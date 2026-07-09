@@ -1,0 +1,191 @@
+---
+description: TanStack Query + Zustand state management architecture
+globs: src/lib/api/**,src/features/**,src/providers/**,src/components/**
+alwaysApply: false
+---
+
+# TanStack Query + Zustand Architecture
+
+Separate UI rendering from business logic: server/async data flows through TanStack Query hooks backed by `lib/api/**`; ephemeral client UI state lives in Zustand stores.
+
+## 1. Global setup
+
+Mount a single `QueryClientProvider` at the app root (`src/providers/query-provider.tsx`). Wrap `src/app/layout.tsx` with `QueryProvider`.
+
+**QueryClient defaults**: `staleTime: 60_000`, `retry: 1`, `refetchOnWindowFocus: false`.
+
+**Zustand**: one store per feature at `src/features/<feature-name>/store/<feature-name>.store.ts`. Do not combine unrelated features into a global store.
+
+## 2. Query and mutation pattern
+
+Each domain lives under `src/lib/api/<feature>/`. See **lib-services.mdc** for the full file layout (`index.ts`, `queries.ts`, `mutations.ts`, optional `types.ts` / `mappers.ts`).
+
+| Concern | Location |
+|---------|----------|
+| Query key factory | `queries.ts` — e.g. `userKeys.detail(id)` |
+| Read helpers | `queries.ts` — pure async, no React |
+| Write helpers | `mutations.ts` — pure async, no React |
+| `useQuery` hooks | `queries.ts` — `'use client'` when exported |
+| `useMutation` hooks | `mutations.ts` — `'use client'` when exported |
+| Public imports | `index.ts` barrel only — `@/lib/api/users` |
+
+### API error (`src/types/api-error.ts`)
+
+```typescript
+export interface ApiError {
+  message: string;
+  statusCode?: number;
+}
+```
+
+### Read helper template (`src/lib/api/users/queries.ts`)
+
+```typescript
+import { createClient } from '@/lib/supabase/client';
+import type { ApiError } from '@/types/api-error';
+
+export const userKeys = {
+  all: ['users'] as const,
+  lists: () => [...userKeys.all, 'list'] as const,
+  list: () => [...userKeys.lists()] as const,
+  details: () => [...userKeys.all, 'detail'] as const,
+  detail: (id: string) => [...userKeys.details(), id] as const,
+};
+
+export async function fetchUser(id: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, status, updated_at')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    throw { message: error.message, statusCode: 500 } satisfies ApiError;
+  }
+
+  return { id: data.id, status: data.status, updatedAt: data.updated_at };
+}
+```
+
+### Query hook template (same file, below helpers)
+
+```typescript
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: userKeys.detail(id),
+    queryFn: () => fetchUser(id),
+    enabled: Boolean(id),
+  });
+}
+```
+
+### Mutation hook template (`src/lib/api/users/mutations.ts`)
+
+```typescript
+'use client';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { userKeys } from '@/lib/api/users/queries';
+import type { ApiError } from '@/types/api-error';
+
+export function useUpdateUser(options?: { onSuccess?: (data: User) => void }) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateUser,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(data.id) });
+      options?.onSuccess?.(data);
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    },
+  });
+}
+```
+
+## 3. Zustand client state
+
+Zustand holds synchronous UI state only — never server data TanStack Query already manages. Use narrow selectors; actions are plain store functions.
+
+**Store path**: `src/features/<feature-name>/store/<feature-name>.store.ts`
+
+```typescript
+import { create } from 'zustand';
+
+interface FeatureUiState {
+  activeTab: string;
+  isPanelOpen: boolean;
+  setActiveTab: (tab: string) => void;
+  setPanelOpen: (isOpen: boolean) => void;
+  resetFeatureUi: () => void;
+}
+
+const initialState = { activeTab: 'default_tab', isPanelOpen: false };
+
+export const useFeatureStore = create<FeatureUiState>((set) => ({
+  ...initialState,
+  setActiveTab: (tab) => set({ activeTab: tab }),
+  setPanelOpen: (isOpen) => set({ isPanelOpen: isOpen }),
+  resetFeatureUi: () => set(initialState),
+}));
+```
+
+### Component usage
+
+```typescript
+'use client';
+
+import { useUser } from '@/lib/api/users';
+import { useFeatureStore } from '@/features/feature-name/store/feature.store';
+
+export function FeaturePanel({ userId }: { userId: string }) {
+  const activeTab = useFeatureStore((state) => state.activeTab);
+  const { data, isLoading, error } = useUser(userId);
+
+  if (isLoading) return <p>Loading…</p>;
+  if (error) return <p>{error.message}</p>;
+
+  return <p>{data?.status}</p>;
+}
+```
+
+## 4. Architectural rules
+
+**Separation of concerns**
+- Server/async data → TanStack Query hooks in `lib/api/**`.
+- Ephemeral UI state → Zustand stores in `features/**/store/`.
+- Never duplicate query results into Zustand.
+
+**No API code in UI**
+- Components call hooks (`@/lib/api/<feature>`) or Zustand selectors only.
+- Never initialize Supabase clients, `fetch`, or Axios in components.
+
+**Typed boundaries**
+- Explicit request/response interfaces in `types.ts` or next to helpers.
+- Query keys use `as const` factory objects in `queries.ts` — never inline arrays in components.
+- Hooks return TanStack Query results directly; do not re-wrap into custom loading/error machines.
+
+**Error handling**
+- Helpers throw `{ message, statusCode? } satisfies ApiError`.
+- Mutation `onError` → `sonner` toast for user-visible failures.
+- Query errors surface via hook `error`; components decide rendering.
+
+**Cache invalidation**
+- Invalidate or update relevant keys in mutation `onSuccess`.
+- Prefer `setQueryData` for optimistic updates; use `invalidateQueries` when server is source of truth.
+
+**Server components**
+- Use server helpers under `lib/api/**` with `lib/supabase/server` — not TanStack Query hooks.
+- Prefetch with `queryClient.prefetchQuery` only when hydrating client subtrees.
+
+**Naming**
+- Paths: `kebab-case` (`use-feature-data.ts` is wrong in `lib/api` — use `queries.ts` / `mutations.ts`).
+- Hook exports: `use<Operation>` (`useUser`, `useUpdateUser`).
+- Zustand: `use<Feature>Store` (`useFeatureStore`).

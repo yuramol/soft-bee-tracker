@@ -1,0 +1,27 @@
+---
+description: Next.js page-route standards
+globs: src/app/**/page.tsx
+alwaysApply: false
+---
+
+# App Router Standards
+
+- Follow **naming-conventions.mdc** for file and folder paths under `src/app/**` (`kebab-case` only).
+- Use TypeScript and prefer `interface` for object shapes.
+- Use `function` declarations for helpers/handlers where possible; avoid inline anonymous handlers for prop callbacks.
+- Prefer React Server Components; add `"use client"` only for real interactivity or Web APIs.
+- Do not fetch data directly in render logic when a dedicated server helper or action exists.
+- For route-level failures, use `notFound()`, `redirect()`, or error boundaries.
+- Use dynamic imports for non-critical heavy client modules.
+- Keep route-specific logic colocated under each route directory.
+
+# UI and performance
+
+- Use `next/image` with explicit dimensions where applicable.
+- Optimize for web vitals and avoid unnecessary client-side state/effects.
+- Keep JSX declarative and avoid imperative DOM manipulation.
+
+# Safety
+
+- Keep changes scoped; avoid unrelated refactors.
+- Ask before security-sensitive auth/permission behavior changes.

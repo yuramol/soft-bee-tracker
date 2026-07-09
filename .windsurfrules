@@ -1,0 +1,133 @@
+# Confyde AI Agent Standing Orders
+
+## Scope and priority
+
+- Apply these instructions in every session.
+- If any instruction conflicts with user direction, ask before proceeding.
+- For database work, these rules override generic model defaults.
+
+## Project context
+
+- Codebase: production Next.js + TypeScript.
+- Backend and auth stack: Supabase + Postgres + RLS.
+- Goal: small, safe, reversible changes that match existing patterns.
+- Primary app paths: `app/`, `components/`, `lib/`, `supabase/`.
+
+## Core coding principles
+
+- Assume expertise in TypeScript, Node.js, Next.js App Router, React, Shadcn UI, Radix UI, and Tailwind.
+- Write TypeScript everywhere; prefer `interface` over `type` for object shapes.
+- Export React components as named functions; avoid default exports and class components.
+- Prefer pure functions with the `function` keyword.
+- Avoid enums; use union literals, records, or maps.
+- Keep components declarative/presentational; extract imperative logic to helpers.
+- Prefer iteration and modularization over duplication.
+- Use descriptive camelCase identifiers (`isLoading`, `canSubmit`); use kebab-case directory names.
+- Use PascalCase for components; camelCase for variables/functions.
+- File order: exported component, subcomponents, helpers, static content, then types.
+- Do not make unrelated refactors or formatting-only sweeps.
+- Reuse existing helpers/modules before adding new files.
+- Do not add or upgrade dependencies without explicit user approval.
+- If behavior changes are ambiguous, ask one focused clarification first.
+
+## React and Next.js patterns
+
+- Prefer React Server Components by default.
+- Minimize `"use client"`, `useEffect`, and client-side state when logic can stay server-side.
+- Add `"use client"` only for real interactivity or Web APIs in small focused components.
+- Wrap client components in `Suspense` with an appropriate fallback.
+- Use dynamic import for non-critical/expensive client components.
+- For route-level errors, prefer `notFound()`, `redirect()`, or route error boundaries over raw thrown errors.
+- Optimize for web vitals (LCP/CLS/FID), small bundles, and efficient image loading.
+
+## Styling and UI
+
+- Compose UI with Shadcn patterns, Radix primitives, and Tailwind utilities.
+- Use local `cn` helper from `lib/utils` for conditional classes.
+- Follow mobile-first utility composition.
+- Keep assets optimized: use `next/image` with explicit dimensions when applicable; lazy-load non-critical visuals.
+
+## State and forms
+
+- Reuse existing form abstractions before adding new ones.
+- Use `react-hook-form` for forms and `zod` for schemas/validation.
+
+## Frontend data access (strict)
+
+- No direct data calls inside React components, pages, layouts, or render paths.
+- Never call `fetch`, raw API utilities, or Supabase client methods directly from UI components.
+- Client-side data access must go through dedicated TanStack Query hooks.
+- Server components must use dedicated server-side data helpers/actions.
+- In this repo, place data access abstractions under `lib/api/**` and shared fetch logic under `lib/**`.
+
+## Supabase client and auth SSR (strict)
+
+- Never create an ad hoc Supabase client.
+- Always use `lib/supabase/client` and `lib/supabase/server`.
+- Use `@supabase/ssr` patterns only; do not use `@supabase/auth-helpers-nextjs`.
+- For cookie adapters, use `getAll` and `setAll`; do not use `get`/`set`/`remove` adapter shape.
+- In auth middleware, keep token refresh flow intact and preserve returned response cookies.
+
+## Supabase migrations and types (strict)
+
+- New migration files must live in `supabase/migrations/`.
+- Migration filename must use 14-digit timestamp format: `YYYYMMDDHHmmss_description.sql` (UTC).
+- Do not use shortened date prefixes without `HHmmss`.
+- Write SQL in lowercase unless quoting requires otherwise.
+- Include a migration header comment (purpose, affected objects, special risks).
+- For destructive statements (`drop`, `alter`, `truncate`), add explicit safety comments.
+- New tables must enable RLS.
+- After creating/modifying migrations, regenerate DB types for this repo flow:
+  - `yarn typegen` (local) or `yarn typegen:remote` (linked environment).
+- Never use `as any` on Supabase `.from()` table names; regenerate types first.
+- Avoid `any` for query results; use generated `Database` table `Row`/`Insert`/`Update` types.
+
+## Supabase query organization
+
+- Keep Supabase query helpers under `lib/api/**` and related Supabase helpers under `lib/supabase/**`.
+- Export and reuse query/mutation helpers instead of re-implementing table access in feature components.
+
+## RLS policy rules (strict)
+
+- Every table in API-exposed schemas must have RLS enabled.
+- Each table must include restrictive policy `"require secure session"` with:
+  - `as restrictive for all`
+  - `using ((select private.is_secure()))`
+  - `with check ((select private.is_secure()))`
+- For normal access control, do not use `for all`; create separate policies for `select`, `insert`, `update`, `delete`.
+- Split policies by role (`anon` and `authenticated`) when behavior differs.
+- Use `auth.uid()` (often as `(select auth.uid())`), never `current_user`.
+- Operator requirements:
+  - `select`: `using` only
+  - `insert`: `with check` only
+  - `update`: `using` + `with check`
+  - `delete`: `using` only
+- Include concise rationale comments for non-trivial policy logic.
+
+## Postgres function rules
+
+- Default to `security invoker`.
+- Use `security definer` only when required and explain why.
+- Always set `set search_path = '';` in function definitions.
+- Fully qualify all object names in SQL/PLpgSQL bodies.
+- Prefer explicit input/output types and `immutable`/`stable` when valid.
+- For updated timestamps, reuse `public.trigger_set_updated_at`; do not create duplicate updated-at trigger functions.
+
+## LLM type safety (project-wide)
+
+- Do not use `any` or `unknown` in project code.
+- Prefer explicit interfaces, unions, generics, and narrowing.
+- If `any` or `unknown` is unavoidable, add a short inline justification comment.
+- `any`/`unknown` are allowed in unit tests when they improve test ergonomics/readability.
+
+## Safety and approval boundaries
+
+- Ask for approval before changing database schema, auth flow, RLS model, or security-sensitive code.
+- Never execute destructive DB or git operations without explicit confirmation.
+- Never commit secrets, tokens, or credential-like values.
+
+## Verification and delivery
+
+- Run the smallest relevant checks (`eslint`, targeted tests, or typecheck) after changes.
+- If checks are not run, state exactly which checks were skipped and why.
+- Summaries must include what changed, why, and any residual risk.

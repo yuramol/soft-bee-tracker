@@ -1,0 +1,33 @@
+---
+description: Supabase migrations, RLS, and Postgres function standards
+globs: supabase/**
+alwaysApply: false
+---
+
+# Migration Rules
+
+- Follow **naming-conventions.mdc** for migration filenames and function folder paths where applicable.
+- Create migrations only in `supabase/migrations/`.
+- Use filename format `YYYYMMDDHHmmss_description.sql` (UTC).
+- Write SQL in lowercase unless quoting requires otherwise.
+- Include migration header comment with purpose, affected objects, and risks.
+- Add explicit safety comments for destructive statements (`drop`, `alter`, `truncate`).
+- New tables must enable RLS.
+- After migration changes, run `yarn sb:db:types` (writes `src/types/supabase-schema.ts`).
+
+# RLS Rules
+
+- Every API-exposed table must have RLS enabled.
+- Each table must include restrictive policy `"require secure session"`:
+  - `as restrictive for all`
+  - `using ((select private.is_secure()))`
+  - `with check ((select private.is_secure()))`
+- For normal access control, split policies by operation (`select`, `insert`, `update`, `delete`).
+- Use `auth.uid()` (often `(select auth.uid())`), never `current_user`.
+
+# Function Rules
+
+- Default to `security invoker`; use `security definer` only when required and documented.
+- Always set `set search_path = '';`.
+- Fully qualify object names in SQL/PLpgSQL.
+- Reuse `public.trigger_set_updated_at`; do not create duplicate updated-at trigger functions.
