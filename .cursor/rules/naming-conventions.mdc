@@ -1,0 +1,42 @@
+---
+description: kebab-case file and folder naming for this repo
+alwaysApply: true
+---
+
+# File and folder naming
+
+Apply when creating, renaming, or moving code. Match the target directory’s existing style.
+
+## Rules (strict)
+
+- **Folders**: `kebab-case` only (`quote-items-grid/`, `product-lookup-dialog/`).
+- **Source files**: `kebab-case` only (`quote-items-grid.tsx`, `use-grid-columns.tsx`, `action-renderer.tsx`).
+- Do **not** use PascalCase or camelCase in paths (`QuoteItemsGrid.tsx`, `quoteItemsGrid/`, `useCheckProductCode.tsx` are wrong).
+
+This rule covers **paths only**. TypeScript/React identifier style (components, hooks, types, variables) is defined in **ai-standing-orders.mdc** and **components-ui.mdc** — not here.
+
+## Examples
+
+```text
+# Good paths
+quote-items-grid/quote-items-grid.tsx
+quote-items-grid/hooks/use-check-product-code.tsx
+quote-items-grid/components/renderers/action-renderer.tsx
+
+# Bad paths
+quoteItemsGrid/QuoteItemsGrid.tsx
+hooks/useCheckProductCode.tsx
+SmartCalculationsActive.tsx
+```
+
+## Renames
+
+- Use `git mv` for path changes.
+- Update barrel `index.ts` re-exports and every import.
+- Remove stale duplicate folders left after renames.
+
+## Exceptions
+
+- `src/components/ui/*` — keep existing lowercase shadcn-style names unless adding a new file (then prefer `kebab-case`).
+- `supabase/migrations/` — `YYYYMMDDHHmmss_description.sql` (UTC).
+- Third-party/vendor files — do not rename.

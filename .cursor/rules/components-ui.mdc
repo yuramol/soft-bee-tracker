@@ -1,0 +1,32 @@
+---
+description: Component architecture and UI composition standards
+globs: src/components/**
+alwaysApply: false
+---
+
+# Component Standards
+
+- Export components as named functions; avoid default exports and class components.
+- Prefer pure functions with the `function` keyword.
+- Use `useCallback` for event handlers passed as props instead of inline lambdas when practical.
+- Keep async handlers separate and pass `void`-safe wrapper functions to void-returning props.
+- Keep components declarative and presentational; move imperative logic to helpers/hooks.
+- Use descriptive camelCase identifiers; component names use PascalCase.
+- Avoid enums; use union literals, records, or maps.
+- Do not use `any` or `unknown` in TypeScript project code; prefer explicit interfaces, unions, generics, and type narrowing.
+- File order: exported component, subcomponents, helpers, static content, then types.
+
+# Paths
+
+- Follow **naming-conventions.mdc** for file and folder paths under `src/components/**` (`kebab-case` only).
+
+# Styling and forms
+
+- Compose UI with Shadcn patterns, Radix primitives, and Tailwind utilities.
+- Use `cn` from `lib/utils` for conditional class names.
+- Reuse existing form abstractions; use `react-hook-form` + `zod`.
+
+# Data access
+
+- Do not call `fetch` or Supabase directly in components.
+- Use dedicated hooks/helpers (for client, TanStack Query hooks).

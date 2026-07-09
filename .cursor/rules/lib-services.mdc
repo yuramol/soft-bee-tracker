@@ -1,0 +1,68 @@
+---
+description: Shared library, API helper, and type-safety standards
+globs: lib/**
+alwaysApply: false
+---
+
+# Library and API Layer Standards
+
+- Follow **naming-conventions.mdc** for file and folder paths under `lib/**` (`kebab-case` only; e.g. `use-ensure-user-profile.ts`, not `useEnsureUserProfile.ts`).
+- Keep shared data access abstractions under `lib/api/**`.
+- Reuse existing modules/helpers before creating new ones.
+- Favor modular pure functions over duplicated logic.
+- Use TypeScript interfaces/unions/generics with explicit typing.
+- Avoid `any` and `unknown`; if unavoidable, add a short inline justification.
+
+# Supabase integration
+
+- Use only `lib/supabase/client` and `lib/supabase/server`.
+- Do not use `@supabase/auth-helpers-nextjs`; use `@supabase/ssr` patterns.
+- For Supabase auth cookie adapters, use `getAll` and `setAll`.
+- Never use `as any` for `.from()` table names; regenerate types first.
+
+# Query and mutation patterns
+
+- Client-side data access goes through TanStack Query hooks colocated in `lib/api/<feature>/`.
+- Server-side data access uses dedicated helpers/actions, not ad hoc calls from components.
+- See **state-manager.mdc** for TanStack Query + Zustand patterns, hook templates, and cache invalidation rules.
+
+## `lib/api` module layout (required)
+
+Each domain gets a kebab-case folder under `src/lib/api/`. Example — `users/`:
+
+```text
+src/lib/api/users/
+  index.ts       # barrel — re-export public API
+  queries.ts     # query key factory, read helpers, useQuery hooks
+  mutations.ts     # write helpers, useMutation hooks
+  types.ts       # optional — request/response interfaces
+  mappers.ts     # optional — DB row ↔ domain mapping
+```
+
+### File responsibilities
+
+| File | Contents |
+|------|----------|
+| `index.ts` | Re-exports from `queries.ts`, `mutations.ts`, and optional `types.ts`. This is the only import path components use (`@/lib/api/users`). |
+| `queries.ts` | `userKeys` factory, pure async read functions, `useUsers` / `useUser` hooks. `'use client'` when hooks are exported. |
+| `mutations.ts` | Pure async write functions, `useUpdateUser` / `useCreateUser` hooks, `queryClient.invalidateQueries`, `toast.error` on failure. `'use client'` when hooks are exported. |
+
+### Rules
+
+- Pure helpers in `queries.ts` / `mutations.ts` must not import React or call hooks.
+- Hooks are thin: call a helper, wire `queryKey` / `queryFn` / `mutationFn`, handle invalidation.
+- Throw `{ message, statusCode? } satisfies ApiError` from helpers (`src/types/api-error.ts`).
+- Query keys live in `queries.ts` next to their hooks — not in components.
+- Do not add one-off `fetch` or Supabase calls in `components/`, `app/` pages, or layouts.
+- Larger features may add `types.ts` or `mappers.ts`; keep `index.ts` as the sole public entry.
+
+### Import example
+
+```typescript
+// ✅ component
+import { useUsers, useUpdateUser } from '@/lib/api/users';
+
+// ❌ deep import or direct data call
+import { fetchUsers } from '@/lib/api/users/queries';
+const supabase = createClient();
+```

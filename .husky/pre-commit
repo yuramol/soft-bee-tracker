@@ -1,0 +1,1 @@
+yarn lint-staged --no-stash --no-revert && (yarn lint:fix || true) && yarn lint:ci
