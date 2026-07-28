@@ -48,7 +48,7 @@ values
     'authenticated',
     'authenticated',
     'manager@softbee.dev',
-    extensions.crypt('Password1', extensions.gen_salt('bf')),
+    extensions.crypt('Password11', extensions.gen_salt('bf')),
     now(),
     '{"provider": "email", "providers": ["email"]}',
     '{"username": "manager", "first_name": "Mila", "last_name": "Managerova"}',
