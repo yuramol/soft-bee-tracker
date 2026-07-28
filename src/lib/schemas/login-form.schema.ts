@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
+import { emailSchema } from '@/lib/schemas/email.schema';
 import { passwordSchema } from '@/lib/schemas/password.schema';
 
 export const loginFormSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+  email: emailSchema,
   password: passwordSchema
 });
 

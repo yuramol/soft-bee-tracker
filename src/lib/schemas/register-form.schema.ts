@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
+import { emailSchema } from '@/lib/schemas/email.schema';
 import { passwordSchema } from '@/lib/schemas/password.schema';
 
-const optionalUrlSchema = z.string().url('Enter a valid URL').or(z.literal(''));
+const optionalUrlSchema = z.url('Enter a valid URL').or(z.literal(''));
 
 export const registerFormSchema = z
   .object({
     username: z.string().min(1, 'Username is required'),
-    email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+    email: emailSchema,
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     phone: z

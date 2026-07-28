@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
+import { emailSchema } from '@/lib/schemas/email.schema';
+
 export const forgotPasswordFormSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Enter a valid email address')
+  email: emailSchema
 });
 
 export interface ForgotPasswordFormValues {
