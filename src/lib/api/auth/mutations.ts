@@ -1,9 +1,10 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { ROUTES } from '@/constants';
+import { authKeys, fetchSessionProfile } from '@/lib/api/auth/queries';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type { RecoverPasswordRequest, SignInRequest, SignUpMetadata, SignUpRequest, UpdatePasswordRequest } from '@/lib/api/auth/types';
 import type { ApiError } from '@/types/api-error';
@@ -25,12 +26,53 @@ export async function signInWithPassword(params: SignInRequest): Promise<void> {
       statusCode: 401
     } satisfies ApiError;
   }
+
+  // blocked users authenticate at the supabase auth layer but must not enter the app
+  const profile = await fetchSessionProfile();
+
+  if (profile?.isBlocked) {
+    await supabase.auth.signOut();
+    throw {
+      message: 'Your account has been blocked. Please contact an administrator.',
+      statusCode: 403
+    } satisfies ApiError;
+  }
 }
 
 export function useSignIn(options?: UseAuthMutationOptions) {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: signInWithPassword,
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: authKeys.all });
+      options?.onSuccess?.();
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    }
+  });
+}
+
+export async function signOutUser(): Promise<void> {
+  const supabase = createBrowserClient();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw {
+      message: error.message,
+      statusCode: error.status
+    } satisfies ApiError;
+  }
+}
+
+export function useSignOut(options?: UseAuthMutationOptions) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: signOutUser,
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: authKeys.all });
       options?.onSuccess?.();
     },
     onError: (error: ApiError) => {
