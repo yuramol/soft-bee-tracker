@@ -1,5 +1,31 @@
 export type UserRole = 'worker' | 'manager' | 'admin';
 
+export type SalaryType = 'hourly' | 'fixed' | 'project';
+
+export interface UserPositions {
+  titles: string[];
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  role: UserRole;
+  dateEmployment: string | null;
+  positions: UserPositions | null;
+  salary: number | null;
+  salaryInfo: string | null;
+  typeSalary: SalaryType | null;
+  linkedin: string | null;
+  upwork: string | null;
+  isConfirmed: boolean;
+  isBlocked: boolean;
+}
+
 export interface SignInRequest {
   email: string;
   password: string;

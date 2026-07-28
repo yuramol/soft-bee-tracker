@@ -8,4 +8,15 @@ export {
   useUpdatePassword,
   updatePassword
 } from './mutations';
-export type { SignInRequest, SignUpRequest, SignUpMetadata, RecoverPasswordRequest, UpdatePasswordRequest, UserRole } from './types';
+export { authKeys, fetchSessionProfile, useSessionProfile } from './queries';
+export type {
+  SignInRequest,
+  SignUpRequest,
+  SignUpMetadata,
+  RecoverPasswordRequest,
+  UpdatePasswordRequest,
+  UserRole,
+  SalaryType,
+  UserPositions,
+  UserProfile
+} from './types';
