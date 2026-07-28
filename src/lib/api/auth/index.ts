@@ -1,2 +1,11 @@
-export { useSignIn, signInWithPassword, useSignUp, signUpWithProfile } from './mutations';
-export type { SignInRequest, SignUpRequest, SignUpMetadata, UserRole } from './types';
+export {
+  useSignIn,
+  signInWithPassword,
+  useSignUp,
+  signUpWithProfile,
+  useRecoverPassword,
+  recoverPassword,
+  useUpdatePassword,
+  updatePassword
+} from './mutations';
+export type { SignInRequest, SignUpRequest, SignUpMetadata, RecoverPasswordRequest, UpdatePasswordRequest, UserRole } from './types';

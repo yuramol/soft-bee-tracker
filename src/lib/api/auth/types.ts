@@ -16,6 +16,14 @@ export interface SignUpRequest {
   password: string;
 }
 
+export interface RecoverPasswordRequest {
+  email: string;
+}
+
+export interface UpdatePasswordRequest {
+  password: string;
+}
+
 export interface SignUpMetadata {
   role: UserRole;
   username: string;

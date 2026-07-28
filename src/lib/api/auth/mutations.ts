@@ -3,8 +3,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { ROUTES } from '@/constants';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { SignInRequest, SignUpMetadata, SignUpRequest } from '@/lib/api/auth/types';
+import type { RecoverPasswordRequest, SignInRequest, SignUpMetadata, SignUpRequest, UpdatePasswordRequest } from '@/lib/api/auth/types';
 import type { ApiError } from '@/types/api-error';
 
 interface UseAuthMutationOptions {
@@ -76,6 +77,63 @@ export function useSignUp(options?: UseAuthMutationOptions) {
     mutationFn: signUpWithProfile,
     onSuccess: () => {
       toast.success('Account created! Please check your email to verify your profile.');
+      options?.onSuccess?.();
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    }
+  });
+}
+
+export async function recoverPassword(params: RecoverPasswordRequest): Promise<void> {
+  const supabase = createBrowserClient();
+
+  // the customized recovery email template links straight to /auth/confirm with a
+  // token_hash; redirectTo is the fallback target when the default template is active
+  const { error } = await supabase.auth.resetPasswordForEmail(params.email, {
+    redirectTo: `${window.location.origin}/auth/confirm?next=${ROUTES.UPDATE_PASSWORD}`
+  });
+
+  if (error) {
+    throw {
+      message: error.message,
+      statusCode: error.status
+    } satisfies ApiError;
+  }
+}
+
+export function useRecoverPassword(options?: UseAuthMutationOptions) {
+  return useMutation({
+    mutationFn: recoverPassword,
+    onSuccess: () => {
+      toast.success('Reset link sent! Please check your mailbox.');
+      options?.onSuccess?.();
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    }
+  });
+}
+
+export async function updatePassword(params: UpdatePasswordRequest): Promise<void> {
+  const supabase = createBrowserClient();
+  const { error } = await supabase.auth.updateUser({
+    password: params.password
+  });
+
+  if (error) {
+    throw {
+      message: error.message,
+      statusCode: error.status
+    } satisfies ApiError;
+  }
+}
+
+export function useUpdatePassword(options?: UseAuthMutationOptions) {
+  return useMutation({
+    mutationFn: updatePassword,
+    onSuccess: () => {
+      toast.success('Password changed! You can now log in.');
       options?.onSuccess?.();
     },
     onError: (error: ApiError) => {
