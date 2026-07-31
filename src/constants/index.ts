@@ -2,6 +2,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
+  UPDATE_PASSWORD: '/auth/update-password',
   DASHBOARD: '/dashboard'
 } as const;
 
