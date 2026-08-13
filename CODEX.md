@@ -1,8 +1,24 @@
 # Codex Working Rules
 
-## Scope filter for this file
+## Project context
 
-- Apply this guidance only when editing `src/components/**` and `src/app/**/page.tsx`.
+- Stack: Next.js 16, React 19, TypeScript 6, Supabase, TanStack Query, Zustand 5, and Vitest.
+- Use Yarn 4 commands; run unit tests with `yarn test`.
+- Keep Supabase reads/writes under `src/lib/api/<entity>/` and export public contracts from that domain's `index.ts`.
+
+## State and data access
+
+- UI components must consume domain hooks/stores and must not call Supabase or `fetch` directly.
+- Use the state owner already established for a domain: TanStack Query or Zustand; never duplicate the same remote data in both.
+- Keep Zustand stores separated by entity.
+- Keep independent get/create operations in separate stores so their loading and error states do not interfere.
+- Keep pure reads in `queries.ts`, pure writes in `mutations.ts`, row mapping in `mappers.ts`, and domain contracts in `types.ts`.
+- Normalize async failures to `ApiError` and preserve the Supabase response status.
+- Add or update Vitest coverage for store success, failure, and overlapping-request behavior.
+
+## Scope filter for frontend conventions
+
+- Apply the coding conventions below only when editing `src/components/**` and `src/app/**/page.tsx`.
 - For changes outside those paths, prioritize local file conventions and existing project rules.
 
 ## Coding standards

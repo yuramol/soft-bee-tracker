@@ -1,9 +1,10 @@
 # Confyde AI Agent Standing Orders
 
-## Scope filter for this file
+## Scope and applicability
 
-- Apply this guidance only when editing `src/components/**` and `src/app/**/page.tsx`.
-- For changes outside those paths, prioritize local file conventions and existing project rules.
+- Apply project context, data access, security, database, and verification rules repository-wide.
+- Apply React component/function conventions only when editing `src/components/**` and `src/app/**/page.tsx`.
+- For other paths, also prioritize local file conventions and existing project rules.
 
 ## Scope and priority
 
@@ -15,6 +16,8 @@
 
 - Codebase: production Next.js + TypeScript.
 - Backend and auth stack: Supabase + Postgres + RLS.
+- Client state stack: Zustand 5 and TanStack Query, selected per domain without duplicating the same data in both.
+- Unit tests: Vitest via `yarn test`.
 - Goal: small, safe, reversible changes that match existing patterns.
 - Primary app paths: `app/`, `components/`, `lib/`, `supabase/`.
 
@@ -59,15 +62,19 @@
 
 - Reuse existing form abstractions before adding new ones.
 - Use `react-hook-form` for forms and `zod` for schemas/validation.
+- Use the state owner already established for a domain: TanStack Query or Zustand, not both for the same data.
+- Keep unrelated entities in separate Zustand stores.
+- Keep async operations with independent loading/error lifecycles in separate stores; do not combine get/create operations into one state machine.
+- Zustand stores must expose typed state/actions and normalize failures to `ApiError`.
 
 ## Frontend data access (strict)
 
 - No direct data calls inside React components, pages, layouts, or render paths.
 - Never call `fetch`, raw API utilities, or Supabase client methods directly from UI components.
-- Client-side data access must go through dedicated TanStack Query hooks.
+- Client-side data access must go through a domain's public TanStack Query hook or Zustand store exported from `lib/api/<entity>/index.ts`.
 - Server components must use dedicated server-side data helpers/actions.
 - In this repo, place data access abstractions under `lib/api/**` and shared fetch logic under `lib/**`.
-- Follow `.cursor/rules/state-manager.mdc` for TanStack Query + Zustand architecture and `.cursor/rules/lib-services.mdc` for `lib/api` folder layout.
+- Follow `.cursor/rules/lib-services.mdc` for the baseline `lib/api` layout. For explicitly Zustand-backed domains, the operation-specific store rules in this file take precedence over legacy TanStack-only guidance.
 
 ### `lib/api` module layout (required)
 
@@ -76,15 +83,18 @@ Colocate each domain under `src/lib/api/<feature>/` (example: `users/`):
 ```text
 src/lib/api/users/
   index.ts       # barrel — re-export public API only
-  queries.ts     # query key factory, pure fetch helpers, useQuery hooks
-  mutations.ts   # pure write helpers, useMutation hooks
+  queries.ts     # pure read helpers; optional useQuery hooks
+  mutations.ts   # pure write helpers; optional useMutation hooks
+  get-users.store.ts    # optional Zustand read state/action
+  create-user.store.ts  # optional Zustand create state/action
   types.ts       # optional — request/response interfaces
   mappers.ts     # optional — DB row ↔ domain mapping
 ```
 
 - **`index.ts`**: components import from `@/lib/api/users` only — no deep paths.
-- **`queries.ts`**: `userKeys`, async read helpers, `use*` query hooks (`'use client'` when hooks are present).
-- **`mutations.ts`**: async write helpers, `use*` mutation hooks, cache invalidation, `sonner` error toasts.
+- **`queries.ts`**: async read helpers and, for TanStack Query domains, query keys plus `use*` hooks.
+- **`mutations.ts`**: async write helpers and, for TanStack Query domains, mutation hooks/cache invalidation.
+- **`*.store.ts`**: typed Zustand state/actions for domains that use Zustand; split independent get/create lifecycles into separate files.
 - Pure helpers must not import React; hooks are thin wrappers around helpers.
 - Throw `{ message, statusCode? } satisfies ApiError` from helpers (`src/types/api-error.ts`).
 
@@ -113,7 +123,8 @@ src/lib/api/users/
 
 - Keep Supabase query helpers under `lib/api/**` and related Supabase helpers under `lib/supabase/**`.
 - Export and reuse query/mutation helpers instead of re-implementing table access in feature components.
-- Follow the `lib/api/<feature>/` split: `index.ts` (barrel), `queries.ts` (reads + `useQuery` hooks), `mutations.ts` (writes + `useMutation` hooks). See `.cursor/rules/lib-services.mdc` and `.cursor/rules/state-manager.mdc`.
+- Follow the `lib/api/<feature>/` split: `index.ts` (barrel), `queries.ts` (reads), `mutations.ts` (writes), optional operation-specific Zustand stores, `types.ts`, and `mappers.ts`.
+- Do not represent the same remote collection in both a Zustand store and a TanStack Query cache.
 
 ## AG Grid rules
 
@@ -173,6 +184,6 @@ src/lib/api/users/
 
 ## Verification and delivery
 
-- Run the smallest relevant checks (`eslint`, targeted tests, or typecheck) after changes.
+- Run the smallest relevant checks (`yarn test`, targeted `eslint`, or typecheck) after changes.
 - If checks are not run, state exactly which checks were skipped and why.
 - Summaries must include what changed, why, and any residual risk.
