@@ -28,6 +28,98 @@ export type Database = {
   };
   public: {
     Tables: {
+      project_rates: {
+        Row: {
+          created_at: string;
+          project_id: string;
+          rate: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          project_id: string;
+          rate?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          project_id?: string;
+          rate?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'project_rates_project_id_fkey';
+            columns: ['project_id'];
+            isOneToOne: false;
+            referencedRelation: 'projects';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'project_rates_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      projects: {
+        Row: {
+          client: string;
+          created_at: string;
+          end_date: string | null;
+          id: string;
+          manager_id: string | null;
+          name: string;
+          note: string | null;
+          picture_url: string | null;
+          start_date: string | null;
+          status: Database['public']['Enums']['project_status'];
+          type: Database['public']['Enums']['project_type'];
+          updated_at: string;
+        };
+        Insert: {
+          client: string;
+          created_at?: string;
+          end_date?: string | null;
+          id?: string;
+          manager_id?: string | null;
+          name: string;
+          note?: string | null;
+          picture_url?: string | null;
+          start_date?: string | null;
+          status?: Database['public']['Enums']['project_status'];
+          type: Database['public']['Enums']['project_type'];
+          updated_at?: string;
+        };
+        Update: {
+          client?: string;
+          created_at?: string;
+          end_date?: string | null;
+          id?: string;
+          manager_id?: string | null;
+          name?: string;
+          note?: string | null;
+          picture_url?: string | null;
+          start_date?: string | null;
+          status?: Database['public']['Enums']['project_status'];
+          type?: Database['public']['Enums']['project_type'];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'projects_manager_id_fkey';
+            columns: ['manager_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       users: {
         Row: {
           avatar_url: string | null;
@@ -102,6 +194,8 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
+      project_status: 'active' | 'archived';
+      project_type: 'fixed_price' | 'non_profit' | 'time_material';
       salary_type: 'hourly' | 'fixed' | 'project';
       user_role: 'worker' | 'manager' | 'admin';
     };
@@ -224,6 +318,8 @@ export const Constants = {
   },
   public: {
     Enums: {
+      project_status: ['active', 'archived'],
+      project_type: ['fixed_price', 'non_profit', 'time_material'],
       salary_type: ['hourly', 'fixed', 'project'],
       user_role: ['worker', 'manager', 'admin']
     }

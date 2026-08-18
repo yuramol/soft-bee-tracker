@@ -1,6 +1,6 @@
 # Soft Bee Tracker
 
-Production Next.js application for crew time tracking, project management, and reporting. Built with Supabase for auth and data, TanStack Query for server state, and shadcn/ui for the interface.
+Production Next.js application for crew time tracking, project management, and reporting. Built with Supabase for auth and data, Zustand and TanStack Query for state management, and shadcn/ui for the interface.
 
 ## Tech stack
 
@@ -9,7 +9,7 @@ Production Next.js application for crew time tracking, project management, and r
 | Framework | [Next.js 16](https://nextjs.org/) (App Router), React 19, TypeScript |
 | Styling | Tailwind CSS v4, [shadcn/ui](https://ui.shadcn.com/) |
 | Database & auth | [Supabase](https://supabase.com/) (Postgres, RLS, SSR cookies) |
-| Server state | [TanStack Query](https://tanstack.com/query) |
+| State management | [Zustand 5](https://zustand.docs.pmnd.rs/) typed stores, [TanStack Query](https://tanstack.com/query) |
 | Auth flows | Supabase Auth, TanStack Query mutations in `lib/api/auth` |
 | Forms & validation | React Hook Form, Zod |
 | Notifications | [Sonner](https://sonner.emilkowal.ski/) |
@@ -60,6 +60,7 @@ SUPABASE_SECRET_KEY=your-service-role-key
 | `npm run start` | Serve production build |
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Auto-fix ESLint issues |
+| `npm run test` | Run the Vitest test suite |
 | `npm run sb:db:types` | Regenerate `src/types/supabase-schema.ts` from local Supabase |
 
 ## Project structure
@@ -71,9 +72,9 @@ src/
 ├── components/
 │   └── ui/               # shadcn/ui primitives
 ├── constants/            # Route lists and shared constants
-├── features/             # Feature modules (Zustand stores, feature UI)
+├── features/             # Feature UI modules
 ├── lib/
-│   ├── api/              # Data access — queries, mutations, hooks
+│   ├── api/              # Domain data access and Zustand stores
 │   └── utils.ts          # Shared helpers (cn, etc.)
 ├── providers/            # React context providers (QueryClient)
 └── types/                # Shared TypeScript types (Database, ApiError)
@@ -95,8 +96,9 @@ Each domain gets a folder under `src/lib/api/<feature>/`:
 ```text
 src/lib/api/users/
   index.ts       # Public barrel — components import from here only
-  queries.ts     # Query keys, read helpers, useQuery hooks
-  mutations.ts   # Write helpers, useMutation hooks
+  queries.ts     # Read helpers
+  mutations.ts   # Write helpers
+  store.ts       # Optional typed Zustand state and async actions
   types.ts       # Optional request/response interfaces
   mappers.ts     # Optional DB row ↔ domain mapping
 ```
@@ -107,7 +109,8 @@ Components import hooks from `@/lib/api/<feature>`. They must not call Supabase,
 
 | Concern | Where |
 |---------|-------|
-| Server/async data | TanStack Query hooks in `lib/api/**` |
+| Project and project-rate async state | Zustand stores in `lib/api/<feature>/store.ts` |
+| Cached server data | TanStack Query hooks in `lib/api/**` |
 | Ephemeral UI state | Zustand stores in `features/<name>/store/` |
 | Auth mutations | `useSignIn`, `useSignUp`, `useSignOut` in `lib/api/auth` |
 
