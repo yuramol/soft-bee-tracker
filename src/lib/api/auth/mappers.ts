@@ -1,7 +1,8 @@
 import type { Database } from '@/types';
-import type { UserPositions, UserProfile } from '@/lib/api/auth/types';
+import type { UpdateProfileRequest, UserPositions, UserProfile } from '@/lib/api/auth/types';
 
 type UserRow = Database['public']['Tables']['users']['Row'];
+type UserUpdate = Database['public']['Tables']['users']['Update'];
 type Json = Database['public']['Tables']['users']['Row']['positions'];
 
 export function mapUserRowToProfile(row: UserRow): UserProfile {
@@ -38,4 +39,18 @@ function parseUserPositions(value: Json): UserPositions | null {
   }
 
   return { titles: titles.filter((title): title is string => typeof title === 'string') };
+}
+
+// only the columns a user owns; role, salary and the confirmation flags are
+// admin-controlled and deliberately absent from the update payload
+export function mapProfileUpdateToUserRow(request: UpdateProfileRequest): UserUpdate {
+  return {
+    username: request.username,
+    first_name: request.firstName,
+    last_name: request.lastName,
+    phone: request.phone,
+    avatar_url: request.avatarUrl,
+    linkedin: request.linkedin,
+    upwork: request.upwork
+  };
 }

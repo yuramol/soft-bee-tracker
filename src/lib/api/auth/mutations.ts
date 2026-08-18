@@ -5,8 +5,19 @@ import { toast } from 'sonner';
 
 import { ROUTES } from '@/constants';
 import { authKeys, fetchSessionProfile } from '@/lib/api/auth/queries';
+import { mapProfileUpdateToUserRow, mapUserRowToProfile } from '@/lib/api/auth/mappers';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { RecoverPasswordRequest, SignInRequest, SignUpMetadata, SignUpRequest, UpdatePasswordRequest } from '@/lib/api/auth/types';
+import { clearSupabaseAuthCookies } from '@/lib/supabase/cookies';
+import { resetClientState } from '@/lib/api/reset-client-state';
+import type {
+  RecoverPasswordRequest,
+  SignInRequest,
+  SignUpMetadata,
+  SignUpRequest,
+  UpdatePasswordRequest,
+  UpdateProfileRequest,
+  UserProfile
+} from '@/lib/api/auth/types';
 import type { ApiError } from '@/types/api-error';
 
 interface UseAuthMutationOptions {
@@ -58,12 +69,15 @@ export async function signOutUser(): Promise<void> {
   const supabase = createBrowserClient();
   const { error } = await supabase.auth.signOut();
 
-  if (error) {
+  // a session that is already gone is the outcome we wanted, not a failure to report
+  if (error && error.name !== 'AuthSessionMissingError') {
     throw {
       message: error.message,
       statusCode: error.status
     } satisfies ApiError;
   }
+
+  clearSupabaseAuthCookies();
 }
 
 export function useSignOut(options?: UseAuthMutationOptions) {
@@ -72,7 +86,7 @@ export function useSignOut(options?: UseAuthMutationOptions) {
   return useMutation({
     mutationFn: signOutUser,
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: authKeys.all });
+      resetClientState(queryClient);
       options?.onSuccess?.();
     },
     onError: (error: ApiError) => {
@@ -182,4 +196,33 @@ export function useUpdatePassword(options?: UseAuthMutationOptions) {
       toast.error(error.message);
     }
   });
+}
+
+export async function updateProfile(params: UpdateProfileRequest): Promise<UserProfile> {
+  const supabase = createBrowserClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    throw {
+      message: 'Your session has expired. Please sign in again.',
+      statusCode: 401
+    } satisfies ApiError;
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .update(mapProfileUpdateToUserRow(params))
+    .eq('id', userData.user.id)
+    .select('*')
+    .single();
+
+  if (error) {
+    throw {
+      // 23505 is the unique violation on users.username; the raw text leaks the constraint name
+      message: error.code === '23505' ? 'That username is already taken.' : error.message,
+      statusCode: error.code === '23505' ? 409 : 500
+    } satisfies ApiError;
+  }
+
+  return mapUserRowToProfile(data);
 }
