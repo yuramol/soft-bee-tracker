@@ -6,30 +6,39 @@ import { registerStoreReset } from '@/lib/api/reset-client-state';
 import { toApiError } from '@/lib/api/to-api-error';
 import type { ApiError } from '@/types/api-error';
 
-import { createProject as createProjectRequest } from './mutations';
-import { getProjects as getProjectsRequest } from './queries';
-import type { CreateProjectInput, Project } from './types';
+import { getProjects as getProjectsRequest, getUserProjects as getUserProjectsRequest } from './queries';
+import type { Project } from './types';
 
 export interface ProjectsRepository {
   getProjects: () => Promise<Project[]>;
-  createProject: (input: CreateProjectInput) => Promise<Project>;
+  getUserProjects: () => Promise<Project[]>;
 }
 
 export interface ProjectsStore {
   projects: Project[];
+  userProjects: Project[];
   isLoading: boolean;
   error: ApiError | null;
   getProjects: () => Promise<void>;
-  createProject: (input: CreateProjectInput) => Promise<Project>;
+  getUserProjects: () => Promise<void>;
+  addUserProject: (project: Project) => void;
   reset: () => void;
 }
+
+const initialState = {
+  projects: [],
+  userProjects: [],
+  isLoading: false,
+  error: null
+} satisfies Pick<ProjectsStore, 'projects' | 'userProjects' | 'isLoading' | 'error'>;
 
 export function createProjectsStore(repository: ProjectsRepository) {
   return create<ProjectsStore>()((set) => {
     let pendingRequests = 0;
     let latestActionId = 0;
-    let latestLoadId = 0;
-    let collectionRevision = 0;
+    let latestProjectsLoadId = 0;
+    let latestUserProjectsLoadId = 0;
+    let userProjectsRevision = 0;
 
     function startRequest(): number {
       pendingRequests += 1;
@@ -38,37 +47,35 @@ export function createProjectsStore(repository: ProjectsRepository) {
       return latestActionId;
     }
 
+    function finishRequest() {
+      pendingRequests = Math.max(0, pendingRequests - 1);
+    }
+
     return {
-      projects: [],
-      isLoading: false,
-      error: null,
+      ...initialState,
       reset: () => {
-        // bumping the guards stops an in-flight response from writing the
-        // previous session's data back after the store has been cleared
         pendingRequests = 0;
         latestActionId += 1;
-        latestLoadId += 1;
-        collectionRevision += 1;
-        set({ projects: [], isLoading: false, error: null });
+        latestProjectsLoadId += 1;
+        latestUserProjectsLoadId += 1;
+        userProjectsRevision += 1;
+        set(initialState);
       },
       getProjects: async () => {
         const actionId = startRequest();
-        const loadId = ++latestLoadId;
-        const revisionAtStart = collectionRevision;
+        const loadId = ++latestProjectsLoadId;
 
         try {
           const projects = await repository.getProjects();
-          pendingRequests -= 1;
-          const canApplyProjects = loadId === latestLoadId && revisionAtStart === collectionRevision;
-
+          finishRequest();
           set({
-            ...(canApplyProjects ? { projects } : {}),
+            ...(loadId === latestProjectsLoadId ? { projects } : {}),
             isLoading: pendingRequests > 0,
             ...(actionId === latestActionId ? { error: null } : {})
           });
         } catch (error) {
           const apiError = toApiError(error);
-          pendingRequests -= 1;
+          finishRequest();
           set({
             isLoading: pendingRequests > 0,
             ...(actionId === latestActionId ? { error: apiError } : {})
@@ -76,28 +83,36 @@ export function createProjectsStore(repository: ProjectsRepository) {
           throw apiError;
         }
       },
-      createProject: async (input) => {
+      getUserProjects: async () => {
         const actionId = startRequest();
+        const loadId = ++latestUserProjectsLoadId;
+        const revisionAtStart = userProjectsRevision;
 
         try {
-          const project = await repository.createProject(input);
-          pendingRequests -= 1;
-          collectionRevision += 1;
-          set((state) => ({
-            projects: [...state.projects, project],
+          const userProjects = await repository.getUserProjects();
+          finishRequest();
+          const canApplyProjects = loadId === latestUserProjectsLoadId && revisionAtStart === userProjectsRevision;
+
+          set({
+            ...(canApplyProjects ? { userProjects } : {}),
             isLoading: pendingRequests > 0,
             ...(actionId === latestActionId ? { error: null } : {})
-          }));
-          return project;
+          });
         } catch (error) {
           const apiError = toApiError(error);
-          pendingRequests -= 1;
+          finishRequest();
           set({
             isLoading: pendingRequests > 0,
             ...(actionId === latestActionId ? { error: apiError } : {})
           });
           throw apiError;
         }
+      },
+      addUserProject: (project) => {
+        userProjectsRevision += 1;
+        set((state) => ({
+          userProjects: state.userProjects.some(({ id }) => id === project.id) ? state.userProjects : [...state.userProjects, project]
+        }));
       }
     };
   });
@@ -105,8 +120,7 @@ export function createProjectsStore(repository: ProjectsRepository) {
 
 export const useProjectsStore = createProjectsStore({
   getProjects: getProjectsRequest,
-  createProject: createProjectRequest
+  getUserProjects: getUserProjectsRequest
 });
 
-// logout clears every store that has been loaded this session
 registerStoreReset(() => useProjectsStore.getState().reset());

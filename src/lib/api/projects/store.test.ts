@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createProjectsStore, type ProjectsRepository } from './store';
-import type { CreateProjectInput, Project } from './types';
+import type { Project } from './types';
 
 const existingProject: Project = {
   id: 'project-1',
@@ -15,139 +15,84 @@ const existingProject: Project = {
   endDate: null,
   status: 'active',
   type: 'time_material',
-  managerId: null
-};
-
-const projectInput: CreateProjectInput = {
-  name: 'New project',
-  client: 'Acme',
-  note: 'Important',
-  pictureUrl: null,
-  startDate: '2026-09-01',
-  endDate: null,
-  status: 'active',
-  type: 'fixed_price',
-  managerId: 'manager-1'
-};
-
-const createdProject: Project = {
-  ...projectInput,
-  id: 'project-2',
-  createdAt: '2026-08-13T11:00:00.000Z',
-  updatedAt: '2026-08-13T11:00:00.000Z'
+  managerId: 'user-1'
 };
 
 function createRepository(overrides: Partial<ProjectsRepository> = {}): ProjectsRepository {
   return {
     getProjects: vi.fn().mockResolvedValue([]),
-    createProject: vi.fn().mockResolvedValue(createdProject),
+    getUserProjects: vi.fn().mockResolvedValue([]),
     ...overrides
   };
 }
 
 function createDeferred<T>() {
   let resolvePromise!: (value: T) => void;
-  let rejectPromise!: (reason: unknown) => void;
-  const promise = new Promise<T>((resolve, reject) => {
+  const promise = new Promise<T>((resolve) => {
     resolvePromise = resolve;
-    rejectPromise = reject;
   });
 
-  return { promise, resolve: resolvePromise, reject: rejectPromise };
+  return { promise, resolve: resolvePromise };
 }
 
 describe('projects store', () => {
-  it('replaces projects with the loaded collection', async () => {
+  it('loads the authenticated user project collection', async () => {
     const repository = createRepository({
-      getProjects: vi.fn().mockResolvedValue([existingProject])
+      getUserProjects: vi.fn().mockResolvedValue([existingProject])
     });
     const store = createProjectsStore(repository);
 
-    await store.getState().getProjects();
+    await store.getState().getUserProjects();
 
     expect(store.getState()).toMatchObject({
-      projects: [existingProject],
+      userProjects: [existingProject],
       isLoading: false,
       error: null
     });
   });
 
-  it('appends and returns a newly created project', async () => {
-    const repository = createRepository();
-    const store = createProjectsStore(repository);
-    store.setState({ projects: [existingProject] });
+  it('adds a user project once', () => {
+    const store = createProjectsStore(createRepository());
 
-    const result = await store.getState().createProject(projectInput);
+    store.getState().addUserProject(existingProject);
+    store.getState().addUserProject(existingProject);
 
-    expect(repository.createProject).toHaveBeenCalledWith(projectInput);
-    expect(result).toEqual(createdProject);
-    expect(store.getState().projects).toEqual([existingProject, createdProject]);
+    expect(store.getState().userProjects).toEqual([existingProject]);
   });
 
-  it('stores a normalized error and preserves projects when loading fails', async () => {
-    const repository = createRepository({
-      getProjects: vi.fn().mockRejectedValue(new Error('Network unavailable'))
-    });
-    const store = createProjectsStore(repository);
-    store.setState({ projects: [existingProject] });
+  it('preserves a created project when an older user-project load finishes', async () => {
+    const loadRequest = createDeferred<Project[]>();
+    const store = createProjectsStore(
+      createRepository({
+        getUserProjects: vi.fn().mockReturnValue(loadRequest.promise)
+      })
+    );
 
-    await expect(store.getState().getProjects()).rejects.toEqual({
+    const loadPromise = store.getState().getUserProjects();
+    store.getState().addUserProject(existingProject);
+    loadRequest.resolve([]);
+    await loadPromise;
+
+    expect(store.getState().userProjects).toEqual([existingProject]);
+    expect(store.getState().isLoading).toBe(false);
+  });
+
+  it('stores a normalized load error without clearing projects', async () => {
+    const store = createProjectsStore(
+      createRepository({
+        getUserProjects: vi.fn().mockRejectedValue(new Error('Network unavailable'))
+      })
+    );
+    store.setState({ userProjects: [existingProject] });
+
+    await expect(store.getState().getUserProjects()).rejects.toEqual({
       message: 'Network unavailable',
       statusCode: 500
     });
     expect(store.getState()).toMatchObject({
-      projects: [existingProject],
+      userProjects: [existingProject],
       isLoading: false,
-      error: {
-        message: 'Network unavailable',
-        statusCode: 500
-      }
+      error: { message: 'Network unavailable', statusCode: 500 }
     });
-  });
-
-  it('stays loading and ignores a stale load after a concurrent create', async () => {
-    const loadRequest = createDeferred<Project[]>();
-    const createRequest = createDeferred<Project>();
-    const repository = createRepository({
-      getProjects: vi.fn().mockReturnValue(loadRequest.promise),
-      createProject: vi.fn().mockReturnValue(createRequest.promise)
-    });
-    const store = createProjectsStore(repository);
-    store.setState({ projects: [existingProject] });
-
-    const loadPromise = store.getState().getProjects();
-    const createPromise = store.getState().createProject(projectInput);
-
-    createRequest.resolve(createdProject);
-    await createPromise;
-
-    expect(store.getState().isLoading).toBe(true);
-    expect(store.getState().projects).toEqual([existingProject, createdProject]);
-
-    loadRequest.resolve([existingProject]);
-    await loadPromise;
-
-    expect(store.getState().isLoading).toBe(false);
-    expect(store.getState().projects).toEqual([existingProject, createdProject]);
-  });
-
-  it('does not let an older request error replace a newer success state', async () => {
-    const loadRequest = createDeferred<Project[]>();
-    const repository = createRepository({
-      getProjects: vi.fn().mockReturnValue(loadRequest.promise)
-    });
-    const store = createProjectsStore(repository);
-
-    const loadPromise = store.getState().getProjects();
-    await store.getState().createProject(projectInput);
-
-    loadRequest.reject(new Error('Old request failed'));
-    await expect(loadPromise).rejects.toEqual({
-      message: 'Old request failed',
-      statusCode: 500
-    });
-
-    expect(store.getState().error).toBeNull();
-    expect(store.getState().projects).toEqual([createdProject]);
   });
 });
