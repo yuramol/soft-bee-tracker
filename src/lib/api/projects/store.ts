@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 
+import { registerStoreReset } from '@/lib/api/reset-client-state';
 import { toApiError } from '@/lib/api/to-api-error';
 import type { ApiError } from '@/types/api-error';
 
@@ -20,6 +21,7 @@ export interface ProjectsStore {
   error: ApiError | null;
   getProjects: () => Promise<void>;
   createProject: (input: CreateProjectInput) => Promise<Project>;
+  reset: () => void;
 }
 
 export function createProjectsStore(repository: ProjectsRepository) {
@@ -40,6 +42,15 @@ export function createProjectsStore(repository: ProjectsRepository) {
       projects: [],
       isLoading: false,
       error: null,
+      reset: () => {
+        // bumping the guards stops an in-flight response from writing the
+        // previous session's data back after the store has been cleared
+        pendingRequests = 0;
+        latestActionId += 1;
+        latestLoadId += 1;
+        collectionRevision += 1;
+        set({ projects: [], isLoading: false, error: null });
+      },
       getProjects: async () => {
         const actionId = startRequest();
         const loadId = ++latestLoadId;
@@ -96,3 +107,6 @@ export const useProjectsStore = createProjectsStore({
   getProjects: getProjectsRequest,
   createProject: createProjectRequest
 });
+
+// logout clears every store that has been loaded this session
+registerStoreReset(() => useProjectsStore.getState().reset());

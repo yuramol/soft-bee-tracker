@@ -6,15 +6,21 @@ export {
   useRecoverPassword,
   recoverPassword,
   useUpdatePassword,
-  updatePassword
+  updatePassword,
+  useSignOut,
+  signOutUser,
+  updateProfile
 } from './mutations';
 export { authKeys, fetchSessionProfile, useSessionProfile } from './queries';
+export { createProfileStore, useProfileStore } from './profile.store';
+export type { ProfileRepository, ProfileStore } from './profile.store';
 export type {
   SignInRequest,
   SignUpRequest,
   SignUpMetadata,
   RecoverPasswordRequest,
   UpdatePasswordRequest,
+  UpdateProfileRequest,
   UserRole,
   SalaryType,
   UserPositions,

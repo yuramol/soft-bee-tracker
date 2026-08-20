@@ -46,6 +46,16 @@ export interface RecoverPasswordRequest {
   email: string;
 }
 
+export interface UpdateProfileRequest {
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  linkedin: string | null;
+  upwork: string | null;
+}
+
 export interface UpdatePasswordRequest {
   password: string;
 }

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 
+import { registerStoreReset } from '@/lib/api/reset-client-state';
 import { toApiError } from '@/lib/api/to-api-error';
 import type { ApiError } from '@/types/api-error';
 
@@ -20,6 +21,7 @@ export interface ProjectRatesStore {
   error: ApiError | null;
   getProjectRates: () => Promise<void>;
   createProjectRate: (input: CreateProjectRateInput) => Promise<ProjectRate>;
+  reset: () => void;
 }
 
 export function createProjectRatesStore(repository: ProjectRatesRepository) {
@@ -40,6 +42,15 @@ export function createProjectRatesStore(repository: ProjectRatesRepository) {
       projectRates: [],
       isLoading: false,
       error: null,
+      reset: () => {
+        // bumping the guards stops an in-flight response from writing the
+        // previous session's data back after the store has been cleared
+        pendingRequests = 0;
+        latestActionId += 1;
+        latestLoadId += 1;
+        collectionRevision += 1;
+        set({ projectRates: [], isLoading: false, error: null });
+      },
       getProjectRates: async () => {
         const actionId = startRequest();
         const loadId = ++latestLoadId;
@@ -96,3 +107,6 @@ export const useProjectRatesStore = createProjectRatesStore({
   getProjectRates: getProjectRatesRequest,
   createProjectRate: createProjectRateRequest
 });
+
+// logout clears every store that has been loaded this session
+registerStoreReset(() => useProjectRatesStore.getState().reset());
