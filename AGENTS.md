@@ -22,6 +22,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Keep entities separate: `projects` and `project-rates` must not share a store or domain types.
 - Do not duplicate the same server data in both TanStack Query and Zustand. Follow the state owner already selected for that domain.
 
+## Database / RLS
+
+- Follow `.cursor/rules/supabase-db.mdc` for migrations and RLS.
+- Role checks in RLS must use JWT helpers (`private.is_manager_or_admin()`, `private.jwt_role()`), never `select … from public.users` for role.
+
 ## Scope filter for frontend conventions
 
 - Apply the function conventions below only when editing `src/components/**` and `src/app/**/page.tsx`.

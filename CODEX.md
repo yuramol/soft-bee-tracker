@@ -33,6 +33,11 @@
 - Avoid `any` and `unknown` in project code unless there is a brief inline justification.
 - Do not run unrelated refactors or formatting-only sweeps.
 
+## Database / RLS
+
+- Follow `.cursor/rules/supabase-db.mdc` for migrations and RLS.
+- Role checks in RLS must use JWT helpers (`private.is_manager_or_admin()`, `private.jwt_role()`), never `select … from public.users` for role.
+
 ## Safety
 
 - Ask before changing auth, security-sensitive behavior, or database schema.

@@ -81,6 +81,8 @@ src/lib/api/users/
 - Use `@supabase/ssr` patterns only; do not use `@supabase/auth-helpers-nextjs`.
 - For cookie adapters, use `getAll` and `setAll`; do not use `get`/`set`/`remove` adapter shape.
 - In auth middleware, keep token refresh flow intact and preserve returned response cookies.
+- For migrations/RLS, follow **supabase-db.mdc**. Role checks in RLS must use JWT helpers
+  (`private.is_manager_or_admin()`, `private.jwt_role()`), never `public.users` role lookups.
 
 ## LLM type safety (project-wide)
 
