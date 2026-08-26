@@ -1,5 +1,5 @@
-import { UserProjectsList } from '@components/dashboard/user-projects-list';
 import { CreateProjectDialog } from '@components/projects/create-project-dialog/create-project-dialog';
+import { UserProjectsList } from '@components/projects/user-projects-list';
 
 export default function ProjectsPage() {
   return (
