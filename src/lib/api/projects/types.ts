@@ -17,4 +17,12 @@ export interface Project {
   managerId: string | null;
 }
 
-export type CreateProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt'>;
+export interface CreateProjectInput {
+  name: string;
+  client: string;
+  note: string | null;
+  pictureUrl: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  type: ProjectType;
+}

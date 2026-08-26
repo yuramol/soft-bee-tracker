@@ -1,5 +1,5 @@
-import type { Database } from '@/types';
 import type { CreateProjectInput, Project } from '@/lib/api/projects/types';
+import type { Database } from '@/types';
 
 type ProjectRow = Database['public']['Tables']['projects']['Row'];
 type InputProjectRow = Database['public']['Tables']['projects']['Insert'];
@@ -25,7 +25,7 @@ export function mapProjectsRowsToProjects(rows: ProjectRow[]): Project[] {
   return rows.map(mapProjectRowToProject);
 }
 
-export function mapProjectToProjectRow(project: CreateProjectInput): InputProjectRow {
+export function mapProjectToProjectRow(project: CreateProjectInput, managerId: string): InputProjectRow {
   return {
     name: project.name,
     client: project.client,
@@ -33,8 +33,7 @@ export function mapProjectToProjectRow(project: CreateProjectInput): InputProjec
     picture_url: project.pictureUrl,
     start_date: project.startDate,
     end_date: project.endDate,
-    status: project.status,
     type: project.type,
-    manager_id: project.managerId
+    manager_id: managerId
   };
 }
