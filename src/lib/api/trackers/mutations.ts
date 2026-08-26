@@ -15,25 +15,9 @@ interface UseCreateTrackerOptions {
 
 export async function createTracker(input: CreateTrackerInput): Promise<Tracker> {
   const supabase = createBrowserClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-
-  if (userError) {
-    throw {
-      message: userError.message,
-      statusCode: userError.status ?? 401
-    } satisfies ApiError;
-  }
-
-  if (!userData.user) {
-    throw {
-      message: 'Your session has expired. Please sign in again.',
-      statusCode: 401
-    } satisfies ApiError;
-  }
-
   const { data, error, status } = await supabase
     .from('trackers')
-    .insert(mapCreateTrackerInputToRow(input, userData.user.id))
+    .insert(mapCreateTrackerInputToRow(input))
     .select('*')
     .single();
 

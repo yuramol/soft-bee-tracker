@@ -27,12 +27,11 @@ export function mapTrackersRowsToTrackers(rows: TrackerRow[]): Tracker[] {
   return rows.map(mapTrackerRowToTracker);
 }
 
-export function mapCreateTrackerInputToRow(input: CreateTrackerInput, userId: string): InputTrackerRow {
+export function mapCreateTrackerInputToRow(input: CreateTrackerInput): InputTrackerRow {
   return {
     date: input.date,
     description: input.description,
     duration_minutes: input.durationMinutes,
-    project_id: input.projectId,
-    user_id: userId
+    project_id: input.projectId
   };
 }

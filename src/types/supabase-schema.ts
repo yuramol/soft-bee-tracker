@@ -159,7 +159,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["tracker_status"]
           transaction_id?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
