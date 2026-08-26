@@ -120,6 +120,72 @@ export type Database = {
           }
         ];
       };
+      trackers: {
+        Row: {
+          created_at: string;
+          date: string;
+          description: string | null;
+          duration_minutes: number;
+          id: string;
+          is_live: boolean;
+          live_duration_minutes: number;
+          live_status: Database['public']['Enums']['tracker_live_status'] | null;
+          project_id: string;
+          start_live_date: string | null;
+          status: Database['public']['Enums']['tracker_status'];
+          transaction_id: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          date: string;
+          description?: string | null;
+          duration_minutes?: number;
+          id?: string;
+          is_live?: boolean;
+          live_duration_minutes?: number;
+          live_status?: Database['public']['Enums']['tracker_live_status'] | null;
+          project_id: string;
+          start_live_date?: string | null;
+          status?: Database['public']['Enums']['tracker_status'];
+          transaction_id?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          date?: string;
+          description?: string | null;
+          duration_minutes?: number;
+          id?: string;
+          is_live?: boolean;
+          live_duration_minutes?: number;
+          live_status?: Database['public']['Enums']['tracker_live_status'] | null;
+          project_id?: string;
+          start_live_date?: string | null;
+          status?: Database['public']['Enums']['tracker_status'];
+          transaction_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trackers_project_id_fkey';
+            columns: ['project_id'];
+            isOneToOne: false;
+            referencedRelation: 'projects';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trackers_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       users: {
         Row: {
           avatar_url: string | null;
@@ -197,6 +263,8 @@ export type Database = {
       project_status: 'active' | 'archived';
       project_type: 'fixed_price' | 'non_profit' | 'time_material';
       salary_type: 'hourly' | 'fixed' | 'project';
+      tracker_live_status: 'finish' | 'pause' | 'start';
+      tracker_status: 'approved' | 'new' | 'rejected';
       user_role: 'worker' | 'manager' | 'admin';
     };
     CompositeTypes: {
@@ -321,6 +389,8 @@ export const Constants = {
       project_status: ['active', 'archived'],
       project_type: ['fixed_price', 'non_profit', 'time_material'],
       salary_type: ['hourly', 'fixed', 'project'],
+      tracker_live_status: ['finish', 'pause', 'start'],
+      tracker_status: ['approved', 'new', 'rejected'],
       user_role: ['worker', 'manager', 'admin']
     }
   }
