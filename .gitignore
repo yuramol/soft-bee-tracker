@@ -4,4 +4,20 @@ node_modules
 
 .env
 .env.*
-.yarn
+
+.yarn/*
+!.yarn/releases
+!.yarn/patches
+!.yarn/plugins
+!.yarn/sdks
+.yarn/install-state.gz
+.yarn/build-state.yml
+.yarn/unplugged
+.yarn/cache
+.idea
+package-lock.json
+
+tsconfig.tsbuildinfo
+supabase/.temp
+supabase/.branches
+docs/

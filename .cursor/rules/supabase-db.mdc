@@ -25,6 +25,30 @@ alwaysApply: false
 - For normal access control, split policies by operation (`select`, `insert`, `update`, `delete`).
 - Use `auth.uid()` (often `(select auth.uid())`), never `current_user`.
 
+# RLS role checks (JWT claims — required)
+
+Role for authorization comes from the access token (`claims.user_role`), injected by
+`public.custom_access_token_hook` from `public.users.role`. Do **not** look up
+`public.users` inside RLS for role.
+
+- Prefer `(select private.is_manager_or_admin())` for admin/manager gates.
+- Prefer `(select private.jwt_role())` when comparing a specific role.
+- Keep `public.users.role` as the source of truth; the hook copies it at token issue/refresh.
+- Never authorize from `user_metadata` or client-writable metadata.
+- Missing/null `user_role` must fail closed (helpers already do this).
+- Role changes apply on the next token refresh (`jwt_expiry`); do not assume instant RLS pickup.
+
+```sql
+-- BAD: table lookup on every policy evaluation
+or (select u.role from public.users u where u.id = (select auth.uid())) in ('admin', 'manager')
+
+-- GOOD: jwt claim helpers
+or (select private.is_manager_or_admin())
+```
+
+Local: `[auth.hook.custom_access_token]` in `supabase/config.toml`.
+Prod: enable the same Custom Access Token hook in the Auth dashboard.
+
 # Function Rules
 
 - Default to `security invoker`; use `security definer` only when required and documented.
