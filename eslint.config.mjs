@@ -4,7 +4,7 @@ import nextTs from 'eslint-config-next/typescript';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 
 const eslintConfig = defineConfig([
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', '.history/**', 'supabase/**']),
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', '.history/**', 'supabase/**', '.yarn/**']),
   ...nextVitals,
   ...nextTs,
   {
