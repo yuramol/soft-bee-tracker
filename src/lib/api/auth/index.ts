@@ -22,7 +22,7 @@ export type {
   UpdatePasswordRequest,
   UpdateProfileRequest,
   UserRole,
-  SalaryType,
   UserPositions,
-  UserProfile
+  UserProfile,
+  UserAccess
 } from './types';

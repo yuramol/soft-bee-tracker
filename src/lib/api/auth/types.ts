@@ -1,6 +1,8 @@
+import type { Database } from '@/types';
+
 export type UserRole = 'worker' | 'manager' | 'admin';
 
-export type SalaryType = 'hourly' | 'fixed' | 'project';
+export type UserAccess = Database['public']['Tables']['user_access']['Row'];
 
 export interface UserPositions {
   titles: string[];
@@ -17,9 +19,6 @@ export interface UserProfile {
   role: UserRole;
   dateEmployment: string | null;
   positions: UserPositions | null;
-  salary: number | null;
-  salaryInfo: string | null;
-  typeSalary: SalaryType | null;
   linkedin: string | null;
   upwork: string | null;
   isConfirmed: boolean;
@@ -61,13 +60,10 @@ export interface UpdatePasswordRequest {
 }
 
 export interface SignUpMetadata {
-  role: UserRole;
   username: string;
   first_name: string;
   last_name: string;
   phone: string | null;
   linkedin: string | null;
   upwork: string | null;
-  is_confirmed: boolean;
-  is_blocked: boolean;
 }
