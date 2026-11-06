@@ -24,6 +24,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Existing Zustand stores under `src/lib/api/**` (`projects`, `project-rates`, `auth` profile) predate this decision: do not add new domain stores or extend them.
 - Keep entities separate: `projects` and `project-rates` must not share query keys, hooks or domain types.
 - Domain types alias generated `Database` types. Add `mappers.ts` only when a value changes at runtime. See `.cursor/rules/lib-services.mdc`.
+- Route access is decided by `getRouteAccess` (`src/lib/route-access.ts`) from the verified `user_role` JWT claim; rules live in `src/constants/index.ts`. Restrict a new page by adding it to `ROLE_RESTRICTED_ROUTES` and the matrix test, and call `requireRouteAccess` (`@/lib/api/auth/server`) at the top of its `page.tsx`; unlisted routes require a session, and a missing role fails closed. Never read the role from `user_metadata`.
 
 ## Database / RLS
 

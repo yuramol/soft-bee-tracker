@@ -2,12 +2,9 @@ import type { CookieOptions } from '@supabase/ssr';
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { ALLOW_AUTHORIZED_ROUTES_LIST, PROTECTED_ROUTES_LIST, ROUTES } from '@/constants';
+import { ROUTES } from '@/constants';
+import { getRouteAccess, parseUserRole, type RouteSession } from '@/lib/route-access';
 import { Database } from '@/types';
-
-function pathnameMatchesRouteList(pathname: string, routes: readonly string[]): boolean {
-  return routes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
-}
 
 function applyResponseCookies(source: NextResponse, target: NextResponse) {
   source.cookies.getAll().forEach((cookie) => {
@@ -49,27 +46,41 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT: If you remove getClaims() and you use server-side rendering
   // with the Supabase client, your users may be randomly logged out.
+  // getClaims verifies the JWT (and refreshes it through setAll above), so the
+  // role read here is the same claims.user_role that RLS checks.
+  const { data, error } = await supabase.auth.getClaims();
+  const session = error || !data ? null : getRouteSession(data.claims.user_role);
 
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const access = getRouteAccess(request.nextUrl.pathname, session);
 
-  const { pathname } = request.nextUrl;
-
-  if (!user && pathnameMatchesRouteList(pathname, PROTECTED_ROUTES_LIST)) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = ROUTES.LOGIN;
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    applyResponseCookies(supabaseResponse, redirectResponse);
-    return redirectResponse;
+  if (access === 'login') {
+    return withSessionCookies(supabaseResponse, NextResponse.redirect(buildUrl(request, ROUTES.LOGIN)));
   }
 
-  if (user && pathnameMatchesRouteList(pathname, ALLOW_AUTHORIZED_ROUTES_LIST)) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = ROUTES.DASHBOARD;
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    applyResponseCookies(supabaseResponse, redirectResponse);
-    return redirectResponse;
+  if (access === 'guest-only') {
+    return withSessionCookies(supabaseResponse, NextResponse.redirect(buildUrl(request, ROUTES.DASHBOARD)));
+  }
+
+  if (access === 'denied') {
+    // rewrite keeps the requested URL in the address bar and answers 403
+    return withSessionCookies(supabaseResponse, NextResponse.rewrite(buildUrl(request, ROUTES.ACCESS_DENIED), { status: 403 }));
   }
 
   return supabaseResponse;
+}
+
+function getRouteSession(roleClaim: string | null | undefined): RouteSession {
+  return { role: parseUserRole(typeof roleClaim === 'string' ? roleClaim : null) };
+}
+
+function buildUrl(request: NextRequest, pathname: string): URL {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  url.search = '';
+  return url;
+}
+
+function withSessionCookies(source: NextResponse, target: NextResponse): NextResponse {
+  applyResponseCookies(source, target);
+  return target;
 }

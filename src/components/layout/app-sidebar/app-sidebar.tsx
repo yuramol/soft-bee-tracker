@@ -19,6 +19,7 @@ import {
 import { NavUser } from '@components/layout/app-sidebar/nav-user';
 import { ROUTES } from '@/constants';
 import type { UserProfile } from '@/lib/api/auth';
+import { canRoleAccessRoute, matchesRoute } from '@/lib/route-access';
 
 interface AppSidebarProps {
   profile: UserProfile;
@@ -26,6 +27,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ profile }: AppSidebarProps) {
   const pathname = usePathname();
+  const navItems = getVisibleNavItems(profile);
 
   return (
     <Sidebar collapsible='icon'>
@@ -49,7 +51,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     isActive={isNavItemActive(pathname, item.href)}
@@ -76,7 +78,12 @@ export function AppSidebar({ profile }: AppSidebarProps) {
 }
 
 function isNavItemActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return matchesRoute(pathname, href);
+}
+
+// hides links the role can't open; the proxy, page checks and RLS still enforce access
+function getVisibleNavItems(profile: UserProfile): NavItem[] {
+  return NAV_ITEMS.filter((item) => canRoleAccessRoute(item.href, profile.role));
 }
 
 const NAV_ITEMS: NavItem[] = [

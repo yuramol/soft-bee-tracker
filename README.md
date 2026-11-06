@@ -94,10 +94,11 @@ src/
 │   └── lib/              # App-scoped utilities (supabase clients, legacy api)
 ├── components/
 │   └── ui/               # shadcn/ui primitives
-├── constants/            # Route lists and shared constants
+├── constants/            # Routes, route-access rules, shared constants
 ├── features/             # Feature UI modules
 ├── lib/
 │   ├── api/              # Domain data access (TanStack Query hooks)
+│   ├── route-access.ts   # Route guard decisions (public, login, role)
 │   └── utils.ts          # Shared helpers (cn, etc.)
 ├── providers/            # React context providers (QueryClient)
 └── types/                # Shared TypeScript types (Database, ApiError)
@@ -127,6 +128,28 @@ src/lib/api/users/
 ```
 
 Components import hooks from `@/lib/api/<feature>`. They must not call Supabase, `fetch`, or Axios directly. Domain types alias generated database types. A mapper exists only when a value changes at runtime. See `.cursor/rules/lib-services.mdc`.
+
+### Route protection
+
+`src/proxy.ts` runs `updateSession` (`src/lib/supabase/session.ts`) on every request. It refreshes the Supabase session, reads the verified `user_role` JWT claim (the same claim RLS checks), and asks `getRouteAccess` in `src/lib/route-access.ts` what to do:
+
+| Result | Response |
+|--------|----------|
+| No session on a protected route | Redirect to `/login` |
+| Signed in on `/login` or `/register` | Redirect to `/dashboard` |
+| Role not allowed | Rewrite to `/access-denied` with status 403 (the URL stays the same) |
+
+Role-restricted pages also call `requireRouteAccess(ROUTES.X)` from `@/lib/api/auth/server` at the top of `page.tsx`. It re-checks the role from `public.users`, so the page stays protected even if the proxy rules drift: no session redirects to `/login`, and a wrong role redirects to `/access-denied`.
+
+The sidebar (`src/components/layout/app-sidebar/app-sidebar.tsx`) uses the same rules to hide links a role can't open.
+
+The access rules live in `src/constants/index.ts`: `PUBLIC_ROUTES_LIST`, `GUEST_ONLY_ROUTES_LIST` and `ROLE_RESTRICTED_ROUTES`. To restrict a new page, add it to `ROLE_RESTRICTED_ROUTES` and to the matrix in `src/lib/route-access.test.ts`, then call `requireRouteAccess` in its `page.tsx`. A missing or unknown role is denied. Hiding a page is not data security: RLS still decides what each request can read or write.
+
+#### Verify route protection
+
+1. `yarn test` runs the route matrix (`src/lib/route-access.test.ts`), the proxy responses and cookie handling (`src/lib/supabase/session.test.ts`), and the page check (`src/lib/api/auth/server.test.ts`).
+2. With `yarn dev` and the seeded [test accounts](#test-accounts): signed out, every app route redirects to `/login`. As `worker@softbee.dev`, `/crew`, `/reports` and `/users` show the access-denied page with status 403, and the sidebar shows only Tracker and Projects. As `manager@softbee.dev`, `/crew` and `/reports` open and only `/users` is denied. As `admin@softbee.dev`, every route opens.
+3. Direct API requests ignore the UI. Sign in through `POST /auth/v1/token?grant_type=password`, then call `/rest/v1/users` with the access token. Each user, any role, sees only their own row, and the anon key sees none.
 
 ### State management
 
@@ -227,18 +250,22 @@ When you change a shared rule, update every instruction file that states it so t
 3. `git status` does not list `.env`.
 4. Ask your agent: *"What are this repo's rules for data access and secrets?"* The answer should mention importing from `@/lib/api/<entity>` only, no direct Supabase or `fetch` calls in UI, and that `SUPABASE_SECRET_KEY` is server-only.
 
-## Planned routes
+## Routes and access
 
-| Route | Purpose |
-|-------|---------|
-| `/login` | Authentication |
-| `/register` | User registration |
-| `/dashboard` | Post-login landing |
-| `/tracker` | Time tracking |
-| `/crew` | Crew management |
-| `/projects` | Project management |
-| `/reports` | Reporting |
-| `/profile` | User profile settings |
+| Route | Purpose | Access |
+|-------|---------|--------|
+| `/login`, `/register` | Sign in, registration | Signed out only (signed-in users go to `/dashboard`) |
+| `/forgot-password`, `/auth/confirm`, `/auth/update-password` | Password recovery and email links | Public |
+| `/access-denied` | Shown when a role can't open a page | Public |
+| `/dashboard` | Post-login landing | Any signed-in role |
+| `/tracker` | Time tracking | Any signed-in role |
+| `/projects` | Projects (read-only for workers, enforced by RLS) | Any signed-in role |
+| `/profile` | User profile settings | Any signed-in role |
+| `/crew` | Crew management | Manager, admin |
+| `/reports` | Reporting | Manager, admin |
+| `/users` | User administration | Admin |
+
+Any route not listed needs a session; there is no public-by-default route.
 
 ## AI change workflow
 
