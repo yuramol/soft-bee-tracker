@@ -125,10 +125,34 @@ export const MOCK_CREW: CrewMember[] = [
 ];
 
 export const MOCK_CREW_LEAVE_REQUESTS: CrewLeaveRequest[] = [
-  { id: 'cl1', memberId: 'u3', leaveType: 'vacation', startDate: '2026-11-23', endDate: '2026-11-27', status: 'pending' },
-  { id: 'cl2', memberId: 'u6', leaveType: 'sick_leave', startDate: '2026-11-12', endDate: '2026-11-12', status: 'pending' },
-  { id: 'cl3', memberId: 'u4', leaveType: 'vacation', startDate: '2026-12-21', endDate: '2026-12-31', status: 'approved' },
-  { id: 'cl4', memberId: 'u2', leaveType: 'vacation', startDate: '2026-12-01', endDate: '2026-12-03', status: 'pending' }
+  {
+    id: 'cl1',
+    memberId: 'u3',
+    leaveType: 'vacation',
+    startDate: '2026-11-23',
+    endDate: '2026-11-27',
+    note: 'Family trip to the Carpathians. I will finish the checkout flow before I leave.',
+    status: 'pending'
+  },
+  {
+    id: 'cl2',
+    memberId: 'u6',
+    leaveType: 'sick_leave',
+    startDate: '2026-11-12',
+    endDate: '2026-11-12',
+    note: 'Fever since last night, doctor visit in the morning.',
+    status: 'pending'
+  },
+  { id: 'cl3', memberId: 'u4', leaveType: 'vacation', startDate: '2026-12-21', endDate: '2026-12-31', note: null, status: 'approved' },
+  {
+    id: 'cl4',
+    memberId: 'u2',
+    leaveType: 'vacation',
+    startDate: '2026-12-01',
+    endDate: '2026-12-03',
+    note: 'Conference in Lviv. Iryna covers the Nova Mobile stand-ups.',
+    status: 'pending'
+  }
 ];
 
 export const MOCK_CREW_LEAVE_ALLOWANCES: LeaveAllowance[] = [
@@ -169,6 +193,7 @@ export interface CrewLeaveRequest {
   leaveType: LeaveType;
   startDate: string;
   endDate: string;
+  note: string | null;
   status: LeaveStatus;
 }
 

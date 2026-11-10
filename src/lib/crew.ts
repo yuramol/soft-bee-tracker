@@ -92,11 +92,7 @@ export function computeMemberLeaveBalances(
   allowances: LeaveAllowance[],
   year: number
 ): Record<LeaveType, LeaveBalance> {
-  return computeLeaveBalances(
-    allowances,
-    requests.map((request) => ({ ...request, note: null })),
-    year
-  );
+  return computeLeaveBalances(allowances, requests, year);
 }
 
 export const ALL_FILTER = 'all';

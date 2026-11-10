@@ -43,6 +43,7 @@ function leave(overrides: Partial<CrewLeaveRequest>): CrewLeaveRequest {
     leaveType: 'vacation',
     startDate: '2026-11-23',
     endDate: '2026-11-24',
+    note: null,
     status: 'pending',
     ...overrides
   };

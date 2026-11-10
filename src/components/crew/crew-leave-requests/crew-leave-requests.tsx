@@ -3,6 +3,7 @@
 import { CheckIcon, PalmtreeIcon, XIcon } from 'lucide-react';
 
 import { EmptyState } from '@components/common/empty-state/empty-state';
+import { LeaveNote } from '@components/crew/leave-note';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
 import { Avatar, AvatarFallback } from '@ui/avatar';
 import { Button } from '@ui/button';
@@ -45,35 +46,37 @@ function LeaveRequestRow({ request, member, canReview, onReview }: LeaveRequestR
   }
 
   return (
-    <li className='bg-card flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border p-4 sm:px-5 lg:flex-nowrap'>
-      <div className='flex min-w-0 flex-1 items-center gap-3'>
-        <Avatar className='size-10'>
-          <AvatarFallback>{getUserAvatarFallback(member)}</AvatarFallback>
-        </Avatar>
-        <div className='flex min-w-0 flex-col gap-0.5'>
-          <span className='truncate font-semibold'>{getFullName(member)}</span>
-          <span className='text-muted-foreground truncate text-sm'>
-            {content.leave.types[request.leaveType]} · {formatLeaveDateRange(request.startDate, request.endDate)} ·{' '}
-            {formatText(content.leave.workingDays, { count: days, unit: days === 1 ? content.leave.day : content.leave.days })}
-          </span>
+    <li className='bg-card flex flex-col gap-3 rounded-2xl border p-4 sm:px-5'>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='flex min-w-0 items-center gap-3'>
+          <Avatar className='size-10 shrink-0'>
+            <AvatarFallback>{getUserAvatarFallback(member)}</AvatarFallback>
+          </Avatar>
+          <div className='flex min-w-0 flex-col gap-0.5'>
+            <span className='font-semibold break-words'>{getFullName(member)}</span>
+            <span className='text-muted-foreground text-sm break-words'>
+              {content.leave.types[request.leaveType]} · {formatLeaveDateRange(request.startDate, request.endDate)} ·{' '}
+              {formatText(content.leave.workingDays, { count: days, unit: days === 1 ? content.leave.day : content.leave.days })}
+            </span>
+          </div>
         </div>
+        <LeaveStatusBadge status={request.status} />
       </div>
 
-      <div className='flex shrink-0 items-center gap-2 max-lg:w-full max-lg:justify-end'>
-        <LeaveStatusBadge status={request.status} />
-        {isReviewable ? (
-          <>
-            <Button variant='outline' onClick={handleRejectClick}>
-              <XIcon data-icon='inline-start' />
-              {content.leave.reject}
-            </Button>
-            <Button onClick={handleApproveClick}>
-              <CheckIcon data-icon='inline-start' />
-              {content.leave.approve}
-            </Button>
-          </>
-        ) : null}
-      </div>
+      {request.note ? <LeaveNote note={request.note} className='sm:ml-13' /> : null}
+
+      {isReviewable ? (
+        <div className='flex justify-end gap-2'>
+          <Button variant='outline' onClick={handleRejectClick}>
+            <XIcon data-icon='inline-start' />
+            {content.leave.reject}
+          </Button>
+          <Button onClick={handleApproveClick}>
+            <CheckIcon data-icon='inline-start' />
+            {content.leave.approve}
+          </Button>
+        </div>
+      ) : null}
     </li>
   );
 }

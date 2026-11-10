@@ -99,7 +99,7 @@ export function CreateProjectDialog() {
         {content.createDialog.triggerButton}
       </DialogTrigger>
 
-      <DialogContent className='max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg' showCloseButton={!isBusy}>
+      <DialogContent className='sm:max-w-lg' showCloseButton={!isBusy}>
         <DialogHeader>
           <DialogTitle>{content.createDialog.title}</DialogTitle>
           <DialogDescription>{content.createDialog.description}</DialogDescription>

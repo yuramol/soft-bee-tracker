@@ -204,6 +204,15 @@
   backdrop-filter: blur(12px) saturate(140%);
 }
 
+/* Keeps the element scrollable but hides the scrollbar track */
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -9,7 +9,7 @@ import { Button } from '@ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@ui/dropdown-menu';
 import { getFullName, getMemberProfileHref } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
-import { getUserAvatarFallback } from '@/lib/utils';
+import { cn, getUserAvatarFallback } from '@/lib/utils';
 import type { CrewMember } from '@/mocks/crew.mock';
 import content from '../content.json';
 
@@ -18,32 +18,37 @@ export function CrewMemberCard({ member, managerName, canManage, onAction }: Cre
   const profileHref = getMemberProfileHref(member.id);
 
   return (
-    <li className='bg-card hover:border-foreground/20 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border p-4 transition-colors sm:px-5 lg:flex-nowrap'>
+    <li
+      className={cn(
+        'bg-card hover:border-foreground/20 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-2xl border p-4 transition-colors sm:px-5',
+        'lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_auto_auto] lg:items-center lg:gap-x-4'
+      )}
+    >
       <Link
         href={profileHref}
-        className='focus-visible:ring-ring/50 group/member -m-1 flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 outline-none focus-visible:ring-3 lg:max-w-72'
+        className='focus-visible:ring-ring/50 group/member col-start-1 row-start-1 -m-1 flex min-w-0 items-center gap-3 rounded-xl p-1 outline-none focus-visible:ring-3'
       >
-        <Avatar className='size-10'>
+        <Avatar className='size-10 shrink-0'>
           <AvatarFallback>{getUserAvatarFallback(member)}</AvatarFallback>
         </Avatar>
         <span className='flex min-w-0 flex-col gap-0.5'>
-          <span className='truncate font-semibold underline-offset-4 group-hover/member:underline'>{name}</span>
-          <span className='text-muted-foreground truncate text-sm'>
+          <span className='font-semibold break-words underline-offset-4 group-hover/member:underline lg:truncate'>{name}</span>
+          <span className='text-muted-foreground text-sm break-words lg:truncate'>
             {content.roles[member.role]} · {member.position}
           </span>
         </span>
       </Link>
 
-      <div className='flex min-w-0 flex-col gap-0.5 text-sm max-lg:order-last max-lg:w-full lg:flex-1'>
-        <span className={member.projects.length > 0 ? 'truncate' : 'text-muted-foreground truncate'}>
+      <div className='col-span-2 row-start-2 flex min-w-0 flex-col gap-0.5 border-t pt-3 text-sm lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:border-t-0 lg:pt-0'>
+        <span className={cn('break-words lg:truncate', member.projects.length === 0 && 'text-muted-foreground')}>
           {member.projects.length > 0 ? member.projects.join(', ') : content.people.noProjects}
         </span>
-        <span className='text-muted-foreground truncate text-xs'>
+        <span className='text-muted-foreground text-xs break-words lg:truncate'>
           {content.people.managerLabel}: {managerName ?? content.people.noManager}
         </span>
       </div>
 
-      <div className='flex shrink-0 items-center gap-2'>
+      <div className='col-span-2 row-start-3 flex items-center justify-between gap-2 lg:col-span-1 lg:col-start-3 lg:row-start-1'>
         <MemberStatusBadge status={member.status} />
         <Button
           variant='outline'
@@ -53,8 +58,13 @@ export function CrewMemberCard({ member, managerName, canManage, onAction }: Cre
         >
           {content.people.open}
         </Button>
-        {canManage ? <MemberActionsMenu member={member} name={name} onAction={onAction} /> : null}
       </div>
+
+      {canManage ? (
+        <div className='col-start-2 row-start-1 -mt-1 -mr-2 lg:col-start-4 lg:m-0'>
+          <MemberActionsMenu member={member} name={name} onAction={onAction} />
+        </div>
+      ) : null}
     </li>
   );
 }

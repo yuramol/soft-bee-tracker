@@ -20,6 +20,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
+import { LeaveNote } from '@components/crew/leave-note';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
 import { MemberStatusBadge } from '@components/crew/member-status-badge';
 import { RoleBadge } from '@components/crew/role-badge';
@@ -51,6 +52,7 @@ export function MemberProfile({ member, managerName, initialLeaveRequests, canRe
         leaveType: values.leaveType,
         startDate: values.startDate,
         endDate: values.endDate,
+        note: values.note.trim() || null,
         status: 'approved'
       }
     ]);
@@ -233,10 +235,10 @@ function LeaveRequestItem({ request, canReview, onReview }: LeaveRequestItemProp
   }
 
   return (
-    <li className='bg-muted/50 flex flex-col gap-2 rounded-xl px-3 py-2'>
+    <li className='bg-muted/50 flex flex-col gap-2.5 rounded-xl px-3 py-2.5'>
       <div className='flex items-center justify-between gap-3'>
         <div className='flex min-w-0 flex-col'>
-          <span className='truncate text-sm font-medium'>{content.leave.types[request.leaveType]}</span>
+          <span className='text-sm font-medium break-words'>{content.leave.types[request.leaveType]}</span>
           <span className='text-muted-foreground text-xs'>
             {formatLeaveDateRange(request.startDate, request.endDate)} ·{' '}
             {formatText(content.leave.workingDays, { count: days, unit: days === 1 ? content.leave.day : content.leave.days })}
@@ -244,6 +246,7 @@ function LeaveRequestItem({ request, canReview, onReview }: LeaveRequestItemProp
         </div>
         <LeaveStatusBadge status={request.status} />
       </div>
+      {request.note ? <LeaveNote note={request.note} /> : null}
       {isReviewable ? (
         <div className='flex justify-end gap-2'>
           <Button variant='outline' size='sm' onClick={handleRejectClick}>

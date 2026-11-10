@@ -158,7 +158,7 @@ export function CrewWorkspace({ viewer }: CrewWorkspaceProps) {
         </TabsContent>
       </Tabs>
 
-      <aside className='flex flex-col gap-3 lg:sticky lg:top-20'>
+      <aside className='flex flex-col gap-3 max-lg:order-first lg:sticky lg:top-20'>
         <TeamSummary
           summary={summarizeTeamTime(filteredMembers)}
           peopleCount={filteredMembers.length}

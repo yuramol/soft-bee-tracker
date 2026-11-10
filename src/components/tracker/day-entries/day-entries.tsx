@@ -2,7 +2,7 @@
 
 import { addDays, format, isAfter, isSameDay, isWeekend, startOfDay } from 'date-fns';
 import { ChevronLeftIcon, ChevronRightIcon, ClockIcon, PalmtreeIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ConfirmDialog } from '@components/common/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@components/common/empty-state/empty-state';
@@ -206,8 +206,21 @@ function DayNavigator({ selectedDate, now, onSelectDate }: DayNavigatorProps) {
 }
 
 function WeekStrip({ selectedDate, now, minutesByDate, leaveByDate, isLoading, hasError, onSelectDate }: WeekStripProps) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const selectedKey = toDateKey(selectedDate);
+
+  // On narrow screens the strip scrolls sideways, so keep the selected day in view
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    const selectedButton = scroller?.querySelector<HTMLElement>('[data-selected="true"]');
+
+    if (scroller && selectedButton) {
+      scrollIntoHorizontalView(scroller, selectedButton);
+    }
+  }, [selectedKey]);
+
   return (
-    <div className='-mx-1 overflow-x-auto px-1'>
+    <div ref={scrollerRef} className='no-scrollbar -mx-1 overflow-x-auto px-1'>
       <div className='grid min-w-[30rem] grid-cols-7 gap-1.5'>
         {getWeekDays(selectedDate).map((day) => {
           const key = toDateKey(day);
@@ -272,6 +285,23 @@ function WeekDayButton({ day, minutes, leaveType, isSelected, isFuture, isLoadin
       )}
     </button>
   );
+}
+
+// Scrolls only the strip, never the page, so picking a day elsewhere doesn't jump the viewport
+function scrollIntoHorizontalView(scroller: HTMLElement, target: HTMLElement) {
+  const scrollerRect = scroller.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const overflowLeft = targetRect.left - scrollerRect.left;
+  const overflowRight = targetRect.right - scrollerRect.right;
+  const offset = overflowLeft < 0 ? overflowLeft : Math.max(overflowRight, 0);
+
+  if (offset === 0) {
+    return;
+  }
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  scroller.scrollBy({ left: offset, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
 }
 
 function LeaveBanner({ leaveType }: { leaveType: LeaveType }) {

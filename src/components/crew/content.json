@@ -89,6 +89,7 @@
     "workingDays": "{count} working {unit}",
     "day": "day",
     "days": "days",
+    "noteLabel": "Comment",
     "approve": "Approve",
     "reject": "Reject",
     "approved": "Leave approved for {name}",
