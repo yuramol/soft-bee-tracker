@@ -5,6 +5,8 @@ import { getLiveWholeMinutes, isLiveTrackerActive } from '@/lib/live-tracker';
 
 export const DATE_KEY_FORMAT = 'yyyy-MM-dd';
 
+export const DAILY_NORM_MINUTES = 5 * 60;
+
 export function toDateKey(date: Date): string {
   return format(date, DATE_KEY_FORMAT);
 }

@@ -37,5 +37,11 @@
     "durationPositive": "Duration must be greater than zero",
     "durationMax": "Duration can be at most 24 hours",
     "descriptionTooLong": "Description can be at most 500 characters"
+  },
+  "leave": {
+    "typeRequired": "Select a leave type",
+    "invalidDate": "Enter a valid date",
+    "endBeforeStart": "End date must be on or after the start date",
+    "noteTooLong": "Comment can be at most 500 characters"
   }
 }

@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className='flex min-h-svh flex-col'>
       <AppHeader profile={profile} />
-      <main className='mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-24'>
+      <main className='mx-auto flex w-full max-w-[90rem] flex-1 flex-col gap-8 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-24'>
         {children}
       </main>
       <LiveTrackerWidget />

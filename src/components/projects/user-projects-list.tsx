@@ -149,7 +149,7 @@ function ProjectCard({ project, isUpdating, onArchive, onRestore }: ProjectCardP
   return (
     <li
       data-busy={isUpdating}
-      className='bg-card flex flex-col gap-4 rounded-2xl border p-5 shadow-sm transition-opacity data-[busy=true]:opacity-60'
+      className='bg-card flex flex-col gap-4 rounded-2xl border p-5 transition-opacity data-[busy=true]:opacity-60'
     >
       <div className='flex items-center gap-3'>
         <Avatar className='size-11 rounded-xl'>

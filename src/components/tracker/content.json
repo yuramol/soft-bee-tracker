@@ -13,13 +13,12 @@
     "placeholder": "Select a project"
   },
   "createDialog": {
-    "triggerButton": "New tracker",
-    "compactTrigger": "Add entry",
-    "title": "Create tracker",
+    "triggerButton": "Add time",
+    "title": "Add time",
     "description": "Add a manual time entry for one of your projects.",
     "cancelButton": "Cancel",
-    "submitButton": "Create tracker",
-    "submittingButton": "Creating…"
+    "submitButton": "Save entry",
+    "submittingButton": "Saving…"
   },
   "editDialog": {
     "title": "Edit entry",
@@ -63,12 +62,20 @@
     }
   },
   "dayEntries": {
+    "label": "Day entries",
     "today": "Today",
+    "goToToday": "Today",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "entriesTitle": "{day} entries",
     "emptyTitle": "Nothing logged this day",
-    "emptyDescription": "Add an entry or start the timer.",
-    "total": "Total:",
-    "week": "Week",
+    "emptyDescription": "Add the time you worked so it counts towards your totals.",
+    "futureTitle": "This day hasn't happened yet",
+    "futureDescription": "You can log time once the day starts.",
+    "total": "Day total",
     "dayLabel": "{day}, {total}",
+    "leaveDayLabel": "{day}, {leave}",
+    "leaveBanner": "{leave} — approved absence. It isn't counted as worked time.",
     "deleteDialog": {
       "title": "Delete this entry?",
       "description": "{duration} on {project} will be removed. This can't be undone.",
@@ -98,26 +105,67 @@
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "error": "Couldn't load entries, so days aren't marked.",
     "legend": {
-      "tracked": "Norm reached",
-      "missing": "Below norm",
-      "weekend": "Weekend"
-    },
-    "normOf": "of {norm} norm",
-    "progressLabel": "Monthly norm progress",
-    "metrics": {
-      "onNorm": "On norm",
-      "belowNorm": "Below norm",
-      "dailyAverage": "Daily avg"
+      "untracked": "Less than {hours}h tracked",
+      "weekend": "Weekend",
+      "tracked": "{hours}h or more tracked"
     }
   },
-  "overview": {
+  "summary": {
     "label": "Time summary",
-    "today": "Today",
-    "thisWeek": "This week",
-    "thisMonth": "This month",
-    "dailyNorm": "of {norm} daily norm",
-    "of": "of {total}",
-    "progressLabel": "Progress towards the norm"
+    "periods": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "empty": "No time tracked in this period.",
+    "total": "Total tracked",
+    "leaveDays": "Approved absence",
+    "leaveDaysValue": "{count} {unit}",
+    "leaveHint": "Not included in tracked time"
+  },
+  "leave": {
+    "label": "Leave",
+    "requestButton": "Request leave",
+    "balances": {
+      "vacation": "Vacation balance",
+      "sick_leave": "Sick leave balance"
+    },
+    "types": {
+      "vacation": "Vacation",
+      "sick_leave": "Sick leave"
+    },
+    "shortTypes": {
+      "vacation": "Leave",
+      "sick_leave": "Sick"
+    },
+    "daysValue": "{count} {unit}",
+    "day": "day",
+    "days": "days",
+    "notConfigured": "Not configured",
+    "balanceHint": "{used} of {total} used",
+    "pendingHint": "{count} pending",
+    "requestsTitle": "Your requests",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "mockNotice": "Sample data. Leave requests aren't connected yet.",
+    "dialog": {
+      "title": "Request leave",
+      "description": "Your manager reviews the request before it's added to your calendar.",
+      "typeLabel": "Type",
+      "startLabel": "From",
+      "endLabel": "To",
+      "noteLabel": "Comment (optional)",
+      "notePlaceholder": "Anything your manager should know?",
+      "workingDays": "{count} working {unit}",
+      "cancelButton": "Cancel",
+      "submitButton": "Send request",
+      "notConnected": "Leave requests aren't connected yet, so nothing was sent."
+    }
   }
 }

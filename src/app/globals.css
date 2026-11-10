@@ -235,3 +235,17 @@
     @apply cursor-pointer;
   }
 }
+
+/* Success toasts use the same accent as the active header nav item. Unlayered + doubled
+   attribute so it wins over sonner's runtime-injected rich-color variables. */
+[data-sonner-toaster][data-sonner-toaster][data-sonner-theme='light'] {
+  --success-bg: color-mix(in oklab, var(--deep-teal) 8%, var(--background));
+  --success-border: color-mix(in oklab, var(--deep-teal) 30%, var(--background));
+  --success-text: var(--deep-teal);
+}
+
+[data-sonner-toaster][data-sonner-toaster][data-sonner-theme='dark'] {
+  --success-bg: color-mix(in oklab, var(--electric-green) 10%, var(--background));
+  --success-border: color-mix(in oklab, var(--electric-green) 30%, var(--background));
+  --success-text: var(--electric-green);
+}

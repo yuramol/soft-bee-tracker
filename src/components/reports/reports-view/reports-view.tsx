@@ -31,7 +31,7 @@ export function ReportsView() {
 
   return (
     <div className='flex flex-col gap-6'>
-      <div className='bg-card flex flex-col gap-3 rounded-2xl border p-3 shadow-sm sm:flex-row sm:items-center'>
+      <div className='bg-card flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center'>
         <Select<ReportPeriod> value={period} onValueChange={handlePeriodChange} items={PERIOD_OPTIONS}>
           <SelectTrigger className='w-full sm:w-44' aria-label={content.filters.periodLabel}>
             <SelectValue />
@@ -103,7 +103,7 @@ function ProjectBreakdown({ rows, totalMinutes }: { rows: ReportRow[]; totalMinu
   const byProject = groupMinutesByProject(rows);
 
   return (
-    <section aria-labelledby='project-breakdown' className='bg-card flex flex-col gap-5 rounded-2xl border p-5 shadow-sm'>
+    <section aria-labelledby='project-breakdown' className='bg-card flex flex-col gap-5 rounded-2xl border p-5'>
       <h2 id='project-breakdown' className='text-base font-semibold'>
         {content.byProject.title}
       </h2>

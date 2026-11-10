@@ -5,7 +5,7 @@ import { PencilIcon, PlayIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@ui/badge';
 import { Button } from '@ui/button';
 import type { Tracker, TrackerStatus } from '@/lib/api/trackers';
-import { formatHoursMinutes } from '@/lib/format-duration';
+import { formatClock } from '@/lib/format-duration';
 import { isLiveTrackerActive } from '@/lib/live-tracker';
 import { getTrackerMinutes } from '@/lib/tracker-days';
 import content from '../content.json';
@@ -36,15 +36,15 @@ export function TrackerEntryRow({
   }
 
   return (
-    <li className='flex items-center gap-3 px-2 py-3'>
-      <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
+    <li className='bg-background hover:border-foreground/20 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border p-4 transition-colors sm:flex-nowrap sm:px-5'>
+      <div className='flex min-w-0 flex-1 flex-col gap-1'>
         <span className='truncate font-semibold'>{projectName}</span>
         <span className='text-muted-foreground truncate text-sm'>{tracker.description?.trim() || content.entryRow.noDescription}</span>
       </div>
 
-      <span className='shrink-0 font-medium tabular-nums'>{formatHoursMinutes(getTrackerMinutes(tracker, now))}</span>
+      <span className='shrink-0 text-xl font-semibold tabular-nums'>{formatClock(getTrackerMinutes(tracker, now))}</span>
 
-      <div className='flex shrink-0 items-center gap-1'>
+      <div className='flex shrink-0 items-center gap-1 max-sm:w-full max-sm:justify-end'>
         {isActiveTimer ? (
           <EntryBadge
             label={tracker.liveStatus === 'start' ? content.entryRow.live : content.entryRow.paused}
@@ -57,19 +57,10 @@ export function TrackerEntryRow({
             <Button
               variant='ghost'
               size='icon'
-              aria-label={content.entryRow.editLabel}
-              title={content.entryRow.edit}
-              onClick={handleEditClick}
-            >
-              <PencilIcon />
-            </Button>
-            <Button
-              variant='outline'
-              size='icon-lg'
               aria-label={content.entryRow.continueLabel}
               title={hasActiveTimer ? content.entryRow.stopRunningFirst : content.entryRow.continue}
               disabled={hasActiveTimer || isPlayPending}
-              className='text-deep-teal dark:text-electric-green rounded-full'
+              className='text-deep-teal dark:text-electric-green'
               onClick={handlePlayClick}
             >
               <PlayIcon className='translate-x-px fill-current' />
@@ -83,6 +74,10 @@ export function TrackerEntryRow({
               onClick={handleDeleteClick}
             >
               <Trash2Icon />
+            </Button>
+            <Button variant='outline' aria-label={content.entryRow.editLabel} className='ml-1' onClick={handleEditClick}>
+              <PencilIcon data-icon='inline-start' />
+              {content.entryRow.edit}
             </Button>
           </>
         ) : null}

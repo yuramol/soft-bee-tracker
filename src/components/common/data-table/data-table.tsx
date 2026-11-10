@@ -34,14 +34,14 @@ export function DataTable<T>({
       {renderMobileRow ? (
         <ul className='flex flex-col gap-3 md:hidden'>
           {rows.map((row) => (
-            <li key={getRowId(row)} className='bg-card rounded-2xl border p-4 shadow-sm'>
+            <li key={getRowId(row)} className='bg-card rounded-2xl border p-4'>
               {renderMobileRow(row)}
             </li>
           ))}
         </ul>
       ) : null}
 
-      <div className={cn('bg-card overflow-hidden rounded-2xl border shadow-sm', renderMobileRow && 'hidden md:block')}>
+      <div className={cn('bg-card overflow-hidden rounded-2xl border', renderMobileRow && 'hidden md:block')}>
         <Table>
           <TableHeader className='bg-muted/50'>
             <TableRow className='hover:bg-transparent'>

@@ -73,7 +73,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
   return (
     <div className='flex flex-col gap-6'>
-      <section className='bg-brand-black text-brand-white relative overflow-hidden rounded-2xl p-6 shadow-md sm:p-8'>
+      <section className='bg-brand-black text-brand-white relative overflow-hidden rounded-2xl p-6 sm:p-8'>
         <div aria-hidden className='bg-glow absolute inset-0' />
         <div className='relative flex flex-col gap-5 sm:flex-row sm:items-center'>
           <Avatar className='ring-electric-green/60 size-20 ring-4'>
@@ -97,7 +97,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         </div>
       </section>
 
-      <Card className='shadow-sm'>
+      <Card>
         <CardHeader className='border-b'>
           <CardTitle>{content.detailsTitle}</CardTitle>
           <CardDescription>{content.detailsDescription}</CardDescription>

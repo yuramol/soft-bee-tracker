@@ -55,7 +55,7 @@ export default function TermsPage() {
 
         <ol className='flex flex-col gap-4'>
           {content.sections.map((section, index) => (
-            <li key={section.id} id={section.id} className='bg-card scroll-mt-20 rounded-2xl border p-6 shadow-sm'>
+            <li key={section.id} id={section.id} className='bg-card scroll-mt-20 rounded-2xl border p-6'>
               <h2 className='flex items-baseline gap-3 text-lg font-semibold tracking-tight'>
                 <span className='text-deep-teal dark:text-electric-green text-sm tabular-nums'>{String(index + 1).padStart(2, '0')}</span>
                 {section.title}

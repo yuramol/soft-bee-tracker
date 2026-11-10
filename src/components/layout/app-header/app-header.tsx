@@ -12,7 +12,7 @@ interface AppHeaderProps {
 export function AppHeader({ profile }: AppHeaderProps) {
   return (
     <header className='glass sticky top-0 z-30 w-full border-b'>
-      <div className='mx-auto flex h-14 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8'>
+      <div className='mx-auto flex h-14 w-full max-w-[90rem] items-center gap-4 px-4 sm:px-6 lg:px-8'>
         <HeaderBrand />
 
         <HeaderNav className='hidden flex-1 justify-center md:flex' />
