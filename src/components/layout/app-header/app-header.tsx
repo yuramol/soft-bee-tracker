@@ -15,12 +15,12 @@ export function AppHeader({ profile }: AppHeaderProps) {
       <div className='mx-auto flex h-14 w-full max-w-[90rem] items-center gap-4 px-4 sm:px-6 lg:px-8'>
         <HeaderBrand />
 
-        <HeaderNav className='hidden flex-1 justify-center md:flex' />
+        <HeaderNav role={profile.role} className='hidden flex-1 justify-center md:flex' />
 
         <div className='ml-auto flex items-center gap-1 md:ml-0'>
           <ThemeToggle />
           <AvatarDropdown profile={profile} />
-          <MobileNav />
+          <MobileNav role={profile.role} />
         </div>
       </div>
     </header>

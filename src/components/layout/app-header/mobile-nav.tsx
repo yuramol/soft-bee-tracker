@@ -7,10 +7,11 @@ import { Button } from '@ui/button';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@ui/sheet';
 import { HeaderBrand } from '@components/layout/app-header/header-brand';
 import { HeaderNav } from '@components/layout/app-header/header-nav';
+import type { UserRole } from '@/lib/api/auth';
 import { cn } from '@/lib/utils';
 import content from '../content.json';
 
-export function MobileNav() {
+export function MobileNav({ role }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   function handleNavigate() {
@@ -41,8 +42,12 @@ export function MobileNav() {
             <XIcon />
           </SheetClose>
         </SheetHeader>
-        <HeaderNav orientation='vertical' className='px-2' onNavigate={handleNavigate} />
+        <HeaderNav role={role} orientation='vertical' className='px-2' onNavigate={handleNavigate} />
       </SheetContent>
     </Sheet>
   );
+}
+
+interface MobileNavProps {
+  role: UserRole;
 }

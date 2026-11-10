@@ -3,23 +3,25 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { isNavItemActive, NAV_ITEMS } from '@components/layout/navigation';
+import { getNavItems, isNavItemActive } from '@components/layout/navigation';
+import type { UserRole } from '@/lib/api/auth';
 import { cn } from '@/lib/utils';
 
 interface HeaderNavProps {
+  role: UserRole;
   className?: string;
   orientation?: NavOrientation;
   onNavigate?: () => void;
 }
 
-export function HeaderNav({ className, orientation = 'horizontal', onNavigate }: HeaderNavProps) {
+export function HeaderNav({ role, className, orientation = 'horizontal', onNavigate }: HeaderNavProps) {
   const pathname = usePathname();
   const isVertical = orientation === 'vertical';
 
   return (
     <nav className={className}>
       <ul className={cn('flex gap-1', isVertical && 'flex-col')}>
-        {NAV_ITEMS.map((item) => {
+        {getNavItems(role).map((item) => {
           const isActive = isNavItemActive(pathname, item.href);
 
           return (

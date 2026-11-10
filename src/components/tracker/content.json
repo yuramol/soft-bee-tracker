@@ -166,6 +166,19 @@
       "cancelButton": "Cancel",
       "submitButton": "Send request",
       "notConnected": "Leave requests aren't connected yet, so nothing was sent."
+    },
+    "grantDialog": {
+      "triggerButton": "Approve vacation",
+      "title": "Approve vacation",
+      "description": "Add approved leave for this person. It counts against their balance right away.",
+      "typeLabel": "Type",
+      "startLabel": "From",
+      "endLabel": "To",
+      "noteLabel": "Comment (optional)",
+      "notePlaceholder": "Anything worth noting?",
+      "workingDays": "{count} working {unit}",
+      "cancelButton": "Cancel",
+      "submitButton": "Approve"
     }
   }
 }

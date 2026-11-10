@@ -1,11 +1,12 @@
 'use client';
 
-import { ChartColumnIcon, CheckCheckIcon, ClockIcon, FileDownIcon, FolderKanbanIcon, UsersIcon } from 'lucide-react';
+import { ChartColumnIcon, CheckCheckIcon, ClockIcon, FileDownIcon, FolderKanbanIcon, UsersIcon, XIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable, type DataTableColumn } from '@components/common/data-table/data-table';
 import { EmptyState } from '@components/common/empty-state/empty-state';
 import { StatCard } from '@components/common/stat-card/stat-card';
+import { Badge } from '@ui/badge';
 import { Button } from '@ui/button';
 import { Progress } from '@ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
@@ -13,13 +14,21 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@ui/tooltip';
 import { formatDuration, toPercent } from '@/lib/format-duration';
 import { MOCK_REPORT_PROJECTS, MOCK_REPORT_ROWS, type ReportRow } from '@/mocks/reports.mock';
 import { formatText } from '@/lib/format-text';
+import type { ReportPeriod } from '@/lib/team-report-params';
 import content from './content.json';
 
-export function ReportsView() {
-  const [period, setPeriod] = useState<ReportPeriod>('this-month');
+export function ReportsView({ initialPeriod, memberIds }: ReportsViewProps) {
+  const [period, setPeriod] = useState<ReportPeriod>(initialPeriod ?? 'this-month');
   const [project, setProject] = useState<string>(ALL_PROJECTS);
-  const rows = project === ALL_PROJECTS ? MOCK_REPORT_ROWS : MOCK_REPORT_ROWS.filter((row) => row.projectName === project);
+  const [crewMemberIds, setCrewMemberIds] = useState<string[] | null>(memberIds);
+  const rows = MOCK_REPORT_ROWS.filter(
+    (row) => (project === ALL_PROJECTS || row.projectName === project) && (!crewMemberIds || crewMemberIds.includes(row.memberId))
+  );
   const totals = summarize(rows);
+
+  function handleClearCrewFilter() {
+    setCrewMemberIds(null);
+  }
 
   function handlePeriodChange(value: ReportPeriod | null) {
     setPeriod(value ?? 'this-month');
@@ -56,6 +65,14 @@ export function ReportsView() {
             ))}
           </SelectContent>
         </Select>
+        {crewMemberIds ? (
+          <Badge variant='secondary' className='h-9 gap-1 rounded-full pr-1 pl-3 text-sm'>
+            {formatText(content.filters.crewScope, { count: crewMemberIds.length })}
+            <Button variant='ghost' size='icon-xs' aria-label={content.filters.clearCrewScope} onClick={handleClearCrewFilter}>
+              <XIcon />
+            </Button>
+          </Badge>
+        ) : null}
         <div className='flex gap-2 sm:ml-auto'>
           <ExportButton label={content.export.csv} />
           <ExportButton label={content.export.pdf} />
@@ -208,7 +225,10 @@ const COLUMNS: DataTableColumn<ReportRow>[] = [
   }
 ];
 
-type ReportPeriod = 'this-week' | 'this-month' | 'last-month';
+interface ReportsViewProps {
+  initialPeriod: ReportPeriod | null;
+  memberIds: string[] | null;
+}
 
 interface ReportTotals {
   minutes: number;

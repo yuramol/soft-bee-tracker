@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { ConfirmDialog } from '@components/common/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@components/common/empty-state/empty-state';
 import { ErrorState } from '@components/common/error-state/error-state';
-import { CardGridSkeleton } from '@components/common/loading-state/skeletons';
+import { ProjectGridSkeleton } from '@components/projects/projects-skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@ui/avatar';
 import { Badge } from '@ui/badge';
 import { Button } from '@ui/button';
@@ -113,7 +113,7 @@ function ProjectsGridContent({
   onRestore
 }: ProjectsGridContentProps) {
   if (isLoading) {
-    return <CardGridSkeleton />;
+    return <ProjectGridSkeleton />;
   }
 
   if (error) {

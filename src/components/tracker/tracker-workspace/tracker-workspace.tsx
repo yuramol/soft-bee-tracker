@@ -7,7 +7,7 @@ import { DayEntries } from '@components/tracker/day-entries/day-entries';
 import { LeavePanel } from '@components/tracker/leave-panel/leave-panel';
 import { TrackerCalendar } from '@components/tracker/tracker-calendar/tracker-calendar';
 import { TrackerSummary } from '@components/tracker/tracker-summary/tracker-summary';
-import { Skeleton } from '@ui/skeleton';
+import { TRACKER_GRID_CLASS, TrackerWorkspaceSkeleton } from '@components/tracker/tracker-workspace/tracker-workspace-skeleton';
 import { useLiveMinuteNow } from '@/hooks/use-live-minute-now';
 import { useTrackers } from '@/lib/api/trackers';
 import { getApprovedLeaveByDate } from '@/lib/leave-days';
@@ -20,18 +20,7 @@ export function TrackerWorkspace({ header }: TrackerWorkspaceProps) {
   const isClient = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
 
   if (!isClient) {
-    return (
-      <div className={WORKSPACE_GRID_CLASS}>
-        <div className='flex flex-col gap-6'>
-          {header}
-          <Skeleton className='h-[32rem] rounded-2xl' />
-        </div>
-        <div className='flex flex-col gap-6'>
-          <Skeleton className='h-56 rounded-2xl' />
-          <Skeleton className='h-64 rounded-2xl' />
-        </div>
-      </div>
-    );
+    return <TrackerWorkspaceSkeleton header={header} />;
   }
 
   return <TrackerWorkspaceContent header={header} />;
@@ -59,7 +48,7 @@ function TrackerWorkspaceContent({ header }: TrackerWorkspaceProps) {
   }
 
   return (
-    <div className={WORKSPACE_GRID_CLASS}>
+    <div className={TRACKER_GRID_CLASS}>
       <div className='flex min-w-0 flex-col gap-6 lg:self-stretch'>
         {header}
         {/* Sticky on desktop; scrolls inside when the day has more entries than fit on screen */}
@@ -116,8 +105,6 @@ function getClientSnapshot(): boolean {
 function getServerSnapshot(): boolean {
   return false;
 }
-
-const WORKSPACE_GRID_CLASS = 'grid items-start gap-6 lg:gap-x-12 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]';
 
 interface TrackerWorkspaceProps {
   header: ReactNode;

@@ -3,6 +3,8 @@
     "periodLabel": "Period",
     "projectLabel": "Project",
     "allProjects": "All projects",
+    "crewScope": "{count} people from Crew",
+    "clearCrewScope": "Show everyone",
     "periods": {
       "thisWeek": "This week",
       "thisMonth": "This month",

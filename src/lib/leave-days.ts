@@ -1,4 +1,4 @@
-import { eachDayOfInterval, isWeekend, parseISO } from 'date-fns';
+import { eachDayOfInterval, format, isWeekend, parseISO } from 'date-fns';
 
 import type { LeaveAllowance, LeaveRequest, LeaveType } from '@/mocks/leave.mock';
 import { toDateKey } from '@/lib/tracker-days';
@@ -22,6 +22,12 @@ export function countLeaveWorkingDays(startDate: string, endDate: string, year?:
   const days = getLeaveWorkingDays(startDate, endDate);
 
   return year === undefined ? days.length : days.filter((day) => day.startsWith(`${year}-`)).length;
+}
+
+export function formatLeaveDateRange(startDate: string, endDate: string): string {
+  const start = parseISO(startDate);
+
+  return startDate === endDate ? format(start, 'd MMM') : `${format(start, 'd MMM')} – ${format(parseISO(endDate), 'd MMM')}`;
 }
 
 export function getApprovedLeaveByDate(requests: LeaveRequest[]): Map<string, LeaveType> {

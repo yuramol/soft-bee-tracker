@@ -9,45 +9,108 @@
     "manager": "Can approve time and see reports.",
     "admin": "Full access, including crew management."
   },
-  "table": {
-    "searchPlaceholder": "Search by name or email",
-    "searchLabel": "Search crew",
-    "roleFilterLabel": "Filter by role",
+  "status": {
+    "pending": "Pending",
+    "active": "Active",
+    "blocked": "Blocked"
+  },
+  "tabs": {
+    "label": "Crew sections",
+    "people": "People",
+    "leave": "Leave requests",
+    "pendingCount": "{count} pending"
+  },
+  "filters": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Name or email",
+    "roleLabel": "Role",
     "allRoles": "All roles",
-    "peopleCount": "{count} people",
+    "positionLabel": "Position",
+    "allPositions": "All positions",
+    "statusLabel": "Status",
+    "allStatuses": "All statuses"
+  },
+  "people": {
+    "count": "{count} people",
     "emptyTitle": "No one matches",
-    "emptyDescription": "Try another name or clear the role filter.",
-    "columns": {
-      "member": "Member",
-      "position": "Position",
-      "role": "Role",
-      "status": "Status",
-      "hours": "This month",
-      "actions": "Actions"
+    "emptyDescription": "Try another name or clear the filters.",
+    "noProjects": "No active projects",
+    "managerLabel": "Manager",
+    "noManager": "No manager",
+    "open": "Open",
+    "openLabel": "Open profile of {name}"
+  },
+  "profile": {
+    "detailsLabel": "Details",
+    "position": "Position",
+    "manager": "Manager",
+    "projects": "Projects",
+    "email": "Email",
+    "phone": "Phone",
+    "linkedin": "LinkedIn",
+    "upwork": "Upwork",
+    "employmentDate": "Employed since",
+    "notAdded": "Not added",
+    "openExternal": "{label} (opens in a new tab)",
+    "pendingHint": "Invite sent. They haven't signed in yet.",
+    "monthTime": "Tracked this month",
+    "leaveLabel": "Leave",
+    "balances": {
+      "vacation": "Vacation",
+      "sick_leave": "Sick leave"
     },
-    "monthHours": "{hours} this month",
+    "balanceValue": "{used} / {total}",
+    "balanceHint": "{remaining} days left",
+    "notConfigured": "Not configured",
+    "requestsTitle": "Requests",
+    "noRequests": "No leave requests yet.",
+    "granted": "Vacation approved for {name}"
+  },
+  "summary": {
+    "title": "Team summary",
+    "trackedTime": "Tracked time",
+    "scope": "{count} people in view",
+    "empty": "No time tracked this week.",
+    "openReport": "Open team report"
+  },
+  "leave": {
+    "emptyTitle": "No leave requests",
+    "emptyDescription": "Requests from your crew show up here.",
+    "types": {
+      "vacation": "Vacation",
+      "sick_leave": "Sick leave"
+    },
     "status": {
-      "active": "Active",
-      "blocked": "Blocked"
-    }
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "workingDays": "{count} working {unit}",
+    "day": "day",
+    "days": "days",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Leave approved for {name}",
+    "rejected": "Leave rejected for {name}"
   },
   "actions": {
-    "menuLabel": "Member actions",
+    "menuLabel": "Actions for {name}",
     "changeRole": "Change role",
-    "blockAccess": "Block access",
-    "restoreAccess": "Restore access",
+    "block": "Block",
+    "reactivate": "Reactivate",
     "roleChanged": "{name} is now {role}",
-    "accessBlocked": "Access blocked for {name}",
-    "accessRestored": "Access restored for {name}",
+    "blocked": "{name} is blocked",
+    "reactivated": "{name} is active again",
     "blockDialog": {
-      "title": "Block access?",
+      "title": "Block {name}?",
       "description": "{name} will be signed out and won't be able to sign in. Their logged time stays in reports.",
-      "confirmButton": "Block access"
+      "confirmButton": "Block"
     },
-    "restoreDialog": {
-      "title": "Restore access?",
+    "reactivateDialog": {
+      "title": "Reactivate {name}?",
       "description": "{name} will be able to sign in and log time again.",
-      "confirmButton": "Restore access"
+      "confirmButton": "Reactivate"
     }
   },
   "changeRoleDialog": {
@@ -58,7 +121,7 @@
     "saveButton": "Save role"
   },
   "inviteDialog": {
-    "triggerButton": "Invite member",
+    "triggerButton": "Invite person",
     "title": "Invite a teammate",
     "description": "They will get a sign-in link by email and complete their profile on first visit.",
     "emailLabel": "Email",
@@ -68,5 +131,6 @@
     "cancelButton": "Cancel",
     "sendButton": "Send invite",
     "sendUnavailable": "Available with SBT-12"
-  }
+  },
+  "mockNotice": "Sample data. Available actions depend on your role and team."
 }

@@ -7,9 +7,9 @@ import { useState } from 'react';
 import { ConfirmDialog } from '@components/common/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@components/common/empty-state/empty-state';
 import { ErrorState } from '@components/common/error-state/error-state';
-import { ListSkeleton } from '@components/common/loading-state/skeletons';
 import { CreateTrackerDialog } from '@components/tracker/create-tracker-dialog/create-tracker-dialog';
 import { TrackerEntryRow } from '@components/tracker/day-entries/tracker-entry-row';
+import { TrackerEntriesSkeleton } from '@components/tracker/tracker-workspace/tracker-workspace-skeleton';
 import { EditTrackerDialog } from '@components/tracker/edit-tracker-dialog/edit-tracker-dialog';
 import { Button } from '@ui/button';
 import { Skeleton } from '@ui/skeleton';
@@ -99,7 +99,7 @@ export function DayEntries({
 
         {dayLeave ? <LeaveBanner leaveType={dayLeave} /> : null}
 
-        {isLoading ? <ListSkeleton rows={2} /> : null}
+        {isLoading ? <TrackerEntriesSkeleton /> : null}
         {!isLoading && error ? <ErrorState error={error} onRetry={onRetry} /> : null}
         {isReady && !hasEntries ? (
           isFutureDay ? (
