@@ -53,6 +53,5 @@ export const ALL_ROLES: readonly UserRole[] = ['worker', 'manager', 'admin'];
 // so adding a route forces a decision here.
 // keep in sync with RLS: hiding a page is UX, the database still enforces data access.
 export const ROLE_RESTRICTED_ROUTES: Record<string, readonly UserRole[]> = {
-  [ROUTES.CREW]: ['manager', 'admin'],
-  [ROUTES.REPORTS]: ['manager', 'admin']
+  [ROUTES.CREW]: ['manager', 'admin']
 };

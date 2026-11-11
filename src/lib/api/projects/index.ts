@@ -1,3 +1,20 @@
 export { createProject, updateProjectStatus, useCreateProject, useUpdateProjectStatus } from './mutations';
-export { getProjects, getUserProjects, projectKeys, useProjects, useUserProjects } from './queries';
-export type { CreateProjectInput, Project, ProjectStatus, ProjectType, UpdateProjectStatusInput } from './types';
+export {
+  getMyProjects,
+  getProjects,
+  getUserProjects,
+  projectKeys,
+  toMemberProjects,
+  useMyProjects,
+  useProjects,
+  useUserProjects
+} from './queries';
+export type {
+  CreateProjectInput,
+  MemberProject,
+  Project,
+  ProjectMembership,
+  ProjectStatus,
+  ProjectType,
+  UpdateProjectStatusInput
+} from './types';

@@ -1,5 +1,3 @@
 {
-  "eyebrow": "Time tracking",
-  "greeting": "Hi, {name}",
-  "description": "Log your hours, keep an eye on the daily norm and spot the gaps before month end."
+  "title": "Tracker"
 }

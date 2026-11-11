@@ -17,25 +17,44 @@
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "invalidPhone": "Enter a valid phone number",
-    "invalidUrl": "Enter a valid URL"
+    "invalidUrl": "Enter a valid URL",
+    "sameEmail": "This is already your email",
+    "invalidTimeZone": "Choose a time zone from the list"
+  },
+  "employment": {
+    "positionRequired": "Position is required",
+    "positionTooLong": "Position must be 100 characters or fewer",
+    "invalidDate": "Enter a valid date",
+    "dateInFuture": "Employment date cannot be in the future"
   },
   "project": {
     "nameRequired": "Project name is required",
     "nameTooLong": "Project name must be 255 characters or fewer",
-    "clientRequired": "Client is required",
-    "clientTooLong": "Client must be 255 characters or fewer",
-    "typeRequired": "Select a project type",
-    "invalidUrl": "Enter a valid URL",
-    "invalidDate": "Enter a valid date",
-    "endBeforeStart": "End date must be on or after the start date"
+    "nameTaken": "A project with this name already exists",
+    "managerRequired": "Choose the responsible manager",
+    "descriptionTooLong": "Description must be 5000 characters or fewer",
+    "descriptionSecret": "Remove passwords, tokens or secret links. Keep secrets in the team vault.",
+    "linkLabelRequired": "Add a label for this link",
+    "linkLabelTooLong": "Label must be 80 characters or fewer",
+    "linkUrlRequired": "URL is required",
+    "linkUrlInvalid": "Enter a full http:// or https:// URL",
+    "linkUrlSecret": "This URL carries credentials or a token. Share a link without them.",
+    "tooManyLinks": "A project can have up to 20 links"
   },
   "tracker": {
     "projectRequired": "Project is required",
     "invalidDate": "Enter a valid date",
+    "dateClosed": "This month is closed. Time can be changed until 23:59 (UTC+2) on the 5th of the next month.",
     "durationFormat": "Enter duration as HH:mm",
     "durationWhole": "Duration must be a whole number",
     "durationPositive": "Duration must be greater than zero",
     "durationMax": "Duration can be at most 24 hours",
     "descriptionTooLong": "Description can be at most 500 characters"
+  },
+  "leave": {
+    "typeRequired": "Select a leave type",
+    "invalidDate": "Enter a valid date",
+    "endBeforeStart": "End date must be on or after the start date",
+    "noteTooLong": "Comment can be at most 500 characters"
   }
 }
