@@ -30,12 +30,16 @@
   "project": {
     "nameRequired": "Project name is required",
     "nameTooLong": "Project name must be 255 characters or fewer",
-    "clientRequired": "Client is required",
-    "clientTooLong": "Client must be 255 characters or fewer",
-    "typeRequired": "Select a project type",
-    "invalidUrl": "Enter a valid URL",
-    "invalidDate": "Enter a valid date",
-    "endBeforeStart": "End date must be on or after the start date"
+    "nameTaken": "A project with this name already exists",
+    "managerRequired": "Choose the responsible manager",
+    "descriptionTooLong": "Description must be 5000 characters or fewer",
+    "descriptionSecret": "Remove passwords, tokens or secret links. Keep secrets in the team vault.",
+    "linkLabelRequired": "Add a label for this link",
+    "linkLabelTooLong": "Label must be 80 characters or fewer",
+    "linkUrlRequired": "URL is required",
+    "linkUrlInvalid": "Enter a full http:// or https:// URL",
+    "linkUrlSecret": "This URL carries credentials or a token. Share a link without them.",
+    "tooManyLinks": "A project can have up to 20 links"
   },
   "tracker": {
     "projectRequired": "Project is required",

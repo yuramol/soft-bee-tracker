@@ -1,13 +1,21 @@
-import { PageHeader } from '@components/common/page-header/page-header';
-import { CreateProjectDialog } from '@components/projects/create-project-dialog/create-project-dialog';
-import { UserProjectsList } from '@components/projects/user-projects-list';
-import content from './content.json';
+import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function ProjectsPage() {
+import { ProjectsPageSkeleton } from '@components/projects/projects-skeleton';
+import { ProjectsWorkspace } from '@components/projects/projects-workspace/projects-workspace';
+import { ROUTES } from '@/constants';
+import { getSessionProfile } from '@/lib/api/auth/server';
+
+export default async function ProjectsPage() {
+  const profile = await getSessionProfile();
+
+  if (!profile) {
+    redirect(ROUTES.LOGIN);
+  }
+
   return (
-    <>
-      <PageHeader eyebrow={content.eyebrow} title={content.title} description={content.description} actions={<CreateProjectDialog />} />
-      <UserProjectsList />
-    </>
+    <Suspense fallback={<ProjectsPageSkeleton />}>
+      <ProjectsWorkspace role={profile.role} />
+    </Suspense>
   );
 }
