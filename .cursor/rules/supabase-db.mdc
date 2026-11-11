@@ -22,6 +22,10 @@ alwaysApply: false
   - `as restrictive for all`
   - `using ((select private.is_secure()))`
   - `with check ((select private.is_secure()))`
+- Default scope is all roles (no `to` clause). Exception: on tables written by the signup trigger or read by
+  the auth hook (`public.users`, `public.user_access`), scope it `to anon, authenticated`.
+  `supabase_auth_admin` runs those without a JWT, so `is_secure()` would block it. Roles outside the list are
+  not gated by this policy, so give `supabase_auth_admin` only the narrow grants and policies it needs.
 - For normal access control, split policies by operation (`select`, `insert`, `update`, `delete`).
 - Use `auth.uid()` (often `(select auth.uid())`), never `current_user`.
 

@@ -40,8 +40,16 @@ export async function signInWithPassword(params: SignInRequest): Promise<void> {
     } satisfies ApiError;
   }
 
-  // blocked users authenticate at the supabase auth layer but must not enter the app
-  const profile = await fetchSessionProfile();
+  // blocked users, and users whose profile or access row can't load, authenticate at the
+  // supabase auth layer but must not keep a session: the app layout can't render without a profile
+  let profile: UserProfile | null;
+
+  try {
+    profile = await fetchSessionProfile();
+  } catch (profileError) {
+    await supabase.auth.signOut();
+    throw profileError;
+  }
 
   if (profile?.isBlocked) {
     await supabase.auth.signOut();

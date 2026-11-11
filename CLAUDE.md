@@ -146,6 +146,8 @@ src/lib/api/users/
   - `as restrictive for all`
   - `using ((select private.is_secure()))`
   - `with check ((select private.is_secure()))`
+- Exception: on `public.users` and `public.user_access` the policy is scoped `to anon, authenticated`, because
+  `supabase_auth_admin` (signup trigger, auth hook) has no JWT. See `.cursor/rules/supabase-db.mdc`.
 - For normal access control, do not use `for all`; create separate policies for `select`, `insert`, `update`, `delete`.
 - Split policies by role (`anon` and `authenticated`) when behavior differs.
 - Use `auth.uid()` (often as `(select auth.uid())`), never `current_user`.

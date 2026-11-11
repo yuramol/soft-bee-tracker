@@ -31,7 +31,7 @@ create policy "require secure session"
   on public.user_access
   as restrictive
   for all
-  to anon, authenticated, service_role
+  to anon, authenticated
   using ((select private.is_secure()))
   with check ((select private.is_secure()));
 
@@ -73,7 +73,7 @@ grant all on table public.user_access to service_role;
 -- safety: restrictive policy is scoped to api roles because is_secure() needs a jwt,
 -- and supabase_auth_admin runs the signup trigger and auth hook without one
 alter policy "require secure session" on public.users
-  to anon, authenticated, service_role;
+  to anon, authenticated;
 
 grant insert on table public.users to supabase_auth_admin;
 
