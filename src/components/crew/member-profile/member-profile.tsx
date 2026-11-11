@@ -21,6 +21,7 @@ import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import { LeaveNote } from '@components/crew/leave-note';
+import { EditableEmploymentDateRow, EditablePositionRow } from '@components/crew/member-profile/editable-detail-rows';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
 import { MemberStatusBadge } from '@components/crew/member-status-badge';
 import { RoleBadge } from '@components/crew/role-badge';
@@ -37,7 +38,14 @@ import { MOCK_CREW_LEAVE_ALLOWANCES, type CrewLeaveRequest, type CrewMember } fr
 import type { LeaveType } from '@/mocks/leave.mock';
 import content from '../content.json';
 
-export function MemberProfile({ member, managerName, initialLeaveRequests, canReviewLeave }: MemberProfileProps) {
+export function MemberProfile({
+  member: initialMember,
+  managerName,
+  initialLeaveRequests,
+  canReviewLeave,
+  canEditEmployment
+}: MemberProfileProps) {
+  const [member, setMember] = useState<CrewMember>(initialMember);
   const [leaveRequests, setLeaveRequests] = useState<CrewLeaveRequest[]>(initialLeaveRequests);
   const [year] = useState(() => new Date().getFullYear());
   const name = getFullName(member);
@@ -57,6 +65,16 @@ export function MemberProfile({ member, managerName, initialLeaveRequests, canRe
       }
     ]);
     toast.success(formatText(content.profile.granted, { name }));
+  }
+
+  function handlePositionSave(position: string) {
+    setMember((current) => ({ ...current, position }));
+    toast.success(formatText(content.employment.positionSaved, { name }));
+  }
+
+  function handleEmploymentDateSave(employmentDate: string | null) {
+    setMember((current) => ({ ...current, employmentDate }));
+    toast.success(formatText(content.employment.dateSaved, { name }));
   }
 
   function handleReview(request: CrewLeaveRequest, decision: 'approved' | 'rejected') {
@@ -86,9 +104,13 @@ export function MemberProfile({ member, managerName, initialLeaveRequests, canRe
         ) : null}
 
         <dl className='grid gap-x-8 gap-y-5 border-t pt-6 sm:grid-cols-2'>
-          <DetailRow icon={BriefcaseIcon} label={content.profile.position}>
-            {member.position}
-          </DetailRow>
+          {canEditEmployment ? (
+            <EditablePositionRow icon={BriefcaseIcon} value={member.position} onSave={handlePositionSave} />
+          ) : (
+            <DetailRow icon={BriefcaseIcon} label={content.profile.position}>
+              {member.position}
+            </DetailRow>
+          )}
           <DetailRow icon={UserRoundIcon} label={content.profile.manager}>
             {managerName ?? <NotAdded />}
           </DetailRow>
@@ -110,9 +132,13 @@ export function MemberProfile({ member, managerName, initialLeaveRequests, canRe
           <DetailRow icon={GlobeIcon} label={content.profile.upwork}>
             <ExternalLink url={member.upwork} label={content.profile.upwork} />
           </DetailRow>
-          <DetailRow icon={CalendarDaysIcon} label={content.profile.employmentDate}>
-            {member.employmentDate ? format(parseISO(member.employmentDate), 'd MMMM yyyy') : <NotAdded />}
-          </DetailRow>
+          {canEditEmployment ? (
+            <EditableEmploymentDateRow icon={CalendarDaysIcon} value={member.employmentDate} onSave={handleEmploymentDateSave} />
+          ) : (
+            <DetailRow icon={CalendarDaysIcon} label={content.profile.employmentDate}>
+              {member.employmentDate ? format(parseISO(member.employmentDate), 'd MMMM yyyy') : <NotAdded />}
+            </DetailRow>
+          )}
         </dl>
       </section>
 
@@ -279,6 +305,7 @@ interface MemberProfileProps {
   managerName: string | null;
   initialLeaveRequests: CrewLeaveRequest[];
   canReviewLeave: boolean;
+  canEditEmployment: boolean;
 }
 
 interface DetailRowProps {

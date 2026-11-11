@@ -17,7 +17,15 @@
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "invalidPhone": "Enter a valid phone number",
-    "invalidUrl": "Enter a valid URL"
+    "invalidUrl": "Enter a valid URL",
+    "sameEmail": "This is already your email",
+    "invalidTimeZone": "Choose a time zone from the list"
+  },
+  "employment": {
+    "positionRequired": "Position is required",
+    "positionTooLong": "Position must be 100 characters or fewer",
+    "invalidDate": "Enter a valid date",
+    "dateInFuture": "Employment date cannot be in the future"
   },
   "project": {
     "nameRequired": "Project name is required",

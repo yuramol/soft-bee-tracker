@@ -133,5 +133,15 @@
     "sendButton": "Send invite",
     "sendUnavailable": "Available with SBT-12"
   },
-  "mockNotice": "Sample data. Available actions depend on your role and team."
+  "mockNotice": "Sample data. Available actions depend on your role and team.",
+  "employment": {
+    "positionPlaceholder": "Any position, e.g. Frontend engineer",
+    "datePlaceholder": "Pick a date",
+    "clearDate": "Clear",
+    "cancelButton": "Cancel",
+    "editLabel": "Edit {label}",
+    "saveLabel": "Save {label}",
+    "positionSaved": "Position updated for {name}",
+    "dateSaved": "Employment date updated for {name}"
+  }
 }

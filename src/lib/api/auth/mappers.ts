@@ -1,12 +1,12 @@
 import type { Database } from '@/types';
-import type { UpdateProfileRequest, UserPositions, UserProfile } from '@/lib/api/auth/types';
+import type { UpdateAvatarRequest, UpdateProfileRequest, UserPositions, UserProfile } from '@/lib/api/auth/types';
 
 type UserRow = Database['public']['Tables']['users']['Row'];
 type UserUpdate = Database['public']['Tables']['users']['Update'];
 type Json = Database['public']['Tables']['users']['Row']['positions'];
 
 export const USER_COLUMNS =
-  'id, created_at, updated_at, username, email, first_name, last_name, phone, avatar_url, role, date_employment, positions, salary, salary_info, type_salary, linkedin, upwork, is_confirmed, is_blocked';
+  'id, created_at, updated_at, username, email, first_name, last_name, phone, avatar_url, role, date_employment, positions, salary, salary_info, type_salary, linkedin, upwork, time_zone, is_confirmed, is_blocked';
 
 export function mapUserRowToProfile(row: UserRow): UserProfile {
   return {
@@ -25,6 +25,7 @@ export function mapUserRowToProfile(row: UserRow): UserProfile {
     typeSalary: row.type_salary,
     linkedin: row.linkedin,
     upwork: row.upwork,
+    timeZone: row.time_zone,
     isConfirmed: row.is_confirmed,
     isBlocked: row.is_blocked
   };
@@ -52,8 +53,13 @@ export function mapProfileUpdateToUserRow(request: UpdateProfileRequest): UserUp
     first_name: request.firstName,
     last_name: request.lastName,
     phone: request.phone,
-    avatar_url: request.avatarUrl,
     linkedin: request.linkedin,
-    upwork: request.upwork
+    upwork: request.upwork,
+    time_zone: request.timeZone
   };
+}
+
+// the photo is saved on its own so it never carries unsaved form edits with it
+export function mapAvatarUpdateToUserRow(request: UpdateAvatarRequest): UserUpdate {
+  return { avatar_url: request.avatarUrl };
 }

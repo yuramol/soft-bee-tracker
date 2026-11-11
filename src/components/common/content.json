@@ -20,5 +20,12 @@
   "confirmDialog": {
     "confirmButton": "Confirm",
     "cancelButton": "Cancel"
+  },
+  "stagedDatePicker": {
+    "previous": "Previous",
+    "next": "Next",
+    "yearRange": "{from} – {to}",
+    "chooseYear": "Choose a different year",
+    "chooseMonth": "Choose a different month"
   }
 }

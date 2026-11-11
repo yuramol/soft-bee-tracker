@@ -50,6 +50,8 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
         managerName={manager ? getFullName(manager) : null}
         initialLeaveRequests={MOCK_CREW_LEAVE_REQUESTS.filter((request) => request.memberId === member.id)}
         canReviewLeave={permissions.canReviewLeave}
+        // employment details are admin-only, the same gate as role changes and blocking
+        canEditEmployment={permissions.canManageMembers}
       />
     </div>
   );

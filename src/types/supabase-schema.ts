@@ -213,6 +213,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           salary: number | null
           salary_info: string | null
+          time_zone: string | null
           type_salary: Database["public"]["Enums"]["salary_type"] | null
           updated_at: string
           upwork: string | null
@@ -234,6 +235,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           salary?: number | null
           salary_info?: string | null
+          time_zone?: string | null
           type_salary?: Database["public"]["Enums"]["salary_type"] | null
           updated_at?: string
           upwork?: string | null
@@ -255,6 +257,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           salary?: number | null
           salary_info?: string | null
+          time_zone?: string | null
           type_salary?: Database["public"]["Enums"]["salary_type"] | null
           updated_at?: string
           upwork?: string | null

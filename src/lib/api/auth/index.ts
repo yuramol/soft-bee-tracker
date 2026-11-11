@@ -9,16 +9,22 @@ export {
   updatePassword,
   useSignOut,
   signOutUser,
-  updateProfile
+  updateProfile,
+  useUpdateProfile,
+  uploadAvatar,
+  useUploadAvatar,
+  removeAvatar,
+  useRemoveAvatar,
+  requestEmailChange,
+  useRequestEmailChange
 } from './mutations';
-export { authKeys, fetchSessionProfile, useSessionProfile } from './queries';
-export { createProfileStore, useProfileStore } from './profile.store';
-export type { ProfileRepository, ProfileStore } from './profile.store';
+export { authKeys, fetchSessionProfile, getPendingEmailChange, useSessionProfile, usePendingEmailChange } from './queries';
 export type {
   SignInRequest,
   SignUpRequest,
   SignUpMetadata,
   RecoverPasswordRequest,
+  RequestEmailChangeRequest,
   UpdatePasswordRequest,
   UpdateProfileRequest,
   UserRole,
