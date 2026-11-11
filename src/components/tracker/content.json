@@ -72,6 +72,8 @@
     "emptyDescription": "Add the time you worked so it counts towards your totals.",
     "futureTitle": "This day hasn't happened yet",
     "futureDescription": "You can log time once the day starts.",
+    "closedTitle": "This month is closed",
+    "closedDescription": "Time can be added or changed until 23:59 (UTC+2) on the 5th of the next month.",
     "total": "Day total",
     "dayLabel": "{day}, {total}",
     "leaveDayLabel": "{day}, {leave}",
@@ -96,6 +98,7 @@
     "deleteLabel": "Delete entry",
     "status": {
       "new": "New",
+      "closed": "Closed",
       "approved": "Approved",
       "rejected": "Rejected"
     }

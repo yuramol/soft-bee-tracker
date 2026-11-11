@@ -187,10 +187,8 @@ function ProjectLinkItem({ link }: { link: ProjectLink }) {
 
 function ProjectTimeCard({ project, viewer }: ProjectTimeCardProps) {
   const summary = summarizeProjectTime(project, viewer);
-  const reportHref = buildTeamReportHref({
-    period: 'this-week',
-    memberIds: summary.scope === 'own' ? [viewer.id] : project.memberIds
-  });
+  // the Reports page already limits staff to their own time, so the project is the only filter needed
+  const reportHref = buildTeamReportHref({ period: 'this-week', projectIds: [project.id] });
 
   return (
     <DetailsCard title={content.details.time.title} titleId='project-time-title'>

@@ -145,6 +145,24 @@ export const MOCK_CREW_LEAVE_REQUESTS: CrewLeaveRequest[] = [
   },
   { id: 'cl3', memberId: 'u4', leaveType: 'vacation', startDate: '2026-12-21', endDate: '2026-12-31', note: null, status: 'approved' },
   {
+    id: 'cl5',
+    memberId: 'u4',
+    leaveType: 'vacation',
+    startDate: '2026-11-24',
+    endDate: '2026-11-27',
+    note: null,
+    status: 'approved'
+  },
+  {
+    id: 'cl6',
+    memberId: 'u2',
+    leaveType: 'vacation',
+    startDate: '2026-11-25',
+    endDate: '2026-11-26',
+    note: 'Moving to a new flat.',
+    status: 'pending'
+  },
+  {
     id: 'cl4',
     memberId: 'u2',
     leaveType: 'vacation',

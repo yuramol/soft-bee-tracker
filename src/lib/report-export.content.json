@@ -1,0 +1,29 @@
+{
+  "title": "Soft Bee time report",
+  "meta": {
+    "period": "Period",
+    "projects": "Projects",
+    "people": "People",
+    "absence": "Vacation and sickness",
+    "shown": "Shown",
+    "hidden": "Hidden",
+    "timeZone": "Time zone",
+    "generatedAt": "Generated at"
+  },
+  "columns": {
+    "person": "Person",
+    "project": "Project",
+    "time": "Time",
+    "absenceDays": "Absence days",
+    "vacationDays": "Vacation days",
+    "sickDays": "Sick days"
+  },
+  "total": "Total",
+  "days": {
+    "one": "{count} day",
+    "other": "{count} days"
+  },
+  "noProject": "—",
+  "empty": "No tracked time or absences for these filters.",
+  "fileName": "soft-bee-report-{from}-{to}.{extension}"
+}

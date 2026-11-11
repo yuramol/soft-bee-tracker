@@ -3,19 +3,21 @@
 import { CheckIcon, PalmtreeIcon, XIcon } from 'lucide-react';
 
 import { EmptyState } from '@components/common/empty-state/empty-state';
+import { LeaveConflicts } from '@components/crew/crew-leave-requests/leave-conflicts';
 import { LeaveNote } from '@components/crew/leave-note';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
 import { Avatar, AvatarFallback } from '@ui/avatar';
 import { Button } from '@ui/button';
 import { getFullName } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
+import type { LeaveConflict } from '@/lib/leave-conflicts';
 import { countLeaveWorkingDays, formatLeaveDateRange } from '@/lib/leave-days';
 import { getUserAvatarFallback } from '@/lib/utils';
 import type { CrewLeaveRequest, CrewMember } from '@/mocks/crew.mock';
 import type { LeaveStatus } from '@/mocks/leave.mock';
 import content from '../content.json';
 
-export function CrewLeaveRequests({ requests, membersById, canReview, onReview }: CrewLeaveRequestsProps) {
+export function CrewLeaveRequests({ requests, membersById, conflictsByRequest, canReview, onReview }: CrewLeaveRequestsProps) {
   if (requests.length === 0) {
     return <EmptyState icon={PalmtreeIcon} title={content.leave.emptyTitle} description={content.leave.emptyDescription} />;
   }
@@ -26,14 +28,22 @@ export function CrewLeaveRequests({ requests, membersById, canReview, onReview }
         const member = membersById.get(request.memberId);
 
         return member ? (
-          <LeaveRequestRow key={request.id} request={request} member={member} canReview={canReview} onReview={onReview} />
+          <LeaveRequestRow
+            key={request.id}
+            request={request}
+            member={member}
+            conflicts={conflictsByRequest.get(request.id) ?? []}
+            membersById={membersById}
+            canReview={canReview}
+            onReview={onReview}
+          />
         ) : null;
       })}
     </ul>
   );
 }
 
-function LeaveRequestRow({ request, member, canReview, onReview }: LeaveRequestRowProps) {
+function LeaveRequestRow({ request, member, conflicts, membersById, canReview, onReview }: LeaveRequestRowProps) {
   const days = countLeaveWorkingDays(request.startDate, request.endDate);
   const isReviewable = canReview && request.status === 'pending';
 
@@ -65,6 +75,10 @@ function LeaveRequestRow({ request, member, canReview, onReview }: LeaveRequestR
 
       {request.note ? <LeaveNote note={request.note} className='sm:ml-13' /> : null}
 
+      {request.status === 'pending' || request.status === 'approved' ? (
+        <LeaveConflicts conflicts={conflicts} membersById={membersById} />
+      ) : null}
+
       {isReviewable ? (
         <div className='flex justify-end gap-2'>
           <Button variant='outline' onClick={handleRejectClick}>
@@ -86,6 +100,7 @@ export type LeaveReviewDecision = Extract<LeaveStatus, 'approved' | 'rejected'>;
 interface CrewLeaveRequestsProps {
   requests: CrewLeaveRequest[];
   membersById: Map<string, CrewMember>;
+  conflictsByRequest: Map<string, LeaveConflict[]>;
   canReview: boolean;
   onReview: (request: CrewLeaveRequest, decision: LeaveReviewDecision) => void;
 }
@@ -93,6 +108,8 @@ interface CrewLeaveRequestsProps {
 interface LeaveRequestRowProps {
   request: CrewLeaveRequest;
   member: CrewMember;
+  conflicts: LeaveConflict[];
+  membersById: Map<string, CrewMember>;
   canReview: boolean;
   onReview: (request: CrewLeaveRequest, decision: LeaveReviewDecision) => void;
 }

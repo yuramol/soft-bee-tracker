@@ -93,7 +93,14 @@
     "approve": "Approve",
     "reject": "Reject",
     "approved": "Leave approved for {name}",
-    "rejected": "Leave rejected for {name}"
+    "rejected": "Leave rejected for {name}",
+    "conflicts": {
+      "alsoAway": "Also away on {project}",
+      "uncovered": "Nobody on {project} is available on {days}",
+      "overlap": "{name} · {type} · {dates} · {status}",
+      "moreDays": "{days} and {count} more",
+      "unknownPerson": "Someone"
+    }
   },
   "actions": {
     "menuLabel": "Actions for {name}",

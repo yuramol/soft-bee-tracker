@@ -8,6 +8,7 @@ import type { Tracker, TrackerStatus } from '@/lib/api/trackers';
 import { formatClock } from '@/lib/format-duration';
 import { isLiveTrackerActive } from '@/lib/live-tracker';
 import { getTrackerMinutes } from '@/lib/tracker-days';
+import { isEntryDateOpen } from '@/lib/work-time-policy';
 import content from '../content.json';
 
 export function TrackerEntryRow({
@@ -21,7 +22,8 @@ export function TrackerEntryRow({
   onPlay
 }: TrackerEntryRowProps) {
   const isActiveTimer = isLiveTrackerActive(tracker);
-  const isEditable = tracker.status === 'new' && !isActiveTimer;
+  const isClosed = !isEntryDateOpen(tracker.date, now);
+  const isEditable = tracker.status === 'new' && !isActiveTimer && !isClosed;
 
   function handleEditClick() {
     onEdit(tracker);
@@ -51,7 +53,9 @@ export function TrackerEntryRow({
             variant={tracker.liveStatus === 'start' ? 'brand' : 'warning'}
           />
         ) : null}
-        {!isActiveTimer && !isEditable ? <EntryBadge {...LOCKED_STATUS_BADGES[tracker.status]} /> : null}
+        {!isActiveTimer && !isEditable ? (
+          <EntryBadge {...(isClosed && tracker.status === 'new' ? CLOSED_BADGE : LOCKED_STATUS_BADGES[tracker.status])} />
+        ) : null}
         {isEditable ? (
           <>
             <Button
@@ -89,6 +93,8 @@ export function TrackerEntryRow({
 function EntryBadge({ label, variant }: EntryBadgeProps) {
   return <Badge variant={variant}>{label}</Badge>;
 }
+
+const CLOSED_BADGE: EntryBadgeProps = { label: content.entryRow.status.closed, variant: 'info' };
 
 const LOCKED_STATUS_BADGES: Record<TrackerStatus, EntryBadgeProps> = {
   new: { label: content.entryRow.status.new, variant: 'info' },

@@ -16,7 +16,8 @@ export function DatePicker({
   onChange,
   placeholder = content.datePicker.placeholder,
   isDisabled = false,
-  isInvalid = false
+  isInvalid = false,
+  minDate
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedDate = parseDate(value);
@@ -47,7 +48,13 @@ export function DatePicker({
         {selectedDate ? format(selectedDate, 'd MMM yyyy') : placeholder}
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0' align='start'>
-        <Calendar mode='single' selected={selectedDate} defaultMonth={selectedDate} onSelect={handleSelect} />
+        <Calendar
+          mode='single'
+          selected={selectedDate}
+          defaultMonth={selectedDate}
+          disabled={minDate ? { before: parseISO(minDate) } : undefined}
+          onSelect={handleSelect}
+        />
       </PopoverContent>
     </Popover>
   );
@@ -72,4 +79,5 @@ interface DatePickerProps {
   placeholder?: string;
   isDisabled?: boolean;
   isInvalid?: boolean;
+  minDate?: string;
 }

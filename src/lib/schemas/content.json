@@ -44,6 +44,7 @@
   "tracker": {
     "projectRequired": "Project is required",
     "invalidDate": "Enter a valid date",
+    "dateClosed": "This month is closed. Time can be changed until 23:59 (UTC+2) on the 5th of the next month.",
     "durationFormat": "Enter duration as HH:mm",
     "durationWhole": "Duration must be a whole number",
     "durationPositive": "Duration must be greater than zero",

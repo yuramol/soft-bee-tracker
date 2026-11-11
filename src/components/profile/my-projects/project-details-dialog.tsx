@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ROUTES } from '@/constants';
 import type { MemberProject, Project, ProjectType } from '@/lib/api/projects';
 import { formatText } from '@/lib/format-text';
+import { buildTeamReportHref } from '@/lib/team-report-params';
 import content from '../content.json';
 
 export function ProjectDetailsDialog({ memberProject, canEdit }: ProjectDetailsDialogProps) {
@@ -55,7 +56,11 @@ export function ProjectDetailsDialog({ memberProject, canEdit }: ProjectDetailsD
               {content.projects.trackTime}
             </Button>
           ) : null}
-          <Button variant='outline' render={<Link href={ROUTES.REPORTS} />} nativeButton={false}>
+          <Button
+            variant='outline'
+            render={<Link href={buildTeamReportHref({ period: 'this-week', projectIds: [project.id] })} />}
+            nativeButton={false}
+          >
             <ChartColumnIcon data-icon='inline-start' />
             {content.projects.viewReport}
           </Button>

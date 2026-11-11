@@ -1,0 +1,62 @@
+{
+  "results": {
+    "label": "Report results",
+    "totalTracked": "Total tracked: {time}",
+    "updating": "Updating the report…",
+    "timeZoneNote": "Dates in {zone}",
+    "columns": {
+      "person": "Person",
+      "project": "Project",
+      "time": "Time",
+      "absence": "Absence"
+    },
+    "none": "—",
+    "total": "Total",
+    "absenceOnly": "Absence only",
+    "absenceBreakdown": {
+      "vacation": "Vacation",
+      "sick": "Sickness",
+      "mixed": "{vacation} vacation · {sick} sick"
+    }
+  },
+  "empty": {
+    "title": "Nothing to report",
+    "description": "No tracked time or absences for {period} with these filters. Try a longer period or include more projects or people.",
+    "descriptionNoAbsence": "No tracked time for {period} with these filters. Try a longer period or include more projects or people.",
+    "reset": "Reset filters"
+  },
+  "filters": {
+    "label": "Report filters",
+    "period": "Period",
+    "periodPresets": {
+      "this-week": "This week",
+      "last-week": "Last week",
+      "this-month": "This month",
+      "last-month": "Last month"
+    },
+    "periodTooLong": "Choose a period of up to one year.",
+    "pickStart": "Click a start date, then an end date.",
+    "pickEnd": "Now click the end date.",
+    "projects": "Projects",
+    "people": "People",
+    "allProjects": "All projects",
+    "allAssignedProjects": "All assigned projects",
+    "everyone": "Everyone",
+    "myTeam": "My team",
+    "onlyMe": "Only me",
+    "onlyMeHint": "Staff reports include only your own time.",
+    "selectedCount": "{first} +{count}",
+    "noOptions": "Nothing available",
+    "showAbsence": "Show vacation and sickness",
+    "apply": "Apply filters",
+    "reset": "Reset filters",
+    "applying": "Applying…",
+    "unapplied": "Apply filters to update the report and exports."
+  },
+  "export": {
+    "pdf": "Download PDF",
+    "csv": "Download CSV",
+    "done": "{format} downloaded",
+    "failed": "Could not create the {format}. Your filters are unchanged, try again."
+  }
+}

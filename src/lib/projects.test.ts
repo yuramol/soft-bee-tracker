@@ -77,7 +77,7 @@ const updateValues: ProjectUpdateValues = {
 describe('getProjectsPermissions', () => {
   it('lets admins and managers create projects but not staff', () => {
     expect(getProjectsPermissions('admin')).toEqual({ canCreate: true, canChooseManager: true });
-    expect(getProjectsPermissions('manager')).toEqual({ canCreate: true, canChooseManager: false });
+    expect(getProjectsPermissions('manager')).toEqual({ canCreate: true, canChooseManager: true });
     expect(getProjectsPermissions('worker')).toEqual({ canCreate: false, canChooseManager: false });
   });
 });
@@ -93,12 +93,8 @@ describe('getProjectAccess', () => {
     });
   });
 
-  it('lets the responsible manager edit description, links and members only', () => {
-    const access = getProjectAccess(project({}), manager);
-
-    expect(access.editableFields).toEqual(['description', 'links']);
-    expect(access.canManageMembers).toBe(true);
-    expect(access.canChangeStatus).toBe(false);
+  it('gives the responsible manager the same rights as an admin', () => {
+    expect(getProjectAccess(project({}), manager)).toEqual(getProjectAccess(project({}), admin));
   });
 
   it('gives other managers and staff read-only access', () => {

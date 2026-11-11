@@ -18,9 +18,9 @@ export function getProjectAccess(project: ProjectRecord, viewer: ProjectViewer):
 
   return {
     canEdit,
-    editableFields: isAdmin ? ADMIN_FIELDS : isResponsibleManager ? MANAGER_FIELDS : [],
+    editableFields: canEdit ? PROJECT_FIELDS : [],
     canManageMembers: canEdit,
-    canChangeStatus: isAdmin,
+    canChangeStatus: canEdit,
     canViewTeamTime: canEdit
   };
 }
@@ -268,14 +268,14 @@ const SECRET_TEXT_PATTERNS: RegExp[] = [
 
 const URL_IN_TEXT_PATTERN = /https?:\/\/[^\s<>"']+/gi;
 
-const ADMIN_FIELDS: ProjectField[] = ['name', 'description', 'managerId', 'status', 'links'];
-const MANAGER_FIELDS: ProjectField[] = ['description', 'links'];
+// the responsible manager edits a project exactly like an admin
+const PROJECT_FIELDS: ProjectField[] = ['name', 'description', 'managerId', 'status', 'links'];
 
 // Creating projects is a separate grant for managers; every manager holds it until
 // per-person grants exist
 const PROJECTS_PERMISSIONS: Record<UserRole, ProjectsPermissions> = {
   admin: { canCreate: true, canChooseManager: true },
-  manager: { canCreate: true, canChooseManager: false },
+  manager: { canCreate: true, canChooseManager: true },
   worker: { canCreate: false, canChooseManager: false }
 };
 

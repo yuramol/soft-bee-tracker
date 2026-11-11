@@ -1,7 +1,7 @@
 'use client';
 
 import { addDays, format, isAfter, isSameDay, isWeekend, startOfDay } from 'date-fns';
-import { ChevronLeftIcon, ChevronRightIcon, ClockIcon, PalmtreeIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, ClockIcon, LockIcon, PalmtreeIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { ConfirmDialog } from '@components/common/confirm-dialog/confirm-dialog';
@@ -22,6 +22,7 @@ import { getWeekDays, toDateKey } from '@/lib/tracker-days';
 import { cn } from '@/lib/utils';
 import type { LeaveType } from '@/mocks/leave.mock';
 import type { ApiError } from '@/types/api-error';
+import { isEntryDateOpen } from '@/lib/work-time-policy';
 import content from '../content.json';
 
 export function DayEntries({
@@ -47,6 +48,8 @@ export function DayEntries({
   const dayLeave = leaveByDate.get(selectedKey);
   const projectNames = new Map(projects.map((project) => [project.id, project.name]));
   const isFutureDay = isAfter(startOfDay(selectedDate), startOfDay(now));
+  const isClosedDay = !isEntryDateOpen(selectedKey, now);
+  const canAddTime = !isFutureDay && !isClosedDay;
   const isReady = !isLoading && !error;
   const hasEntries = isReady && dayEntries.length > 0;
 
@@ -94,7 +97,7 @@ export function DayEntries({
       <div className='flex flex-col gap-4 border-t pt-5'>
         <div className='flex min-h-9 items-center justify-between gap-3'>
           <h2 className='text-base font-semibold'>{formatText(content.dayEntries.entriesTitle, { day: format(selectedDate, 'EEEE') })}</h2>
-          {hasEntries && !isFutureDay ? <CreateTrackerDialog defaultDate={selectedKey} /> : null}
+          {hasEntries && canAddTime ? <CreateTrackerDialog defaultDate={selectedKey} /> : null}
         </div>
 
         {dayLeave ? <LeaveBanner leaveType={dayLeave} /> : null}
@@ -104,6 +107,8 @@ export function DayEntries({
         {isReady && !hasEntries ? (
           isFutureDay ? (
             <EmptyState icon={ClockIcon} title={content.dayEntries.futureTitle} description={content.dayEntries.futureDescription} />
+          ) : isClosedDay ? (
+            <EmptyState icon={LockIcon} title={content.dayEntries.closedTitle} description={content.dayEntries.closedDescription} />
           ) : (
             <EmptyState
               icon={ClockIcon}

@@ -27,7 +27,9 @@ import {
   type CrewFilters as CrewFiltersValue
 } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
+import { getLeaveConflicts } from '@/lib/leave-conflicts';
 import { buildTeamReportHref } from '@/lib/team-report-params';
+import { MOCK_PROJECTS } from '@/mocks/projects.mock';
 import {
   getMockViewerId,
   MOCK_CREW,
@@ -53,6 +55,11 @@ export function CrewWorkspace({ viewer }: CrewWorkspaceProps) {
   const membersById = new Map(members.map((member) => [member.id, member]));
   const visibleLeaveRequests = getVisibleLeaveRequests(leaveRequests, visibleMembers);
   const pendingLeaveCount = countPendingLeave(visibleLeaveRequests);
+  const visibleMemberIds = new Set(visibleMembers.map((member) => member.id));
+  // coverage counts everyone's leave; only visible people are named in the overlaps
+  const conflictsByRequest = new Map(
+    visibleLeaveRequests.map((request) => [request.id, getLeaveConflicts(request, leaveRequests, MOCK_PROJECTS, visibleMemberIds)])
+  );
   const reportHref = buildTeamReportHref({
     period: 'this-week',
     memberIds: filteredMembers.length === members.length ? [] : filteredMembers.map((member) => member.id)
@@ -152,6 +159,7 @@ export function CrewWorkspace({ viewer }: CrewWorkspaceProps) {
           <CrewLeaveRequests
             requests={visibleLeaveRequests}
             membersById={membersById}
+            conflictsByRequest={conflictsByRequest}
             canReview={permissions.canReviewLeave}
             onReview={handleLeaveReview}
           />

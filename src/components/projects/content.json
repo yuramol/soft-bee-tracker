@@ -89,7 +89,7 @@
     "footer": "Only assigned users can log time. Archived projects keep their history.",
     "archiveDialog": {
       "title": "Archive {name}?",
-      "description": "No one can log new time to it. Logged entries and reports stay, and an admin can restore it any time.",
+      "description": "No one can log new time to it. Logged entries and reports stay, and an admin or the project's manager can restore it any time.",
       "confirmButton": "Archive project"
     },
     "restoreDialog": {
@@ -136,13 +136,13 @@
     "nameLabel": "Name",
     "managerLabel": "Manager",
     "managerPlaceholder": "Choose a manager",
-    "managerHint": "Changing the manager doesn't reassign people in other projects.",
+    "managerHint": "The new manager takes over editing this project. People in other projects stay as they are.",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Purpose, scope, working notes and key agreements.",
     "descriptionHint": "Separate paragraphs with a blank line. Start lines with \"-\" or \"1.\" for lists. Don't paste passwords or tokens.",
     "statusLabel": "Status",
     "archiveHint": "Archiving stops new time entries. History and reports stay.",
-    "lockedHint": "Only an admin can change this field.",
+    "lockedHint": "Only an admin or the project's manager can change this field.",
     "linksTitle": "Links",
     "linkLabel": "Label",
     "linkLabelPlaceholder": "Documentation",
