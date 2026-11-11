@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { getNavItems, isNavItemActive } from '@components/layout/navigation';
+import { getVisibleNavItems, isNavItemActive } from '@components/layout/navigation';
 import type { UserRole } from '@/lib/api/auth';
 import { cn } from '@/lib/utils';
 
 interface HeaderNavProps {
-  role: UserRole;
+  // from the user_role claim (getRouteSession), so links match the proxy and page guards
+  role: UserRole | null;
   className?: string;
   orientation?: NavOrientation;
   onNavigate?: () => void;
@@ -21,7 +22,7 @@ export function HeaderNav({ role, className, orientation = 'horizontal', onNavig
   return (
     <nav className={className}>
       <ul className={cn('flex gap-1', isVertical && 'flex-col')}>
-        {getNavItems(role).map((item) => {
+        {getVisibleNavItems(role).map((item) => {
           const isActive = isNavItemActive(pathname, item.href);
 
           return (

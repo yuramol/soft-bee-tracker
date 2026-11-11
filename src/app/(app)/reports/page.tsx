@@ -1,11 +1,10 @@
-import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { PageHeader } from '@components/common/page-header/page-header';
 import { ReportResultsSkeleton } from '@components/reports/reports-skeleton';
 import { ReportsWorkspace } from '@components/reports/reports-workspace/reports-workspace';
 import { ROUTES } from '@/constants';
-import { getSessionProfile } from '@/lib/api/auth/server';
+import { requireRouteAccess } from '@/lib/api/auth/server';
 import { buildReport, getReportOptions, getTodayKey, parseReportFilters, type ReportData, type ReportSearchParams } from '@/lib/reports';
 import { COMPANY_TIME_ZONE } from '@/lib/work-time-policy';
 import { MOCK_CREW } from '@/mocks/crew.mock';
@@ -15,11 +14,7 @@ import content from './content.json';
 
 // The report is built on the server and scoped to the viewer before anything reaches the browser
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
-  const profile = await getSessionProfile();
-
-  if (!profile) {
-    redirect(ROUTES.LOGIN);
-  }
+  const profile = await requireRouteAccess(ROUTES.REPORTS);
 
   // the general report always uses the company time zone, not the viewer's own
   const todayKey = getTodayKey(COMPANY_TIME_ZONE, new Date());

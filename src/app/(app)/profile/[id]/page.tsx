@@ -4,17 +4,15 @@ import { notFound, redirect } from 'next/navigation';
 
 import { MemberProfile } from '@components/crew/member-profile/member-profile';
 import { ROUTES } from '@/constants';
-import { getSessionProfile } from '@/lib/api/auth/server';
+import { requireRouteAccess } from '@/lib/api/auth/server';
 import { getCrewPermissions, getFullName, getVisibleMembers } from '@/lib/crew';
 import { getMockViewerId, MOCK_CREW, MOCK_CREW_LEAVE_REQUESTS } from '@/mocks/crew.mock';
 import content from './content.json';
 
 export default async function MemberProfilePage({ params }: MemberProfilePageProps) {
-  const [{ id }, profile] = await Promise.all([params, getSessionProfile()]);
-
-  if (!profile) {
-    redirect(ROUTES.LOGIN);
-  }
+  const { id } = await params;
+  // dynamic route: the guard gets the real path so login sends the user back here
+  const profile = await requireRouteAccess(`${ROUTES.PROFILE}/${encodeURIComponent(id)}`);
 
   if (id === profile.id) {
     redirect(ROUTES.PROFILE);

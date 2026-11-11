@@ -1,19 +1,13 @@
-import { redirect } from 'next/navigation';
-
 import { PageHeader } from '@components/common/page-header/page-header';
 import { MyProjects } from '@components/profile/my-projects/my-projects';
 import { ProfileForm } from '@components/profile/profile-form/profile-form';
 import { ProfileSummaryCard } from '@components/profile/profile-summary-card/profile-summary-card';
 import { ROUTES } from '@/constants';
-import { getSessionProfile } from '@/lib/api/auth/server';
+import { requireRouteAccess } from '@/lib/api/auth/server';
 import content from './content.json';
 
 export default async function ProfilePage() {
-  const profile = await getSessionProfile();
-
-  if (!profile) {
-    redirect(ROUTES.LOGIN);
-  }
+  const profile = await requireRouteAccess(ROUTES.PROFILE);
 
   return (
     <>

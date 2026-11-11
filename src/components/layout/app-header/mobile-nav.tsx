@@ -49,5 +49,5 @@ export function MobileNav({ role }: MobileNavProps) {
 }
 
 interface MobileNavProps {
-  role: UserRole;
+  role: UserRole | null;
 }

@@ -2,26 +2,27 @@ import { ChartColumnIcon, ClockIcon, FolderKanbanIcon, UsersIcon, type LucideIco
 
 import { ROUTES } from '@/constants';
 import type { UserRole } from '@/lib/api/auth';
+import { canRoleAccessRoute, matchesRoute } from '@/lib/route-access';
 import content from './content.json';
 
 export const NAV_ITEMS: NavItem[] = [
   { title: content.navigation.tracker, href: ROUTES.TRACKER, icon: ClockIcon },
-  { title: content.navigation.crew, href: ROUTES.CREW, icon: UsersIcon, roles: ['admin', 'manager'] },
+  { title: content.navigation.crew, href: ROUTES.CREW, icon: UsersIcon },
   { title: content.navigation.reports, href: ROUTES.REPORTS, icon: ChartColumnIcon },
   { title: content.navigation.projects, href: ROUTES.PROJECTS, icon: FolderKanbanIcon }
 ];
 
-export function getNavItems(role: UserRole): NavItem[] {
-  return NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
+// hides links the role can't open; the proxy, page checks and RLS still enforce access
+export function getVisibleNavItems(role: UserRole | null): NavItem[] {
+  return NAV_ITEMS.filter((item) => canRoleAccessRoute(item.href, role));
 }
 
 export function isNavItemActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return matchesRoute(pathname, href);
 }
 
 export interface NavItem {
   title: string;
   href: string;
   icon: LucideIcon;
-  roles?: UserRole[];
 }
