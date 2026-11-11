@@ -44,7 +44,25 @@ export async function getUserProjects(): Promise<Project[]> {
     return [];
   }
 
-  const { data, error, status } = await supabase.from('projects').select(PROJECT_COLUMNS).eq('manager_id', userData.user.id);
+  // role comes from the verified user_role JWT claim (same one RLS checks)
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+
+  if (claimsError || !claimsData) {
+    throw {
+      message: claimsError?.message ?? 'Unable to verify session',
+      statusCode: 401
+    } satisfies ApiError;
+  }
+
+  const query = supabase.from('projects').select(PROJECT_COLUMNS);
+  // admin sees every project; manager is bound to the projects they manage.
+  // worker (and others) are not filtered by manager_id: RLS returns only the
+  // projects they are assigned to via project_rates.
+  // claims are loosely typed (any); unknown is intentional, the role is only compared by value
+  const userRole: unknown = claimsData.claims.user_role;
+  const scopedQuery = userRole === 'manager' ? query.eq('manager_id', userData.user.id) : query;
+
+  const { data, error, status } = await scopedQuery;
 
   if (error) {
     throw {

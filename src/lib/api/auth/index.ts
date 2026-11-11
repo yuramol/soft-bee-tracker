@@ -7,6 +7,8 @@ export {
   recoverPassword,
   useUpdatePassword,
   updatePassword,
+  useChangePassword,
+  changePassword,
   useSignOut,
   signOutUser,
   updateProfile
@@ -18,6 +20,7 @@ export type {
   SignInRequest,
   SignUpRequest,
   SignUpMetadata,
+  ChangePasswordRequest,
   RecoverPasswordRequest,
   UpdatePasswordRequest,
   UpdateProfileRequest,

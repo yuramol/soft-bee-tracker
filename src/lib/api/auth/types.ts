@@ -60,6 +60,11 @@ export interface UpdatePasswordRequest {
   password: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  password: string;
+}
+
 export interface SignUpMetadata {
   role: UserRole;
   username: string;

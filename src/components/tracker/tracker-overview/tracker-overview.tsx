@@ -1,14 +1,29 @@
+'use client';
+
 import { CalendarDaysIcon, CalendarRangeIcon, TimerIcon } from 'lucide-react';
 
 import { StatCard } from '@components/common/stat-card/stat-card';
 import { Progress } from '@ui/progress';
+import { Skeleton } from '@ui/skeleton';
+import { useLiveMinuteNow } from '@/hooks/use-live-minute-now';
+import { useTrackers } from '@/lib/api/trackers';
 import { formatDuration, toPercent } from '@/lib/format-duration';
-import { DAILY_NORM_MINUTES, MOCK_TRACKER_SUMMARY } from '@/mocks/tracker-calendar.mock';
 import { formatText } from '@/lib/format-text';
+import { isLiveTrackerActive } from '@/lib/live-tracker';
+import { buildTrackerSummary, DAILY_NORM_MINUTES } from '@/lib/tracker-days';
 import content from '../content.json';
 
 export function TrackerOverview() {
-  const summary = MOCK_TRACKER_SUMMARY;
+  const { data: trackers = [], isLoading } = useTrackers();
+  const runningStartDate =
+    trackers.find((tracker) => isLiveTrackerActive(tracker) && tracker.liveStatus === 'start')?.startLiveDate ?? null;
+  const now = useLiveMinuteNow(runningStartDate);
+
+  if (isLoading) {
+    return <TrackerOverviewSkeleton />;
+  }
+
+  const summary = buildTrackerSummary(trackers, now);
 
   return (
     <section aria-label={content.overview.label} className='grid gap-4 sm:grid-cols-3'>
@@ -34,6 +49,16 @@ export function TrackerOverview() {
         hint={formatText(content.overview.of, { total: formatDuration(summary.monthNormMinutes) })}
         footer={<NormProgress value={summary.monthMinutes} total={summary.monthNormMinutes} />}
       />
+    </section>
+  );
+}
+
+function TrackerOverviewSkeleton() {
+  return (
+    <section aria-label={content.overview.label} className='grid gap-4 sm:grid-cols-3'>
+      {Array.from({ length: 3 }, (_, index) => (
+        <Skeleton key={index} className='h-36 rounded-2xl' />
+      ))}
     </section>
   );
 }

@@ -10,6 +10,7 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { clearSupabaseAuthCookies } from '@/lib/supabase/cookies';
 import { resetClientState } from '@/lib/api/reset-client-state';
 import type {
+  ChangePasswordRequest,
   RecoverPasswordRequest,
   SignInRequest,
   SignUpMetadata,
@@ -192,6 +193,47 @@ export function useUpdatePassword(options?: UseAuthMutationOptions) {
     mutationFn: updatePassword,
     onSuccess: () => {
       toast.success(options?.successMessage ?? content.passwordChanged);
+      options?.onSuccess?.();
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message);
+    }
+  });
+}
+
+export async function changePassword(params: ChangePasswordRequest): Promise<void> {
+  const supabase = createBrowserClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData.user?.email) {
+    throw {
+      message: content.sessionExpired,
+      statusCode: 401
+    } satisfies ApiError;
+  }
+
+  // supabase only checks the current password server-side when the project enables
+  // that setting, so verify it here by re-authenticating with the signed-in email
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password: params.currentPassword
+  });
+
+  if (verifyError) {
+    throw {
+      message: content.currentPasswordIncorrect,
+      statusCode: 400
+    } satisfies ApiError;
+  }
+
+  await updatePassword({ password: params.password });
+}
+
+export function useChangePassword(options?: UseAuthMutationOptions) {
+  return useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => {
+      toast.success(content.passwordUpdated);
       options?.onSuccess?.();
     },
     onError: (error: ApiError) => {

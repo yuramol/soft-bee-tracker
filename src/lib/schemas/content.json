@@ -10,7 +10,9 @@
     "lowercase": "Password must contain at least one lowercase letter",
     "number": "Password must contain at least one number",
     "confirmRequired": "Please confirm your password",
-    "mismatch": "Passwords do not match"
+    "mismatch": "Passwords do not match",
+    "currentRequired": "Enter your current password",
+    "sameAsCurrent": "New password must be different from the current one"
   },
   "profile": {
     "usernameRequired": "Username is required",

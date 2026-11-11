@@ -3,6 +3,8 @@
   "signUpSuccess": "Account created! Please check your email to verify your profile.",
   "resetLinkSent": "Reset link sent! Please check your mailbox.",
   "passwordChanged": "Password changed! You can now log in.",
+  "passwordUpdated": "Your password has been updated.",
+  "currentPasswordIncorrect": "Current password is incorrect.",
   "sessionExpired": "Your session has expired. Please sign in again.",
   "usernameTaken": "That username is already taken."
 }

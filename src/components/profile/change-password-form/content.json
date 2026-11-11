@@ -1,0 +1,10 @@
+{
+  "title": "Password",
+  "description": "Enter your current password, then choose a new one.",
+  "currentPasswordLabel": "Current password",
+  "passwordLabel": "New password",
+  "confirmPasswordLabel": "Confirm new password",
+  "passwordPlaceholder": "••••••••",
+  "submitButton": "Change password",
+  "submittingButton": "Changing…"
+}

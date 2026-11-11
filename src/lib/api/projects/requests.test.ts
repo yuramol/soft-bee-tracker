@@ -55,22 +55,44 @@ describe('projects requests', () => {
     });
   });
 
-  it('filters user projects by the authenticated manager id', async () => {
-    const equal = vi.fn().mockResolvedValue({ data: [projectRow], error: null, status: 200 });
+  function mockUserProjectsClient(role: string, result = { data: [projectRow], error: null, status: 200 }) {
+    const equal = vi.fn().mockResolvedValue(result);
+    const select = vi.fn().mockReturnValue({ eq: equal, then: (resolve: (value: typeof result) => unknown) => resolve(result) });
     createBrowserClient.mockReturnValue({
       auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null })
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
+        getClaims: vi.fn().mockResolvedValue({ data: { claims: { user_role: role } }, error: null })
       },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({ eq: equal })
-      })
+      from: vi.fn().mockReturnValue({ select })
     });
+    return { equal };
+  }
+
+  it('filters user projects by the authenticated manager id for managers', async () => {
+    const { equal } = mockUserProjectsClient('manager');
 
     const projects = await getUserProjects();
 
     expect(equal).toHaveBeenCalledWith('manager_id', 'user-1');
     expect(projects).toHaveLength(1);
     expect(projects[0]?.managerId).toBe('user-1');
+  });
+
+  it('does not filter user projects by manager id for admins', async () => {
+    const { equal } = mockUserProjectsClient('admin');
+
+    const projects = await getUserProjects();
+
+    expect(equal).not.toHaveBeenCalled();
+    expect(projects).toHaveLength(1);
+  });
+
+  it('leaves worker scoping to RLS instead of manager id', async () => {
+    const { equal } = mockUserProjectsClient('worker');
+
+    await getUserProjects();
+
+    expect(equal).not.toHaveBeenCalled();
   });
 
   it('creates an active project managed by the authenticated user', async () => {

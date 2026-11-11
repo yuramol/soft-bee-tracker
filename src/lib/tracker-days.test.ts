@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Tracker } from '@/lib/api/trackers/types';
-import { getWeekDays, sumMinutesByDate, toDateKey } from '@/lib/tracker-days';
+import { buildTrackerSummary, DAILY_NORM_MINUTES, getWeekDays, sumMinutesByDate, toDateKey } from '@/lib/tracker-days';
 
 const NOW = new Date('2026-11-05T12:00:00.000Z');
 
@@ -77,5 +77,33 @@ describe('getWeekDays', () => {
     const days = getWeekDays(new Date(2026, 10, 5)).map(toDateKey);
 
     expect(days).toEqual(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08']);
+  });
+});
+
+describe('buildTrackerSummary', () => {
+  // NOW is Thu 2026-11-05: week is 11-02..11-08, November 2026 has 21 working days
+  it('buckets each entry into today, week and month by its date', () => {
+    const summary = buildTrackerSummary(
+      [
+        buildTracker({ id: 'today', date: '2026-11-05', durationMinutes: 120 }),
+        buildTracker({ id: 'week', date: '2026-11-02', durationMinutes: 60 }),
+        buildTracker({ id: 'month', date: '2026-11-20', durationMinutes: 30 }),
+        buildTracker({ id: 'other-month', date: '2026-10-30', durationMinutes: 500 }),
+        buildTracker({ id: 'rejected', date: '2026-11-05', durationMinutes: 999, status: 'rejected' })
+      ],
+      NOW
+    );
+
+    expect(summary.todayMinutes).toBe(120);
+    expect(summary.weekMinutes).toBe(180);
+    expect(summary.monthMinutes).toBe(210);
+  });
+
+  it('derives norms from the working days of the current week and month', () => {
+    const summary = buildTrackerSummary([], NOW);
+
+    expect(summary.weekNormMinutes).toBe(5 * DAILY_NORM_MINUTES);
+    expect(summary.monthNormMinutes).toBe(21 * DAILY_NORM_MINUTES);
+    expect(summary.todayMinutes).toBe(0);
   });
 });

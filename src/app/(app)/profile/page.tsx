@@ -1,4 +1,5 @@
 import { PageHeader } from '@components/common/page-header/page-header';
+import { ChangePasswordForm } from '@components/profile/change-password-form/change-password-form';
 import { ProfileForm } from '@components/profile/profile-form/profile-form';
 import { ROUTES } from '@/constants';
 import { requireRouteAccess } from '@/lib/api/auth/server';
@@ -11,6 +12,7 @@ export default async function ProfilePage() {
     <div className='mx-auto flex w-full max-w-3xl flex-col gap-8'>
       <PageHeader eyebrow={content.eyebrow} title={content.title} description={content.description} />
       <ProfileForm profile={profile} />
+      <ChangePasswordForm />
     </div>
   );
 }

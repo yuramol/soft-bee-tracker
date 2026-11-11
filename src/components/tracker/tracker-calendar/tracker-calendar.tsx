@@ -19,8 +19,7 @@ import { Progress } from '@ui/progress';
 import { Skeleton } from '@ui/skeleton';
 import { cn } from '@/lib/utils';
 import { formatDuration, toPercent } from '@/lib/format-duration';
-import { toDateKey } from '@/lib/tracker-days';
-import { DAILY_NORM_MINUTES } from '@/mocks/tracker-calendar.mock';
+import { DAILY_NORM_MINUTES, toDateKey } from '@/lib/tracker-days';
 import { formatText } from '@/lib/format-text';
 import content from '../content.json';
 
@@ -223,7 +222,7 @@ function buildCalendarDays(month: Date, minutesByDate: Map<string, number>): Cal
       key,
       date,
       dayOfMonth: date.getDate(),
-      minutes: isFuture ? 0 : minutes,
+      minutes,
       isFuture,
       isOutside: !isSameMonth(date, month),
       isToday: isToday(date),
