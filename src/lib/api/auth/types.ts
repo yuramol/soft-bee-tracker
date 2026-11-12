@@ -2,6 +2,8 @@ export type UserRole = 'worker' | 'manager' | 'admin';
 
 export type SalaryType = 'hourly' | 'fixed' | 'project';
 
+export type UserStatus = 'pending' | 'active' | 'blocked';
+
 export interface UserPositions {
   titles: string[];
 }

@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 
 import { Input } from '@ui/input';
 import { buildTimeZoneOptions, getRuntimeTimeZones, toTimeZoneOption, type TimeZoneOption } from '@/lib/time-zones';
+import { COMPANY_TIME_ZONE } from '@/lib/work-time-policy';
 import content from '../content.json';
 
 export function TimeZoneCombobox({ id, value, detectedTimeZone, isDisabled, isInvalid, onChange }: TimeZoneComboboxProps) {
@@ -15,7 +16,7 @@ export function TimeZoneCombobox({ id, value, detectedTimeZone, isDisabled, isIn
   // ~420 zones; rebuilt only when the device zone arrives after hydration, which keeps it
   // in the list even when the runtime spells it differently (Europe/Kyiv vs Europe/Kiev)
   const options = useMemo(
-    () => buildTimeZoneOptions(getRuntimeTimeZones(), [initialValue, detectedTimeZone], now),
+    () => buildTimeZoneOptions(getRuntimeTimeZones(), [initialValue, detectedTimeZone, COMPANY_TIME_ZONE], now),
     [initialValue, detectedTimeZone, now]
   );
   const selected = value ? (options.find((option) => option.value === value) ?? toTimeZoneOption(value, now)) : null;

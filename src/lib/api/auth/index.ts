@@ -29,6 +29,7 @@ export type {
   UpdateProfileRequest,
   UserRole,
   SalaryType,
+  UserStatus,
   UserPositions,
   UserProfile
 } from './types';
