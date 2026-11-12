@@ -12,16 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getFullName } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
 import { getShortName } from '@/lib/projects';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectRecord } from '@/mocks/projects.mock';
+import type { ProjectRecord } from '@/lib/api/projects';
+import type { ProjectPerson } from '@/lib/api/users';
 import content from '../content.json';
 
-export function ProjectMembers({ project, peopleById, canManage, addableMembers, isAdmin, onAdd, onRemove }: ProjectMembersProps) {
-  const [pendingRemoval, setPendingRemoval] = useState<CrewMember | null>(null);
+export function ProjectMembers({ project, peopleById, canManage, addableMembers, onAdd, onRemove }: ProjectMembersProps) {
+  const [pendingRemoval, setPendingRemoval] = useState<ProjectPerson | null>(null);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const members = project.memberIds.flatMap((id) => peopleById.get(id) ?? []);
 
-  function handleRemoveRequest(member: CrewMember) {
+  function handleRemoveRequest(member: ProjectPerson) {
     setPendingRemoval(member);
     setIsRemoveDialogOpen(true);
   }
@@ -34,7 +34,7 @@ export function ProjectMembers({ project, peopleById, canManage, addableMembers,
     setIsRemoveDialogOpen(false);
   }
 
-  function handleAdd(member: CrewMember) {
+  function handleAdd(member: ProjectPerson) {
     onAdd(project, member);
   }
 
@@ -42,9 +42,7 @@ export function ProjectMembers({ project, peopleById, canManage, addableMembers,
     <DetailsCard
       title={content.details.members.title}
       titleId='project-members-title'
-      action={
-        canManage ? <AddMemberDialog projectName={project.name} candidates={addableMembers} isAdmin={isAdmin} onAdd={handleAdd} /> : null
-      }
+      action={canManage ? <AddMemberDialog projectName={project.name} candidates={addableMembers} onAdd={handleAdd} /> : null}
     >
       {members.length > 0 ? (
         <ul className='flex flex-col divide-y'>
@@ -108,12 +106,14 @@ function MemberRow({ member, isResponsible, canRemove, onRemove }: MemberRowProp
   );
 }
 
-function AddMemberDialog({ projectName, candidates, isAdmin, onAdd }: AddMemberDialogProps) {
+function AddMemberDialog({ projectName, candidates, onAdd }: AddMemberDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const options = candidates.map((member) => ({ value: member.id, label: `${getFullName(member)} · ${member.position}` }));
+  const options = candidates.map((member) => ({
+    value: member.id,
+    label: member.position ? `${getFullName(member)} · ${member.position}` : getFullName(member)
+  }));
   const selected = candidates.find((member) => member.id === selectedId);
-  const scopeHint = isAdmin ? content.addMember.adminScope : content.addMember.managerScope;
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -160,7 +160,7 @@ function AddMemberDialog({ projectName, candidates, isAdmin, onAdd }: AddMemberD
                 ))}
               </SelectContent>
             </Select>
-            <FieldDescription>{options.length === 0 ? content.addMember.nobodyLeft : scopeHint}</FieldDescription>
+            <FieldDescription>{options.length === 0 ? content.addMember.nobodyLeft : content.addMember.scope}</FieldDescription>
           </Field>
 
           <DialogFooter>
@@ -179,24 +179,22 @@ function AddMemberDialog({ projectName, candidates, isAdmin, onAdd }: AddMemberD
 
 interface ProjectMembersProps {
   project: ProjectRecord;
-  peopleById: Map<string, CrewMember>;
+  peopleById: Map<string, ProjectPerson>;
   canManage: boolean;
-  addableMembers: CrewMember[];
-  isAdmin: boolean;
-  onAdd: (project: ProjectRecord, member: CrewMember) => void;
-  onRemove: (project: ProjectRecord, member: CrewMember) => void;
+  addableMembers: ProjectPerson[];
+  onAdd: (project: ProjectRecord, member: ProjectPerson) => void;
+  onRemove: (project: ProjectRecord, member: ProjectPerson) => void;
 }
 
 interface MemberRowProps {
-  member: CrewMember;
+  member: ProjectPerson;
   isResponsible: boolean;
   canRemove: boolean;
-  onRemove: (member: CrewMember) => void;
+  onRemove: (member: ProjectPerson) => void;
 }
 
 interface AddMemberDialogProps {
   projectName: string;
-  candidates: CrewMember[];
-  isAdmin: boolean;
-  onAdd: (member: CrewMember) => void;
+  candidates: ProjectPerson[];
+  onAdd: (member: ProjectPerson) => void;
 }

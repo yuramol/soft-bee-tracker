@@ -4,6 +4,7 @@ import { createProjectFormSchema, projectFormSchema, type ProjectFormValues } fr
 
 const validValues: ProjectFormValues = {
   name: 'Atlas CRM',
+  client: 'Acme',
   managerId: 'u2',
   description: 'Scope:\n- Checkout',
   status: 'active',
@@ -42,7 +43,25 @@ describe('projectFormSchema', () => {
 });
 
 describe('createProjectFormSchema', () => {
-  it('needs only name, manager and description', () => {
-    expect(createProjectFormSchema.safeParse({ name: 'New', managerId: 'u1', description: '' }).success).toBe(true);
+  it('needs only name, manager, description and an optional client', () => {
+    expect(createProjectFormSchema.safeParse({ name: 'New', client: '', managerId: 'u1', description: '', managerIds: [] }).success).toBe(
+      true
+    );
+    expect(
+      createProjectFormSchema.safeParse({ name: 'New', client: '', managerId: 'u1', description: '', managerIds: ['u2', 'u3'] }).success
+    ).toBe(true);
+  });
+
+  it('limits the client to 255 characters', () => {
+    const result = createProjectFormSchema.safeParse({
+      name: 'New',
+      client: 'x'.repeat(256),
+      managerId: 'u1',
+      description: '',
+      managerIds: []
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual(['client']);
   });
 });

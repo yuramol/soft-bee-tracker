@@ -31,6 +31,8 @@
     "nameRequired": "Project name is required",
     "nameTooLong": "Project name must be 255 characters or fewer",
     "nameTaken": "A project with this name already exists",
+    "clientTooLong": "Client must be 255 characters or fewer",
+    "tooManyManagers": "Choose 20 project managers or fewer",
     "managerRequired": "Choose the responsible manager",
     "descriptionTooLong": "Description must be 5000 characters or fewer",
     "descriptionSecret": "Remove passwords, tokens or secret links. Keep secrets in the team vault.",
