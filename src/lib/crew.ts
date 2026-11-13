@@ -1,20 +1,18 @@
 import { ROUTES } from '@/constants';
 import type { UserRole } from '@/lib/api/auth';
 import { computeLeaveBalances, type LeaveBalance } from '@/lib/leave-days';
-import type { LeaveAllowance, LeaveType } from '@/mocks/leave.mock';
-import type { CrewLeaveRequest, CrewMember, CrewStatus, CrewViewer } from '@/mocks/crew.mock';
+import type { CrewLeaveRequest, CrewMember, CrewStatus, CrewViewer } from '@/lib/api/crew';
+import type { LeaveAllowance, LeaveType } from '@/lib/api/leave';
 
 export function getCrewPermissions(role: UserRole): CrewPermissions {
   return CREW_PERMISSIONS[role];
 }
 
+// managers and admins see everyone, the same scope rls gives them on profiles,
+// time entries and leave; staff never reach the crew page
 export function getVisibleMembers(members: CrewMember[], viewer: CrewViewer): CrewMember[] {
-  if (viewer.role === 'admin') {
+  if (viewer.role === 'admin' || viewer.role === 'manager') {
     return members;
-  }
-
-  if (viewer.role === 'manager') {
-    return members.filter((member) => member.managerId === viewer.id);
   }
 
   return members.filter((member) => member.id === viewer.id);
@@ -34,7 +32,7 @@ export function filterMembers(members: CrewMember[], filters: CrewFilters): Crew
 }
 
 export function getPositions(members: CrewMember[]): string[] {
-  return [...new Set(members.map((member) => member.position))].sort((a, b) => a.localeCompare(b));
+  return [...new Set(members.flatMap((member) => (member.position ? [member.position] : [])))].sort((a, b) => a.localeCompare(b));
 }
 
 export function summarizeTeamTime(members: CrewMember[]): TeamTimeSummary {
@@ -66,6 +64,20 @@ export function countPendingLeave(requests: CrewLeaveRequest[]): number {
 
 export function getFullName(member: Pick<CrewMember, 'firstName' | 'lastName'>): string {
   return `${member.firstName} ${member.lastName}`.trim();
+}
+
+// managers of the person's active projects, by name, for the "Manager" line
+export function getManagerNames(member: Pick<CrewMember, 'managerIds'>, membersById: Map<string, CrewMember>): string[] {
+  return member.managerIds.flatMap((id) => {
+    const manager = membersById.get(id);
+
+    return manager ? [getFullName(manager)] : [];
+  });
+}
+
+// managers can't decide on their own leave (the database refuses it); admins can
+export function canReviewLeaveRequest(request: Pick<CrewLeaveRequest, 'memberId' | 'status'>, viewer: CrewViewer): boolean {
+  return request.status === 'pending' && (viewer.role === 'admin' || (viewer.role === 'manager' && request.memberId !== viewer.id));
 }
 
 export function getMemberProfileHref(memberId: string): string {

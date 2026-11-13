@@ -1,5 +1,5 @@
 import { Badge } from '@ui/badge';
-import type { LeaveStatus } from '@/mocks/leave.mock';
+import type { LeaveStatus } from '@/lib/api/leave';
 import content from './content.json';
 
 export function LeaveStatusBadge({ status }: LeaveStatusBadgeProps) {

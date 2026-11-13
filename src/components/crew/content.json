@@ -38,7 +38,8 @@
     "managerLabel": "Manager",
     "noManager": "No manager",
     "open": "Open",
-    "openLabel": "Open profile of {name}"
+    "openLabel": "Open profile of {name}",
+    "noPosition": "No position yet"
   },
   "profile": {
     "detailsLabel": "Details",
@@ -64,7 +65,13 @@
     "notConfigured": "Not configured",
     "requestsTitle": "Requests",
     "noRequests": "No leave requests yet.",
-    "granted": "Vacation approved for {name}"
+    "granted": "Vacation approved for {name}",
+    "notFoundTitle": "This person isn't in your crew",
+    "allowanceLabel": "{type} days per year",
+    "editAllowance": "Edit {type} allowance",
+    "allowanceSaved": "{type} allowance updated for {name}",
+    "allowanceSave": "Save",
+    "allowanceCancel": "Cancel"
   },
   "summary": {
     "title": "Team summary",
@@ -141,7 +148,6 @@
     "networkError": "We couldn't reach the server. Check your connection and try again.",
     "resendButton": "Resend invite"
   },
-  "mockNotice": "Sample data. Available actions depend on your role and team.",
   "employment": {
     "positionPlaceholder": "Any position, e.g. Frontend engineer",
     "datePlaceholder": "Pick a date",
@@ -151,5 +157,7 @@
     "saveLabel": "Save {label}",
     "positionSaved": "Position updated for {name}",
     "dateSaved": "Employment date updated for {name}"
-  }
+  },
+  "loadErrorTitle": "Couldn't load the crew",
+  "loadError": "Something went wrong. Try again in a moment."
 }

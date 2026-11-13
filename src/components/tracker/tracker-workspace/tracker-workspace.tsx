@@ -9,12 +9,12 @@ import { TrackerCalendar } from '@components/tracker/tracker-calendar/tracker-ca
 import { TrackerSummary } from '@components/tracker/tracker-summary/tracker-summary';
 import { TRACKER_GRID_CLASS, TrackerWorkspaceSkeleton } from '@components/tracker/tracker-workspace/tracker-workspace-skeleton';
 import { useLiveMinuteNow } from '@/hooks/use-live-minute-now';
+import { useMyLeaveAllowances, useMyLeaveRequests } from '@/lib/api/leave';
 import { useTrackers } from '@/lib/api/trackers';
 import { getApprovedLeaveByDate } from '@/lib/leave-days';
 import { isLiveTrackerActive } from '@/lib/live-tracker';
 import { sumMinutesByDate, toDateKey } from '@/lib/tracker-days';
 import type { SummaryPeriod } from '@/lib/tracker-summary';
-import { MOCK_LEAVE_ALLOWANCES, MOCK_LEAVE_REQUESTS } from '@/mocks/leave.mock';
 
 export function TrackerWorkspace({ header }: TrackerWorkspaceProps) {
   const isClient = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
@@ -35,7 +35,9 @@ function TrackerWorkspaceContent({ header }: TrackerWorkspaceProps) {
     trackers.find((tracker) => isLiveTrackerActive(tracker) && tracker.liveStatus === 'start')?.startLiveDate ?? null;
   const now = useLiveMinuteNow(runningStartDate);
   const minutesByDate = sumMinutesByDate(trackers, now);
-  const leaveRequests = MOCK_LEAVE_REQUESTS;
+  const leaveRequestsQuery = useMyLeaveRequests();
+  const leaveAllowancesQuery = useMyLeaveAllowances();
+  const leaveRequests = leaveRequestsQuery.data ?? [];
   const leaveByDate = getApprovedLeaveByDate(leaveRequests);
 
   function handleSelectDate(date: Date) {
@@ -45,6 +47,11 @@ function TrackerWorkspaceContent({ header }: TrackerWorkspaceProps) {
 
   function handleRetry() {
     void refetch();
+  }
+
+  function handleLeaveRetry() {
+    void leaveRequestsQuery.refetch();
+    void leaveAllowancesQuery.refetch();
   }
 
   return (
@@ -69,7 +76,14 @@ function TrackerWorkspaceContent({ header }: TrackerWorkspaceProps) {
 
       <aside className='grid items-start gap-6 sm:grid-cols-2 lg:flex lg:flex-col lg:items-stretch'>
         <div className='sm:col-span-2'>
-          <LeavePanel requests={leaveRequests} allowances={MOCK_LEAVE_ALLOWANCES} today={now} />
+          <LeavePanel
+            requests={leaveRequests}
+            allowances={leaveAllowancesQuery.data ?? []}
+            today={now}
+            isLoading={leaveRequestsQuery.isLoading || leaveAllowancesQuery.isLoading}
+            error={leaveRequestsQuery.error ?? leaveAllowancesQuery.error}
+            onRetry={handleLeaveRetry}
+          />
         </div>
         <TrackerSummary
           period={period}

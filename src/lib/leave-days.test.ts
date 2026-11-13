@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { LeaveAllowance, LeaveRequest } from '@/mocks/leave.mock';
+import type { LeaveAllowance, LeaveRequest } from '@/lib/api/leave';
 import { computeLeaveBalances, countLeaveWorkingDays, getApprovedLeaveByDate } from '@/lib/leave-days';
 
 function request(overrides: Partial<LeaveRequest>): LeaveRequest {

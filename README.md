@@ -171,7 +171,9 @@ To verify, run `yarn test`, then with `yarn dev` open `/crew`:
 | Signed in on `/login` | Redirect to a safe `next` path, else `/tracker` |
 | Role not allowed | Rewrite to `/access-denied` (the URL stays the same): status 403 on a page load, 200 on an in-app navigation so the router renders it in place |
 
-Every app page calls `requireRouteAccess(ROUTES.X)` from `@/lib/api/auth/server` at the top of `page.tsx`. It re-runs the proxy's `getRouteAccess` decision with the role from the same verified `user_role` claim, then loads the profile: `getUser()` asks the Auth server (catching revoked sessions that a locally verified JWT can't), and a revoked session or one without a profile row is sent to `/auth/sign-out`, which clears the cookies and returns to `/login`. A blocked user goes through the same route and lands on `/blocked`, which says why. No session redirects to `/login`, and a wrong role redirects to `/access-denied`. A session with no role is offered "Sign in again" there, since only a new token carries a new claim.
+Every app page calls `requireRouteAccess(ROUTES.X)` from `@/lib/api/auth/server` at the top of `page.tsx`. It re-runs the proxy's `getRouteAccess` decision with the role from the same verified `user_role` claim, then loads the profile: `getUser()` asks the Auth server (catching revoked sessions that a locally verified JWT can't), and a revoked session or one without a profile row is sent to `/auth/sign-out`, which clears the cookies and returns to `/login`. A blocked user goes through the same route and lands on `/blocked`, which says why. No session redirects to `/login`, and a wrong role redirects to `/access-denied`. A session with no role is offered "Sign in again" there, since only a new token carries a new claim. The access-denied page loads the profile first for every signed-in user, so a blocked user who reaches it (with no role after their token refreshed, or with a stale token whose role the proxy denied) is signed out and lands on `/blocked` instead.
+
+Blocking is also enforced in the database, so it holds for API calls that never touch the app. `private.is_secure()`, the restrictive gate on every table, refuses a blocked user on their next request, even with a token issued before the block. They can still read their own `users` and `user_access` rows, so the app can explain the sign-out, but they can't write anything (migration `20261113110305_enforce_blocking_and_confirm_invites.sql`). The same migration marks an invited person confirmed in `user_access` once Supabase Auth confirms their email, which happens when they accept the invite.
 
 The sidebar (`src/components/layout/app-sidebar/app-sidebar.tsx`) uses the same rules and the same claim to hide links a role can't open.
 
@@ -224,10 +226,19 @@ yarn sb:db:types
 
 > **Warning:** `supabase db push` targets the **local** database. The linked hosted project needs `supabase db push --remote`, and the CLI asks for confirmation.
 
-Production migrations are deployed **manually only**: after the migrations are merged to `main`, the person responsible for the release opens **Actions → Deploy database migrations → Run workflow** with the `main` branch selected (other branches are skipped). Nothing deploys automatically on merge.
+There is a single hosted Supabase project. The Vercel deployments of `dev`, `test` (Preview) and `main` (Production) all use it, so its schema must work with the code on every one of these branches.
+
+Migrations are deployed **manually only**: after the migrations are merged to `dev`, the person responsible opens **Actions → Deploy database migrations → Run workflow** and selects the `dev`, `test` or `main` branch (other branches are skipped). Nothing deploys automatically on merge.
 
 1. `validate-db.yml` runs first: all migrations + seeds on a clean database, schema lint, pgTAP tests (`supabase/tests`), DB types.
-2. The `deploy` job waits for approval in the `production` GitHub Environment, prints the pending migrations (`db push --dry-run`) and applies them. Seeds are never applied to production.
+2. The `deploy` job waits for approval in the `production` GitHub Environment, prints the pending migrations (`db push --dry-run`) and applies them. Seeds are never applied to the hosted project.
+
+Because older code on `test` and `main` keeps running against the new schema:
+
+- Write backward-compatible migrations (expand → contract): add new columns, tables and functions first, and drop the old ones in a later migration once no deployed branch uses them.
+- If a migration must break older code, deploy it together with promoting the code to `main`.
+- Never edit or delete a migration that has been deployed; fix it with a new migration.
+- Running the workflow from a branch that lacks migrations already applied to the database fails at `db push`; run it from the branch with the newest migrations.
 
 Repository setup (owner, one time): create the `production` environment under **Settings → Environments**, add required reviewers, and add the `SUPABASE_DB_URL` secret (production connection string) to it.
 
@@ -246,7 +257,7 @@ Migrations use 14-digit UTC timestamps: `YYYYMMDDHHmmss_description.sql`. All ta
 - **ESLint** + **Prettier** — run `yarn lint` before committing
 - **Husky** pre-commit hooks via lint-staged
 - **CI** (`.github/workflows/ci.yml`) — lint, unit tests, build, secret-leak scan and Playwright safeguards on every PR, plus `validate-db.yml` in parallel: all migrations + seeds on a clean database, `supabase db lint`, pgTAP tests (`yarn sb:test`: seeded test accounts, RLS on every public table), and a check that `src/types/supabase-schema.ts` is up to date
-- **DB deploy** (`.github/workflows/deploy-db.yml`) — manually triggered, validated, approval-gated `supabase db push` to production from `main`
+- **DB deploy** (`.github/workflows/deploy-db.yml`) — manually triggered, validated, approval-gated `supabase db push` to the shared hosted project from `dev`, `test` or `main`
 - Path alias: `@/*` → `src/*`
 
 ## AI agent setup

@@ -1,10 +1,12 @@
 import { SkeletonRegion } from '@components/common/loading-state/skeletons';
 import { Skeleton } from '@ui/skeleton';
 
-export function MemberProfileSkeleton() {
+// the route's loading file shows the back link placeholder; the profile itself
+// renders under a real back link, so it leaves it out
+export function MemberProfileSkeleton({ hasBackLink = true }: MemberProfileSkeletonProps) {
   return (
     <SkeletonRegion className='flex flex-col gap-6'>
-      <Skeleton className='h-4 w-28' />
+      {hasBackLink ? <Skeleton className='h-4 w-28' /> : null}
       <div className='grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-12 xl:grid-cols-[minmax(0,1fr)_24rem]'>
         <div className='flex flex-col gap-6 rounded-2xl border p-5 sm:p-8'>
           <div className='flex flex-col gap-5 sm:flex-row sm:items-center'>
@@ -54,4 +56,8 @@ export function MemberProfileSkeleton() {
       </div>
     </SkeletonRegion>
   );
+}
+
+interface MemberProfileSkeletonProps {
+  hasBackLink?: boolean;
 }

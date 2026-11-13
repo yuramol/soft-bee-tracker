@@ -1,6 +1,6 @@
 import { eachDayOfInterval, format, isWeekend, parseISO } from 'date-fns';
 
-import type { LeaveAllowance, LeaveRequest, LeaveType } from '@/mocks/leave.mock';
+import type { LeaveAllowance, LeaveRequest, LeaveType } from '@/lib/api/leave';
 import { toDateKey } from '@/lib/tracker-days';
 
 export const LEAVE_TYPES: LeaveType[] = ['vacation', 'sick_leave'];

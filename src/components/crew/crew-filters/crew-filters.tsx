@@ -8,7 +8,7 @@ import { Field, FieldLabel } from '@ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
 import type { UserRole } from '@/lib/api/auth';
 import { ALL_FILTER, type CrewFilters as CrewFiltersValue } from '@/lib/crew';
-import type { CrewStatus } from '@/mocks/crew.mock';
+import type { CrewStatus } from '@/lib/api/crew';
 import content from '../content.json';
 
 export function CrewFilters({ filters, positions, onChange }: CrewFiltersProps) {

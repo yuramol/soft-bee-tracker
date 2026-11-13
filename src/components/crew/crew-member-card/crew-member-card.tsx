@@ -4,16 +4,16 @@ import { EllipsisIcon, ShieldIcon, UserCheckIcon, UserXIcon } from 'lucide-react
 import Link from 'next/link';
 
 import { MemberStatusBadge } from '@components/crew/member-status-badge';
-import { Avatar, AvatarFallback } from '@ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@ui/avatar';
 import { Button } from '@ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@ui/dropdown-menu';
 import { getFullName, getMemberProfileHref } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
 import { cn, getUserAvatarFallback } from '@/lib/utils';
-import type { CrewMember } from '@/mocks/crew.mock';
+import type { CrewMember } from '@/lib/api/crew';
 import content from '../content.json';
 
-export function CrewMemberCard({ member, managerName, canManage, onAction }: CrewMemberCardProps) {
+export function CrewMemberCard({ member, managerNames, canManage, onAction }: CrewMemberCardProps) {
   const name = getFullName(member);
   const profileHref = getMemberProfileHref(member.id);
 
@@ -29,12 +29,13 @@ export function CrewMemberCard({ member, managerName, canManage, onAction }: Cre
         className='focus-visible:ring-ring/50 group/member col-start-1 row-start-1 -m-1 flex min-w-0 items-center gap-3 rounded-xl p-1 outline-none focus-visible:ring-3'
       >
         <Avatar className='size-10 shrink-0'>
+          {member.avatarUrl ? <AvatarImage src={member.avatarUrl} alt='' /> : null}
           <AvatarFallback>{getUserAvatarFallback(member)}</AvatarFallback>
         </Avatar>
         <span className='flex min-w-0 flex-col gap-0.5'>
           <span className='font-semibold break-words underline-offset-4 group-hover/member:underline lg:truncate'>{name}</span>
           <span className='text-muted-foreground text-sm break-words lg:truncate'>
-            {content.roles[member.role]} · {member.position}
+            {content.roles[member.role]} · {member.position ?? content.people.noPosition}
           </span>
         </span>
       </Link>
@@ -44,7 +45,7 @@ export function CrewMemberCard({ member, managerName, canManage, onAction }: Cre
           {member.projects.length > 0 ? member.projects.join(', ') : content.people.noProjects}
         </span>
         <span className='text-muted-foreground text-xs break-words lg:truncate'>
-          {content.people.managerLabel}: {managerName ?? content.people.noManager}
+          {content.people.managerLabel}: {managerNames.length > 0 ? managerNames.join(', ') : content.people.noManager}
         </span>
       </div>
 
@@ -111,7 +112,7 @@ export type MemberActionHandler = (type: MemberActionType, member: CrewMember) =
 
 interface CrewMemberCardProps {
   member: CrewMember;
-  managerName: string | null;
+  managerNames: string[];
   canManage: boolean;
   onAction: MemberActionHandler;
 }

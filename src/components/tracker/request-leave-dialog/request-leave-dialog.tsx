@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { PalmtreeIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useController, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { DatePicker } from '@components/common/form/date-picker';
 import { Button } from '@ui/button';
@@ -19,11 +18,12 @@ import {
   leaveRequestFormSchema,
   type LeaveRequestFormValues
 } from '@/lib/schemas/leave-request-form.schema';
-import type { LeaveType } from '@/mocks/leave.mock';
+import type { LeaveType } from '@/lib/api/leave';
 import content from '../content.json';
 
 export function RequestLeaveDialog({ mode = 'request', onSubmit }: RequestLeaveDialogProps) {
   const [open, setOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const copy = mode === 'grant' ? content.leave.grantDialog : content.leave.dialog;
   const form = useForm<LeaveRequestFormValues>({
     defaultValues: createLeaveRequestFormDefaults(),
@@ -34,21 +34,23 @@ export function RequestLeaveDialog({ mode = 'request', onSubmit }: RequestLeaveD
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    formState: { errors, isSubmitting }
   } = form;
   const { field: typeField } = useController({ control, name: 'leaveType' });
   const { field: startField } = useController({ control, name: 'startDate' });
   const { field: endField } = useController({ control, name: 'endDate' });
   const workingDays = countLeaveWorkingDays(startField.value, endField.value);
 
-  function handleLeaveSubmit(values: LeaveRequestFormValues) {
-    if (onSubmit) {
-      onSubmit(values);
-    } else {
-      toast.info(content.leave.dialog.notConnected);
-    }
+  // the dialog closes only after a successful save; on failure it keeps what was typed
+  async function handleLeaveSubmit(values: LeaveRequestFormValues) {
+    setSubmitError(null);
 
-    setOpen(false);
+    try {
+      await onSubmit(values);
+      setOpen(false);
+    } catch (error) {
+      setSubmitError(getErrorMessage(error));
+    }
   }
 
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -57,6 +59,7 @@ export function RequestLeaveDialog({ mode = 'request', onSubmit }: RequestLeaveD
 
   function handleOpenChange(nextOpen: boolean) {
     reset(createLeaveRequestFormDefaults());
+    setSubmitError(null);
     setOpen(nextOpen);
   }
 
@@ -128,11 +131,19 @@ export function RequestLeaveDialog({ mode = 'request', onSubmit }: RequestLeaveD
             </Field>
           </FieldGroup>
 
+          {submitError ? (
+            <p role='alert' className='text-destructive text-sm'>
+              {submitError}
+            </p>
+          ) : null}
+
           <DialogFooter>
-            <Button type='button' variant='outline' onClick={handleCancelClick}>
+            <Button type='button' variant='outline' disabled={isSubmitting} onClick={handleCancelClick}>
               {copy.cancelButton}
             </Button>
-            <Button type='submit'>{copy.submitButton}</Button>
+            <Button type='submit' disabled={isSubmitting}>
+              {copy.submitButton}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -140,9 +151,18 @@ export function RequestLeaveDialog({ mode = 'request', onSubmit }: RequestLeaveD
   );
 }
 
+function getErrorMessage(error: unknown): string {
+  // unknown: a rejected promise can carry anything; ApiError-shaped values keep their message
+  if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+
+  return content.leave.dialog.submitError;
+}
+
 const LEAVE_TYPE_ITEMS = LEAVE_TYPES.map((leaveType) => ({ value: leaveType, label: content.leave.types[leaveType] }));
 
 interface RequestLeaveDialogProps {
   mode?: 'request' | 'grant';
-  onSubmit?: (values: LeaveRequestFormValues) => void;
+  onSubmit: (values: LeaveRequestFormValues) => Promise<void> | void;
 }

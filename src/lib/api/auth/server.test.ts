@@ -231,7 +231,7 @@ describe('requireRouteAccess', () => {
   it('signs out a blocked user on a restricted page instead of showing access denied', async () => {
     signInAs('worker', { is_blocked: true });
 
-    await expect(requireRouteAccess(ROUTES.CREW)).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.SIGN_OUT}`);
+    await expect(requireRouteAccess(ROUTES.CREW)).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.SIGN_OUT}?reason=blocked`);
   });
 
   it('signs out a revoked session on a restricted page instead of showing access denied', async () => {

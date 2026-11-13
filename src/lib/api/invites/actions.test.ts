@@ -163,6 +163,17 @@ describe('inviteMember', () => {
       expect(inviteUserByEmail).toHaveBeenCalledWith('pending@softbee.dev');
     });
 
+    it.each<UserRole>(['admin', 'manager'])('keeps a pending %s invite on resend instead of taking the form role', async (pendingRole) => {
+      signInAs('admin');
+      existingAccount({ email_confirmed_at: null, invited_at: '2026-11-09T10:00:00Z' }, pendingRole);
+
+      await expect(inviteMember({ email: 'pending@softbee.dev', role: 'worker', resend: true })).resolves.toMatchObject({
+        status: 'resent'
+      });
+      expect(updateRole).toHaveBeenCalledWith('user_access', { role: pendingRole }, 'user_id', 'user-new');
+      expect(updateRole).not.toHaveBeenCalledWith('user_access', { role: 'worker' }, 'user_id', 'user-new');
+    });
+
     it('never resends to an account that already accepted', async () => {
       signInAs('admin');
       existingAccount({ email_confirmed_at: '2026-11-01T10:00:00Z', invited_at: '2026-10-30T10:00:00Z' });
@@ -261,7 +272,8 @@ describe('inviteMember', () => {
 
       await expect(inviteMember({ email: 'new@softbee.dev', role: 'manager' })).resolves.toEqual({
         status: 'error',
-        message: "The invite to new@softbee.dev was sent, but their role couldn't be saved. Send the invite again to fix it."
+        message:
+          "The invite to new@softbee.dev was sent, but their role couldn't be saved. They're a worker for now; an admin can change their role in Crew."
       });
     });
   });

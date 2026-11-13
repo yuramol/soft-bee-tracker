@@ -9,7 +9,7 @@ import { useProjects } from '@/lib/api/projects';
 import type { Tracker } from '@/lib/api/trackers';
 import { formatClock } from '@/lib/format-duration';
 import { getPeriodRange, isDateKeyInRange, summarizeTrackersByProject, type DateKeyRange, type SummaryPeriod } from '@/lib/tracker-summary';
-import type { LeaveType } from '@/mocks/leave.mock';
+import type { LeaveType } from '@/lib/api/leave';
 import type { ApiError } from '@/types/api-error';
 import content from '../content.json';
 
