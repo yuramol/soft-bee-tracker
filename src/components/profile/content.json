@@ -1,0 +1,130 @@
+{
+  "summary": {
+    "label": "Account summary",
+    "position": "Position",
+    "noPosition": "Not assigned",
+    "employedSince": "Employed since",
+    "notSet": "Not set",
+    "managedHint": "Role, status and position are managed by an admin. Ask them if something looks wrong.",
+    "pendingHint": "Your account is waiting for admin confirmation.",
+    "security": "Security"
+  },
+  "photo": {
+    "trigger": "Change photo",
+    "title": "Profile photo",
+    "description": "Upload an image from your device, then drag and zoom to choose what shows in the circle. Saving the photo does not touch other profile fields.",
+    "previewLabel": "Preview",
+    "chooseFile": "Choose a file or drag it here",
+    "fileHint": "JPG, PNG, WebP or GIF, up to 10 MB",
+    "removeButton": "Remove photo",
+    "removingButton": "Removing…",
+    "cancelButton": "Cancel",
+    "saveButton": "Save photo",
+    "savingButton": "Uploading…",
+    "saved": "Photo updated",
+    "removed": "Photo removed",
+    "chooseAnother": "Choose another photo",
+    "cropLabel": "Photo crop area",
+    "cropHint": "Drag to reposition, use the slider to zoom",
+    "zoomLabel": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "processFailed": "Could not process this image. Try another file."
+  },
+  "form": {
+    "title": "Personal details",
+    "description": "Update the details other people in the workspace see.",
+    "emailLabel": "Email",
+    "emailDescription": "Email change requires verification.",
+    "emailPending": "Waiting for confirmation from {email}.",
+    "positionLabel": "Position (read only)",
+    "timeZoneLabel": "Time zone",
+    "unsavedHint": "You have unsaved changes",
+    "discardButton": "Discard",
+    "saveButton": "Save changes",
+    "savingButton": "Saving…",
+    "saved": "Profile saved",
+    "fields": {
+      "firstName": {
+        "label": "First name",
+        "placeholder": "John"
+      },
+      "lastName": {
+        "label": "Last name",
+        "placeholder": "Doe"
+      },
+      "username": {
+        "label": "Username",
+        "placeholder": "johndoe"
+      },
+      "phone": {
+        "label": "Phone",
+        "placeholder": "+1 555 123 4567"
+      },
+      "linkedin": {
+        "label": "LinkedIn",
+        "placeholder": "https://linkedin.com/in/johndoe"
+      },
+      "upwork": {
+        "label": "Upwork",
+        "placeholder": "https://upwork.com/freelancers/johndoe"
+      }
+    },
+    "timeZonePlaceholder": "Search city or region",
+    "timeZoneOpen": "Show time zones",
+    "timeZoneEmpty": "No time zones match",
+    "timeZoneUseDevice": "Use this device's time zone ({timeZone})",
+    "timeZoneDeviceDefault": "Detected from this device. Change it if you work in another zone."
+  },
+  "leaveDialog": {
+    "title": "Leave without saving?",
+    "description": "Your profile changes have not been saved and will be lost.",
+    "confirmButton": "Leave page"
+  },
+  "email": {
+    "title": "Change email",
+    "description": "We will send a confirmation link to the new address. Your current email keeps working until you open it.",
+    "currentLabel": "Current email",
+    "newLabel": "New email",
+    "newPlaceholder": "name@example.com",
+    "cancelButton": "Cancel",
+    "sendButton": "Send confirmation",
+    "sendingButton": "Sending…",
+    "sent": "Confirmation link sent to {email}"
+  },
+  "password": {
+    "title": "Change password",
+    "description": "Choose a new password. You stay signed in on this device.",
+    "newLabel": "New password",
+    "confirmLabel": "Confirm new password",
+    "placeholder": "••••••••",
+    "cancelButton": "Cancel",
+    "saveButton": "Change password",
+    "savingButton": "Saving…",
+    "saved": "Password changed"
+  },
+  "projects": {
+    "title": "My projects",
+    "description": "Projects you manage or are assigned to.",
+    "emptyTitle": "No projects yet",
+    "emptyDescription": "Projects you are assigned to will show up here.",
+    "membership": {
+      "manager": "Manager",
+      "member": "Member"
+    },
+    "status": {
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "open": "Open",
+    "openLabel": "Open {name}",
+    "client": "Client",
+    "type": "Type",
+    "dates": "Dates",
+    "noDescription": "No description yet.",
+    "openEnded": "now",
+    "trackTime": "Track time",
+    "viewReport": "View report",
+    "editProject": "Edit project"
+  }
+}

@@ -102,8 +102,14 @@ from auth.users u
 where u.email in ('admin@softbee.dev', 'manager@softbee.dev', 'worker@softbee.dev');
 
 -- promote roles and confirm profiles (signup trigger always creates 'worker')
-update public.users set role = 'admin', is_confirmed = true where email = 'admin@softbee.dev';
+update public.user_access ua set role = 'admin', is_confirmed = true
+from public.users u
+where u.id = ua.user_id and u.email = 'admin@softbee.dev';
 
-update public.users set role = 'manager', is_confirmed = true where email = 'manager@softbee.dev';
+update public.user_access ua set role = 'manager', is_confirmed = true
+from public.users u
+where u.id = ua.user_id and u.email = 'manager@softbee.dev';
 
-update public.users set role = 'worker', is_confirmed = true where email = 'worker@softbee.dev';
+update public.user_access ua set role = 'worker', is_confirmed = true
+from public.users u
+where u.id = ua.user_id and u.email = 'worker@softbee.dev';

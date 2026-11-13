@@ -79,6 +79,13 @@ describe('getSessionProfile', () => {
     await expect(getSessionProfile()).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.SIGN_OUT}?reason=blocked`);
   });
 
+  it('resets the session when the access row is missing', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: { ...buildUserRow(), user_access: null }, error: null });
+
+    await expect(getSessionProfile()).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.SIGN_OUT}`);
+  });
+
   it('returns the profile of an active user', async () => {
     getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     single.mockResolvedValue({ data: buildUserRow(), error: null });
@@ -118,6 +125,14 @@ describe('resolveSessionProfile', () => {
   it('returns the plain sign-out path when the profile row is missing', async () => {
     getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     single.mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'no rows' } });
+
+    await expect(resolveSessionProfile()).resolves.toEqual({ kind: 'reset', signOutPath: ROUTES.SIGN_OUT });
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('returns the plain sign-out path when the access row is missing', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: { ...buildUserRow(), user_access: null }, error: null });
 
     await expect(resolveSessionProfile()).resolves.toEqual({ kind: 'reset', signOutPath: ROUTES.SIGN_OUT });
     expect(redirect).not.toHaveBeenCalled();
@@ -166,10 +181,7 @@ describe('requireRouteAccess', () => {
     await expect(requireRouteAccess(ROUTES.CREW)).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.LOGIN}?next=%2Fcrew`);
   });
 
-  it.each<[string, UserRole]>([
-    [ROUTES.CREW, 'worker'],
-    [ROUTES.REPORTS, 'worker']
-  ])('redirects %s for %s to access denied', async (route, role) => {
+  it.each<[string, UserRole]>([[ROUTES.CREW, 'worker']])('redirects %s for %s to access denied', async (route, role) => {
     signInAs(role);
 
     await expect(requireRouteAccess(route)).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.ACCESS_DENIED}`);
@@ -185,6 +197,8 @@ describe('requireRouteAccess', () => {
   it.each<[string, UserRole]>([
     [ROUTES.CREW, 'manager'],
     [ROUTES.REPORTS, 'manager'],
+    // staff open Reports for their own time
+    [ROUTES.REPORTS, 'worker'],
     [ROUTES.CREW, 'admin']
   ])('allows %s for %s', async (route, role) => {
     signInAs(role);
@@ -228,14 +242,14 @@ describe('requireRouteAccess', () => {
   });
 });
 
-function signInAs(role: UserRole, row: Partial<UserRow> = {}) {
+function signInAs(role: UserRole, access: Partial<AccessRow> = {}) {
   getClaims.mockResolvedValue({ data: { claims: { sub: 'user-1', user_role: role } }, error: null });
   getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-  single.mockResolvedValue({ data: buildUserRow(row), error: null });
+  single.mockResolvedValue({ data: buildUserRow(access), error: null });
 }
 
 // role is deliberately 'worker' here: the guard must use the claim, not this row
-function buildUserRow(overrides: Partial<UserRow> = {}): UserRow {
+function buildUserRow(access: Partial<AccessRow> = {}) {
   return {
     id: 'user-1',
     created_at: '',
@@ -246,18 +260,12 @@ function buildUserRow(overrides: Partial<UserRow> = {}): UserRow {
     last_name: 'User',
     phone: null,
     avatar_url: null,
-    role: 'worker',
     date_employment: null,
     positions: null,
-    salary: null,
-    salary_info: null,
-    type_salary: null,
     linkedin: null,
     upwork: null,
-    is_confirmed: true,
-    is_blocked: false,
-    ...overrides
+    user_access: { role: 'worker', is_confirmed: true, is_blocked: false, ...access }
   };
 }
 
-type UserRow = Record<string, string | number | boolean | null | string[]>;
+type AccessRow = Record<string, string | boolean>;

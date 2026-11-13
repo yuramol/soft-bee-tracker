@@ -18,7 +18,7 @@ import {
 } from '@/lib/schemas/tracker-form.schema';
 import content from '../content.json';
 
-export function CreateTrackerDialog({ defaultDate, isCompact = false }: CreateTrackerDialogProps) {
+export function CreateTrackerDialog({ defaultDate, triggerSize = 'default' }: CreateTrackerDialogProps) {
   const [open, setOpen] = useState(false);
   const { data: projects = [], isLoading: isLoadingProjects, error: projectsError } = useProjects(open);
   const form = useForm<TrackerFormValues>({
@@ -62,25 +62,10 @@ export function CreateTrackerDialog({ defaultDate, isCompact = false }: CreateTr
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange} disablePointerDismissal={isBusy}>
-      {isCompact ? (
-        <DialogTrigger
-          render={
-            <Button
-              size='icon-lg'
-              aria-label={content.createDialog.compactTrigger}
-              title={content.createDialog.compactTrigger}
-              className='rounded-full'
-            />
-          }
-        >
-          <PlusIcon className='size-5' />
-        </DialogTrigger>
-      ) : (
-        <DialogTrigger render={<Button size='lg' />}>
-          <PlusIcon data-icon='inline-start' />
-          {content.createDialog.triggerButton}
-        </DialogTrigger>
-      )}
+      <DialogTrigger render={<Button size={triggerSize} />}>
+        <PlusIcon data-icon='inline-start' />
+        {content.createDialog.triggerButton}
+      </DialogTrigger>
 
       <DialogContent className='sm:max-w-lg' showCloseButton={!isBusy}>
         <DialogHeader>
@@ -114,5 +99,5 @@ export function CreateTrackerDialog({ defaultDate, isCompact = false }: CreateTr
 
 interface CreateTrackerDialogProps {
   defaultDate?: string;
-  isCompact?: boolean;
+  triggerSize?: 'default' | 'lg';
 }

@@ -17,6 +17,13 @@ export interface Project {
   managerId: string | null;
 }
 
+export type ProjectMembership = 'manager' | 'member';
+
+export interface MemberProject {
+  project: Project;
+  membership: ProjectMembership;
+}
+
 export interface CreateProjectInput {
   name: string;
   client: string;

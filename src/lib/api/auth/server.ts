@@ -67,6 +67,11 @@ export const resolveSessionProfile = cache(async (): Promise<SessionProfileState
     } satisfies ApiError;
   }
 
+  // no access row: same dead end as a missing profile row
+  if (!data.user_access) {
+    return { kind: 'reset', signOutPath: ROUTES.SIGN_OUT };
+  }
+
   const profile = mapUserRowToProfile(data);
 
   // the JWT hook copies user_role only, so the proxy can't see a block; cut a

@@ -21,7 +21,8 @@ const EXPECTED_ACCESS: Record<UserRole, Record<string, RouteAccess>> = {
     [ROUTES.PROFILE]: 'allowed',
     [ROUTES.PROJECTS]: 'allowed',
     [ROUTES.CREW]: 'denied',
-    [ROUTES.REPORTS]: 'denied'
+    // staff open Reports for their own time; the page scopes the data to them
+    [ROUTES.REPORTS]: 'allowed'
   },
   manager: {
     [ROUTES.DASHBOARD]: 'allowed',
@@ -61,7 +62,7 @@ const ROUTE_CLASSIFICATION: Record<keyof typeof ROUTES, 'public' | readonly User
   TRACKER: ALL_ROLES,
   PROFILE: ALL_ROLES,
   CREW: ['manager', 'admin'],
-  REPORTS: ['manager', 'admin']
+  REPORTS: ALL_ROLES
 };
 
 describe('route classification', () => {
@@ -99,7 +100,7 @@ describe('getRouteAccess', () => {
 
   it('applies restrictions to nested paths but not to lookalike prefixes', () => {
     expect(getRouteAccess('/crew/42', { role: 'worker' })).toBe('denied');
-    expect(getRouteAccess('/reports/2026/11', { role: 'worker' })).toBe('denied');
+    expect(getRouteAccess('/reports/2026/11', { role: 'worker' })).toBe('allowed');
     expect(getRouteAccess('/crewmates', { role: 'worker' })).toBe('allowed');
   });
 
