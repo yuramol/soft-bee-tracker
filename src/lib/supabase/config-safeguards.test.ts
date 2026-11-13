@@ -76,8 +76,15 @@ describe('configuration and secret safeguards', () => {
     const allSrcFiles = collectSourceFiles(srcRoot);
     const useClientFiles = allSrcFiles.filter((filePath) => hasUseClientDirective(fs.readFileSync(filePath, 'utf8')));
 
+    // lib/api/**/actions.ts may import server modules only while it is a real
+    // server action ('use server'), matching the eslint exemption
+    const isServerAction = (filePath: string) =>
+      filePath.startsWith(path.join(srcRoot, 'lib', 'api') + path.sep) &&
+      path.basename(filePath) === 'actions.ts' &&
+      /^\s*['"]use server['"]/.test(fs.readFileSync(filePath, 'utf8'));
+
     const isServerHelper = (filePath: string) =>
-      filePath.startsWith(path.join(srcRoot, 'lib') + path.sep) && path.basename(filePath) === 'server.ts';
+      (filePath.startsWith(path.join(srcRoot, 'lib') + path.sep) && path.basename(filePath) === 'server.ts') || isServerAction(filePath);
 
     const clientFileSet = new Set<string>(
       [...explicitClientFiles, ...alwaysClientPaths.flatMap((dir) => collectSourceFiles(dir)), ...useClientFiles].filter(

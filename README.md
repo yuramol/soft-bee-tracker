@@ -125,9 +125,41 @@ src/lib/api/users/
   mutations.ts   # Write helpers
   types.ts       # Optional aliases and Pick/Omit of generated database types
   mappers.ts     # Only when a value changes at runtime
+  actions.ts     # Optional 'use server' actions for privileged server work
 ```
 
 Components import hooks from `@/lib/api/<feature>`. They must not call Supabase, `fetch`, or Axios directly. Domain types alias generated database types. A mapper exists only when a value changes at runtime. See `.cursor/rules/lib-services.mdc`.
+
+`actions.ts` holds server actions (`'use server'` must be its first line). Client hooks import them; Next.js sends the browser a reference, not the code. Besides `server.ts`, it is the only `lib/api` file allowed to import server-only modules such as the service client, and `src/lib/api/actions-directive.test.ts` fails if the directive is missing.
+
+### Invitations
+
+Admins and managers invite teammates from the Crew page (SBT-54, SBT-55). `getInvitableRoles` in `src/lib/api/invites/permissions.ts` decides who may assign which role, from the verified `user_role` claim: admins any role, managers only workers, workers nobody. The dialog only shows the allowed roles; the `inviteMember` server action (`src/lib/api/invites/actions.ts`) re-checks everything on each call:
+
+1. a live, unblocked session whose role may invite;
+2. the email and role, with the same zod schema as the form (the email is trimmed and lowercased);
+3. the requested role is one this inviter may assign;
+4. the email has no account (`email_confirmed_at` set). An invite that hasn't been accepted is sent again only on **Resend invite**, and only by someone who could assign its role; anyone else just hears it's pending, without its role.
+
+It then calls `auth.admin.inviteUserByEmail` with the service client and stores the invited role: the signup trigger always creates a `worker`, so if that second write fails the user stays a worker and a resend fixes it. Nothing retries automatically; the dialog keeps the form after an error. Results: `sent` / `resent` (toast, dialog closes), `already-member`, `already-invited` (offers Resend), `rate-limited`, `error`.
+
+The email uses `supabase/templates/invite.html`, which links to `/auth/confirm?token_hash=…&type=invite&next=/register`. There the invitee is signed in and sets a password. An expired, used or superseded link lands on `/auth/link-invalid`, a public page that explains it whether or not the visitor is signed in.
+
+Users can update only their own profile columns (`username`, `first_name`, `last_name`, `phone`, `avatar_url`, `linkedin`, `upwork`, `time_zone`); `email`, `positions` and `date_employment` are written by the signup trigger and the service role only (migration `20261113081253_restrict_user_profile_updates.sql`). Role and access flags live in `public.user_access`, which only admins can change, and the invite stores the invited role there.
+
+**Hosted projects:** set the invite email template in the Supabase dashboard (Authentication → Emails) to the contents of `supabase/templates/invite.html`, and set the Site URL to the app's URL. With the default template the link goes through `/auth/v1/verify` to the Site URL, which the app doesn't handle.
+
+**Local email:** after changing `config.toml` (templates included), restart with `supabase stop && supabase start`. Emails arrive in Mailpit at http://127.0.0.1:54324.
+
+To verify, run `yarn test`, then with `yarn dev` open `/crew`:
+
+- As `admin@softbee.dev`, the role picker offers Staff, Manager and Admin. `not-an-email` shows a field error and `worker@softbee.dev` says the account exists.
+- Invite a new address as Manager: the dialog closes with "Invite sent". The email appears in Mailpit. Invite the same address again: the dialog offers **Resend invite**, and a second email arrives.
+- In a private window open the latest link: you land on `/register`, set a password and reach `/profile`. `/crew` opens, since the token's `user_role` is `manager`.
+- Open the first email's link, or the used one, again, in the same window or a fresh one: `/auth/link-invalid` explains the link no longer works.
+- As `manager@softbee.dev`, the picker offers only Staff. As `worker@softbee.dev`, `/crew` is denied and there is no Invite button.
+- A signed-in user's `update users set role = 'admin'` through the API fails with "permission denied for table users".
+- Delete the test users afterwards (Studio → Authentication).
 
 ### Route protection
 

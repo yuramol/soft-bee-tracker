@@ -26,7 +26,7 @@ vi.mock('@/lib/supabase/server', () => ({
 
 // node-only unit test of the server helper; the rule guards client bundles
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { getRouteSession, getSessionProfile, requireRouteAccess } from '@/lib/api/auth/server';
+import { getRouteSession, getSessionProfile, requireRouteAccess, resolveSessionProfile } from '@/lib/api/auth/server';
 
 describe('getSessionProfile', () => {
   beforeEach(() => {
@@ -100,6 +100,49 @@ describe('getSessionProfile', () => {
 
     await expect(getSessionProfile()).rejects.toEqual({ message: 'statement timeout', statusCode: 500 });
     expect(redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe('resolveSessionProfile', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('reports no session without a user', async () => {
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
+
+    await expect(resolveSessionProfile()).resolves.toEqual({ kind: 'none' });
+  });
+
+  it('returns the blocked sign-out path instead of redirecting', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: buildUserRow({ is_blocked: true }), error: null });
+
+    await expect(resolveSessionProfile()).resolves.toEqual({ kind: 'reset', signOutPath: `${ROUTES.SIGN_OUT}?reason=blocked` });
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('returns the plain sign-out path when the profile row is missing', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'no rows' } });
+
+    await expect(resolveSessionProfile()).resolves.toEqual({ kind: 'reset', signOutPath: ROUTES.SIGN_OUT });
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('returns the plain sign-out path when the access row is missing', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: { ...buildUserRow(), user_access: null }, error: null });
+
+    await expect(resolveSessionProfile()).resolves.toEqual({ kind: 'reset', signOutPath: ROUTES.SIGN_OUT });
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('returns the profile of an active user', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: buildUserRow(), error: null });
+
+    await expect(resolveSessionProfile()).resolves.toMatchObject({ kind: 'active', profile: { id: 'user-1' } });
   });
 });
 
