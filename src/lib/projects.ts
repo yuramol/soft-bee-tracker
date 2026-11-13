@@ -1,20 +1,21 @@
 import { ROUTES } from '@/constants';
 import type { UserRole } from '@/lib/api/auth';
-import type { ProjectStatus } from '@/lib/api/projects';
+import type { ProjectLink, ProjectRecord, ProjectStatus, UpdateProjectInput } from '@/lib/api/projects';
+import type { Tracker } from '@/lib/api/trackers';
+import type { ProjectPerson } from '@/lib/api/users';
 import { toSafeExternalUrl } from '@/lib/crew';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectLink, ProjectRecord, ProjectViewer } from '@/mocks/projects.mock';
+import { getTrackerMinutes } from '@/lib/tracker-days';
 
 export function getProjectsPermissions(role: UserRole): ProjectsPermissions {
   return PROJECTS_PERMISSIONS[role];
 }
 
-// Admin owns the whole space, a manager only the projects they are responsible for,
-// staff only read the projects they are assigned to
+// Admin owns the whole space; a manager manages every project they are responsible for or
+// assigned to; staff only read the projects they are assigned to
 export function getProjectAccess(project: ProjectRecord, viewer: ProjectViewer): ProjectAccess {
   const isAdmin = viewer.role === 'admin';
-  const isResponsibleManager = viewer.role === 'manager' && project.managerId === viewer.id;
-  const canEdit = isAdmin || isResponsibleManager;
+  const isProjectManager = viewer.role === 'manager' && (project.managerId === viewer.id || project.memberIds.includes(viewer.id));
+  const canEdit = isAdmin || isProjectManager;
 
   return {
     canEdit,
@@ -25,16 +26,19 @@ export function getProjectAccess(project: ProjectRecord, viewer: ProjectViewer):
   };
 }
 
+// mirrors the projects select policy: admins see everything, everyone else the projects
+// they are responsible for or assigned to
+export function isProjectVisible(project: Pick<ProjectRecord, 'managerId' | 'memberIds'>, viewer: ProjectViewer): boolean {
+  return viewer.role === 'admin' || project.managerId === viewer.id || project.memberIds.includes(viewer.id);
+}
+
+// only managers and admins may manage a project
+export function canBeProjectManager(person: Pick<ProjectPerson, 'role'>): boolean {
+  return person.role === 'manager' || person.role === 'admin';
+}
+
 export function getVisibleProjects(projects: ProjectRecord[], viewer: ProjectViewer): ProjectRecord[] {
-  if (viewer.role === 'admin') {
-    return projects;
-  }
-
-  if (viewer.role === 'manager') {
-    return projects.filter((project) => project.managerId === viewer.id);
-  }
-
-  return projects.filter((project) => project.memberIds.includes(viewer.id));
+  return projects.filter((project) => isProjectVisible(project, viewer));
 }
 
 export function filterProjects(projects: ProjectRecord[], filters: ProjectFilters): ProjectRecord[] {
@@ -46,29 +50,43 @@ export function filterProjects(projects: ProjectRecord[], filters: ProjectFilter
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// Managers may only bring in active people from their own team; anyone else needs an admin
-export function getAddableMembers(project: ProjectRecord, crew: CrewMember[], viewer: ProjectViewer): CrewMember[] {
-  return crew
+// people have no team in the backend yet, so any active person who isn't a member can be added
+export function getAddableMembers(project: ProjectRecord, people: ProjectPerson[]): ProjectPerson[] {
+  return people
     .filter((member) => member.status === 'active' && !project.memberIds.includes(member.id))
-    .filter((member) => viewer.role === 'admin' || member.managerId === viewer.id)
     .sort((a, b) => a.firstName.localeCompare(b.firstName));
 }
 
-export function getManagerCandidates(crew: CrewMember[]): CrewMember[] {
-  return crew
-    .filter((member) => member.status === 'active' && (member.role === 'manager' || member.role === 'admin'))
+// the responsible person first, everyone else in their existing order
+export function getOrderedMembers(
+  project: Pick<ProjectRecord, 'managerId' | 'memberIds'>,
+  peopleById: Map<string, ProjectPerson>
+): ProjectPerson[] {
+  const members = project.memberIds.flatMap((id) => peopleById.get(id) ?? []);
+
+  return [...members.filter((member) => member.id === project.managerId), ...members.filter((member) => member.id !== project.managerId)];
+}
+
+// active managers and admins, plus the people in keepIds (the viewer, the current responsible
+// person) even when their account isn't active yet, so a preselected value is always listed
+export function getManagerCandidates(people: ProjectPerson[], keepIds: Array<string | null> = []): ProjectPerson[] {
+  return people
+    .filter((member) => canBeProjectManager(member) && (member.status === 'active' || keepIds.includes(member.id)))
     .sort((a, b) => a.firstName.localeCompare(b.firstName));
 }
 
-export function summarizeProjectTime(project: ProjectRecord, viewer: ProjectViewer): ProjectTimeSummary {
-  if (getProjectAccess(project, viewer).canViewTeamTime) {
-    return { minutes: sumMinutes(Object.values(project.weekMinutesByMember)), scope: 'team' };
-  }
+// rejected entries don't count, the same as in the tracker summary
+export function summarizeProjectTime(project: ProjectRecord, trackers: Tracker[], viewer: ProjectViewer, now: Date): ProjectTimeSummary {
+  const scope = getProjectAccess(project, viewer).canViewTeamTime ? 'team' : 'own';
+  const minutes = trackers
+    .filter((tracker) => tracker.projectId === project.id && tracker.status !== 'rejected')
+    .filter((tracker) => scope === 'team' || tracker.userId === viewer.id)
+    .reduce((sum, tracker) => sum + getTrackerMinutes(tracker, now), 0);
 
-  return { minutes: project.weekMinutesByMember[viewer.id] ?? 0, scope: 'own' };
+  return { minutes, scope };
 }
 
-export function getShortName(person: Pick<CrewMember, 'firstName' | 'lastName'>): string {
+export function getShortName(person: Pick<ProjectPerson, 'firstName' | 'lastName'>): string {
   const initial = person.lastName.trim().charAt(0);
 
   return initial ? `${person.firstName} ${initial}.` : person.firstName;
@@ -80,32 +98,9 @@ export function isProjectNameTaken(projects: ProjectRecord[], name: string, exce
   return projects.some((project) => project.id !== exceptId && project.name.trim().toLowerCase() === normalized);
 }
 
-export function createProjectRecord(input: CreateProjectValues, id: string): ProjectRecord {
-  return {
-    id,
-    name: input.name.trim(),
-    description: input.description.trim(),
-    managerId: input.managerId,
-    status: 'active',
-    memberIds: [input.managerId],
-    links: [],
-    weekMinutesByMember: {},
-    version: 1
-  };
-}
-
-// Applies only the fields the viewer may change, and refuses to overwrite a newer version
-export function applyProjectUpdate(
-  project: ProjectRecord,
-  values: ProjectUpdateValues,
-  baseVersion: number,
-  editableFields: ProjectField[]
-): ProjectUpdateResult {
-  if (project.version !== baseVersion) {
-    return { status: 'conflict', project };
-  }
-
-  const changes: Partial<ProjectRecord> = {};
+// only the fields the viewer may change are sent to the server
+export function getProjectChanges(values: ProjectUpdateValues, editableFields: ProjectField[]): UpdateProjectInput['changes'] {
+  const changes: UpdateProjectInput['changes'] = {};
 
   for (const field of editableFields) {
     if (field === 'links') {
@@ -117,23 +112,7 @@ export function applyProjectUpdate(
     }
   }
 
-  const managerId = changes.managerId ?? project.managerId;
-  // the responsible manager is always a member; changing them leaves other projects untouched
-  const memberIds = project.memberIds.includes(managerId) ? project.memberIds : [managerId, ...project.memberIds];
-
-  return { status: 'saved', project: { ...project, ...changes, memberIds, version: project.version + 1 } };
-}
-
-export function removeProjectMember(project: ProjectRecord, memberId: string): ProjectRecord {
-  if (memberId === project.managerId) {
-    return project;
-  }
-
-  return { ...project, memberIds: project.memberIds.filter((id) => id !== memberId) };
-}
-
-export function addProjectMember(project: ProjectRecord, memberId: string): ProjectRecord {
-  return project.memberIds.includes(memberId) ? project : { ...project, memberIds: [...project.memberIds, memberId] };
+  return changes;
 }
 
 export function buildProjectHref(projectId?: string, view?: ProjectView): string {
@@ -240,10 +219,6 @@ export function containsSecret(text: string): boolean {
   return (text.match(URL_IN_TEXT_PATTERN) ?? []).some(hasSecretUrlParams);
 }
 
-function sumMinutes(values: number[]): number {
-  return values.reduce((sum, minutes) => sum + minutes, 0);
-}
-
 const PROJECT_PARAM = 'project';
 const VIEW_PARAM = 'view';
 
@@ -269,7 +244,7 @@ const SECRET_TEXT_PATTERNS: RegExp[] = [
 const URL_IN_TEXT_PATTERN = /https?:\/\/[^\s<>"']+/gi;
 
 // the responsible manager edits a project exactly like an admin
-const PROJECT_FIELDS: ProjectField[] = ['name', 'description', 'managerId', 'status', 'links'];
+const PROJECT_FIELDS: ProjectField[] = ['name', 'client', 'description', 'managerId', 'status', 'links'];
 
 // Creating projects is a separate grant for managers; every manager holds it until
 // per-person grants exist
@@ -281,13 +256,19 @@ const PROJECTS_PERMISSIONS: Record<UserRole, ProjectsPermissions> = {
 
 export const DEFAULT_PROJECT_FILTERS: ProjectFilters = { query: '', status: 'active' };
 
-export type ProjectField = 'name' | 'description' | 'managerId' | 'status' | 'links';
+export type ProjectField = 'name' | 'client' | 'description' | 'managerId' | 'status' | 'links';
 
 export type ProjectView = 'details' | 'edit';
 
+// how a create or edit submit ended, so the form knows which message to show
+export type ProjectSubmitOutcome = 'saved' | 'name-taken' | 'conflict' | 'failed';
+
 export type DescriptionBlock = { type: 'paragraph'; text: string } | { type: 'list'; ordered: boolean; items: string[] };
 
-export type ProjectUpdateResult = { status: 'saved'; project: ProjectRecord } | { status: 'conflict'; project: ProjectRecord };
+export interface ProjectViewer {
+  id: string;
+  role: UserRole;
+}
 
 export interface ProjectsPermissions {
   canCreate: boolean;
@@ -319,12 +300,15 @@ export interface ProjectParams {
 
 export interface CreateProjectValues {
   name: string;
+  client: string;
   description: string;
   managerId: string;
+  managerIds: string[];
 }
 
 export interface ProjectUpdateValues {
   name: string;
+  client: string;
   description: string;
   managerId: string;
   status: ProjectStatus;

@@ -43,7 +43,7 @@ export function mapUserRowToProfile(row: UserProfileRow): UserProfile {
   };
 }
 
-function parseUserPositions(value: Json): UserPositions | null {
+export function parseUserPositions(value: Json): UserPositions | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return null;
   }

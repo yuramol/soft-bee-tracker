@@ -1,4 +1,4 @@
-import type { UserRole } from '@/lib/api/auth';
+import type { UserRole, UserStatus } from '@/lib/api/auth';
 import type { LeaveAllowance, LeaveStatus, LeaveType } from '@/mocks/leave.mock';
 
 // Layout-only mock until crew gets its own backend task
@@ -185,7 +185,7 @@ export function getMockViewerId(viewer: CrewViewer): string {
 
 const MOCK_MANAGER_ID = 'u2';
 
-export type CrewStatus = 'pending' | 'active' | 'blocked';
+export type CrewStatus = UserStatus;
 
 export interface CrewMember {
   id: string;

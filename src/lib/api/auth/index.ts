@@ -28,6 +28,7 @@ export type {
   UpdatePasswordRequest,
   UpdateProfileRequest,
   UserRole,
+  UserStatus,
   UserPositions,
   UserProfile,
   UserAccess

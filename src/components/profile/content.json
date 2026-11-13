@@ -74,7 +74,7 @@
     "timeZoneOpen": "Show time zones",
     "timeZoneEmpty": "No time zones match",
     "timeZoneUseDevice": "Use this device's time zone ({timeZone})",
-    "timeZoneDeviceDefault": "Detected from this device. Change it if you work in another zone."
+    "timeZoneCompanyDefault": "Company default ({timeZone}). Change it if you work in another zone."
   },
   "leaveDialog": {
     "title": "Leave without saving?",
@@ -90,7 +90,7 @@
     "cancelButton": "Cancel",
     "sendButton": "Send confirmation",
     "sendingButton": "Sending…",
-    "sent": "Confirmation link sent to {email}"
+    "sent": "Check your inbox at {email} and open the confirmation link to finish changing your email."
   },
   "password": {
     "title": "Change password",

@@ -15,6 +15,7 @@ const projectLinkSchema = z.object({
 
 export const projectFormSchema = z.object({
   name: z.string().trim().min(1, content.project.nameRequired).max(255, content.project.nameTooLong),
+  client: z.string().trim().max(255, content.project.clientTooLong),
   managerId: z.string().min(1, content.project.managerRequired),
   description: z
     .string()
@@ -25,7 +26,9 @@ export const projectFormSchema = z.object({
   links: z.array(projectLinkSchema).max(20, content.project.tooManyLinks)
 });
 
-export const createProjectFormSchema = projectFormSchema.pick({ name: true, managerId: true, description: true });
+export const createProjectFormSchema = projectFormSchema
+  .pick({ name: true, client: true, managerId: true, description: true })
+  .extend({ managerIds: z.array(z.string()).max(20, content.project.tooManyManagers) });
 
 export type ProjectFormValues = z.infer<typeof projectFormSchema>;
 

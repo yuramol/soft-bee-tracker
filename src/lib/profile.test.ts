@@ -20,6 +20,7 @@ function buildProject(overrides: Partial<Project>): Project {
     status: 'active',
     type: 'time_material',
     managerId: null,
+    links: [],
     ...overrides
   };
 }

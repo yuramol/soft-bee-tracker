@@ -12,12 +12,11 @@ import { Button } from '@ui/button';
 import { Field, FieldLabel } from '@ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
 import type { UserRole } from '@/lib/api/auth';
-import type { ProjectStatus } from '@/lib/api/projects';
+import type { ProjectRecord, ProjectStatus } from '@/lib/api/projects';
+import type { ProjectPerson } from '@/lib/api/users';
 import { formatText } from '@/lib/format-text';
 import { buildProjectHref, filterProjects, getDescriptionSummary, getShortName, type ProjectFilters } from '@/lib/projects';
 import { cn } from '@/lib/utils';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectRecord } from '@/mocks/projects.mock';
 import content from '../content.json';
 
 export function ProjectList({ projects, filters, role, peopleById, createAction, onFiltersChange }: ProjectListProps) {
@@ -70,14 +69,16 @@ export function ProjectList({ projects, filters, role, peopleById, createAction,
         {filteredProjects.length > 0 ? (
           <ul className='animate-in fade-in flex flex-col gap-3 duration-500'>
             {filteredProjects.map((project) => (
-              <ProjectListCard key={project.id} project={project} manager={peopleById.get(project.managerId)} />
+              <ProjectListCard
+                key={project.id}
+                project={project}
+                manager={project.managerId ? peopleById.get(project.managerId) : undefined}
+              />
             ))}
           </ul>
         ) : (
           <ProjectListEmpty hasAnyProjects={projects.length > 0} role={role} />
         )}
-
-        <p className='text-muted-foreground text-xs'>{content.mockNotice}</p>
       </div>
     </>
   );
@@ -134,14 +135,14 @@ interface ProjectListProps {
   projects: ProjectRecord[];
   filters: ProjectFilters;
   role: UserRole;
-  peopleById: Map<string, CrewMember>;
+  peopleById: Map<string, ProjectPerson>;
   createAction: ReactNode;
   onFiltersChange: (filters: ProjectFilters) => void;
 }
 
 interface ProjectListCardProps {
   project: ProjectRecord;
-  manager: CrewMember | undefined;
+  manager: ProjectPerson | undefined;
 }
 
 interface ProjectListEmptyProps {
