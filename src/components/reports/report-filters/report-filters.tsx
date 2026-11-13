@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { PeriodPicker } from '@components/reports/period-picker/period-picker';
 import { Button } from '@ui/button';
 import { Checkbox } from '@ui/checkbox';
-import { Field, FieldDescription, FieldError, FieldLabel } from '@ui/field';
+import { Field, FieldError, FieldLabel } from '@ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
 import { formatText } from '@/lib/format-text';
 import type { ReportExportFormat } from '@/lib/report-export';
@@ -83,16 +83,17 @@ export function ReportFilters({ applied, options, labels, todayKey, isPending, o
         onChange={handleProjectsChange}
       />
 
-      <MultiSelectField
-        id='reportPeople'
-        label={content.filters.people}
-        allLabel={labels.allPeople}
-        value={draft.memberIds}
-        options={options.people}
-        isDisabled={!options.canChoosePeople}
-        hint={options.canChoosePeople ? undefined : content.filters.onlyMeHint}
-        onChange={handlePeopleChange}
-      />
+      {/* staff reports cover only their own time, so there is no one to choose */}
+      {options.canChoosePeople ? (
+        <MultiSelectField
+          id='reportPeople'
+          label={content.filters.people}
+          allLabel={labels.allPeople}
+          value={draft.memberIds}
+          options={options.people}
+          onChange={handlePeopleChange}
+        />
+      ) : null}
 
       <Field orientation='horizontal'>
         <Checkbox id='reportShowAbsence' checked={draft.showAbsence} onCheckedChange={handleAbsenceChange} />
@@ -128,7 +129,7 @@ export function ReportFilters({ applied, options, labels, todayKey, isPending, o
   );
 }
 
-function MultiSelectField({ id, label, allLabel, value, options, isDisabled = false, hint, onChange }: MultiSelectFieldProps) {
+function MultiSelectField({ id, label, allLabel, value, options, onChange }: MultiSelectFieldProps) {
   const namesById = new Map(options.map((option) => [option.id, option.name]));
 
   function renderValue(selected: string[]) {
@@ -144,7 +145,7 @@ function MultiSelectField({ id, label, allLabel, value, options, isDisabled = fa
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Select<string, true> multiple value={value} onValueChange={onChange} disabled={isDisabled || options.length === 0}>
+      <Select<string, true> multiple value={value} onValueChange={onChange} disabled={options.length === 0}>
         <SelectTrigger id={id} className='w-full'>
           <SelectValue>{renderValue}</SelectValue>
         </SelectTrigger>
@@ -156,7 +157,6 @@ function MultiSelectField({ id, label, allLabel, value, options, isDisabled = fa
           ))}
         </SelectContent>
       </Select>
-      {hint ? <FieldDescription>{hint}</FieldDescription> : null}
     </Field>
   );
 }
@@ -178,7 +178,5 @@ interface MultiSelectFieldProps {
   allLabel: string;
   value: string[];
   options: ReportOption[];
-  isDisabled?: boolean;
-  hint?: string;
   onChange: (value: string[]) => void;
 }

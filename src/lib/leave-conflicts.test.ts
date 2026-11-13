@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { getLeaveConflicts } from '@/lib/leave-conflicts';
+import { getLeaveConflicts, type ConflictProject } from '@/lib/leave-conflicts';
 import type { CrewLeaveRequest } from '@/lib/api/crew';
-import type { ProjectRecord } from '@/mocks/projects.mock';
 
 describe('getLeaveConflicts', () => {
   it('lists colleagues away on the same project and days', () => {
@@ -71,18 +70,8 @@ function leave(id: string, memberId: string, startDate: string, endDate: string,
   return { id, memberId, leaveType: 'vacation', startDate, endDate, note: null, status };
 }
 
-function project(id: string, memberIds: string[]): ProjectRecord {
-  return {
-    id,
-    name: id,
-    description: '',
-    managerId: memberIds[0],
-    status: 'active',
-    memberIds,
-    links: [],
-    weekMinutesByMember: {},
-    version: 1
-  };
+function project(id: string, memberIds: string[]): ConflictProject {
+  return { id, name: id, status: 'active', memberIds };
 }
 
 const REQUEST = leave('a', 'u1', '2026-11-23', '2026-11-27', 'pending');

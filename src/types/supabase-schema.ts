@@ -414,6 +414,14 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      get_report_time: {
+        Args: { from_date: string; to_date: string }
+        Returns: {
+          minutes: number
+          project_id: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       leave_status: "pending" | "approved" | "rejected" | "cancelled"
