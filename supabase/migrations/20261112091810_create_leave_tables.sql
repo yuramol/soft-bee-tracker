@@ -9,7 +9,7 @@
 --     a manager cannot decide on their own request, only an admin can.
 --   - workers can create pending requests for themselves and cancel them while pending;
 --     every other status change is rejected by private.guard_leave_request().
---   - managers can set allowances for other users, not their own; admins for anyone.
+--   - managers and admins can set allowances for any user.
 --   - anon gets no privileges on either table (supabase default privileges would
 --     otherwise grant them; rls was the only guard).
 
@@ -253,38 +253,24 @@ create policy "leave_allowances_select_own_or_management"
     or (select private.is_manager_or_admin())
   );
 
--- managers set other people's allowances, never their own (the same rule as deciding
--- on their own leave); admins may set anyone's, their own included
 create policy "leave_allowances_insert_management"
   on public.leave_allowances
   for insert
   to authenticated
-  with check (
-    (select private.is_manager_or_admin())
-    and (user_id <> (select auth.uid()) or (select private.jwt_role()) = 'admin')
-  );
+  with check ((select private.is_manager_or_admin()));
 
 create policy "leave_allowances_update_management"
   on public.leave_allowances
   for update
   to authenticated
-  using (
-    (select private.is_manager_or_admin())
-    and (user_id <> (select auth.uid()) or (select private.jwt_role()) = 'admin')
-  )
-  with check (
-    (select private.is_manager_or_admin())
-    and (user_id <> (select auth.uid()) or (select private.jwt_role()) = 'admin')
-  );
+  using ((select private.is_manager_or_admin()))
+  with check ((select private.is_manager_or_admin()));
 
 create policy "leave_allowances_delete_management"
   on public.leave_allowances
   for delete
   to authenticated
-  using (
-    (select private.is_manager_or_admin())
-    and (user_id <> (select auth.uid()) or (select private.jwt_role()) = 'admin')
-  );
+  using ((select private.is_manager_or_admin()));
 
 -- safety: revokes only remove supabase default privileges on this brand-new table
 revoke all on table public.leave_allowances from anon, authenticated;
