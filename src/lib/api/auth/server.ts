@@ -15,8 +15,26 @@ import { buildLoginPath, getRouteAccess, getRouteSessionFromClaim, type RouteSes
 // imported via '@/lib/api/auth/server' (not the barrel) so client bundles
 // never pull in next/headers.
 // cache() dedupes it per request: the root layout and requireRouteAccess on the
-// page share one getUser() and one users query
+// page share one getUser() and one users query.
+// a session that must be reset is sent to the sign-out route handler, because
+// server components can't write cookies
 export const getSessionProfile = cache(async (): Promise<UserProfile | null> => {
+  const state = await resolveSessionProfile();
+
+  if (state.kind === 'reset') {
+    redirect(state.signOutPath);
+  }
+
+  return state.kind === 'active' ? state.profile : null;
+});
+
+/**
+ * The same checks as getSessionProfile, returned as a value instead of a
+ * redirect. For callers that can't follow a server-side redirect to a route
+ * handler, such as server actions called through useMutation: they hand
+ * signOutPath to the client, which loads it as a full page.
+ */
+export const resolveSessionProfile = cache(async (): Promise<SessionProfileState> => {
   const supabase = await createServerClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
@@ -30,15 +48,14 @@ export const getSessionProfile = cache(async (): Promise<UserProfile | null> => 
   }
 
   if (!userData.user) {
-    return null;
+    return { kind: 'none' };
   }
 
   const { data, error } = await supabase.from('users').select(USER_COLUMNS).eq('id', userData.user.id).single();
 
-  // no profile row: the session can never use the app. server components can't
-  // write cookies, so hand off to the route handler that clears them
+  // no profile row: the session can never use the app, so clear its cookies
   if (error?.code === NO_ROWS_ERROR_CODE) {
-    redirect(ROUTES.SIGN_OUT);
+    return { kind: 'reset', signOutPath: ROUTES.SIGN_OUT };
   }
 
   // anything else (timeout, network, RLS) is likely transient: surface it to the
@@ -50,15 +67,20 @@ export const getSessionProfile = cache(async (): Promise<UserProfile | null> => 
     } satisfies ApiError;
   }
 
+  // no access row: same dead end as a missing profile row
+  if (!data.user_access) {
+    return { kind: 'reset', signOutPath: ROUTES.SIGN_OUT };
+  }
+
   const profile = mapUserRowToProfile(data);
 
   // the JWT hook copies user_role only, so the proxy can't see a block; cut a
   // blocked user's live session here, the same way signInWithPassword does
   if (profile.isBlocked) {
-    redirect(`${ROUTES.SIGN_OUT}?${SIGN_OUT_REASON_PARAM}=${SIGN_OUT_REASON_BLOCKED}`);
+    return { kind: 'reset', signOutPath: `${ROUTES.SIGN_OUT}?${SIGN_OUT_REASON_PARAM}=${SIGN_OUT_REASON_BLOCKED}` };
   }
 
-  return profile;
+  return { kind: 'active', profile };
 });
 
 // server counterpart of the proxy session: role from the verified user_role
@@ -127,3 +149,7 @@ function isInvalidSessionError(error: AuthError): boolean {
 const NO_ROWS_ERROR_CODE = 'PGRST116';
 
 const INVALID_SESSION_STATUSES: readonly number[] = [401, 403];
+
+// active: a usable session. none: no session (signed out, revoked or deleted
+// user). reset: a session that must never be used again; signOutPath clears it
+export type SessionProfileState = { kind: 'active'; profile: UserProfile } | { kind: 'none' } | { kind: 'reset'; signOutPath: string };

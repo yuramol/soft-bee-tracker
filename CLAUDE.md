@@ -86,6 +86,7 @@ src/lib/api/users/
   mutations.ts   # pure write helpers; optional useMutation hooks
   types.ts       # optional — aliases and Pick/Omit of generated database types
   mappers.ts     # only when a value changes at runtime
+  actions.ts     # optional — 'use server' actions for privileged server work; the only lib/api file besides server.ts that may import server-only modules
 ```
 
 - **`index.ts`**: components import from `@/lib/api/users` only — no deep paths.
@@ -147,6 +148,8 @@ src/lib/api/users/
   - `as restrictive for all`
   - `using ((select private.is_secure()))`
   - `with check ((select private.is_secure()))`
+- Exception: on `public.users` and `public.user_access` the policy is scoped `to anon, authenticated`, because
+  `supabase_auth_admin` (signup trigger, auth hook) has no JWT. See `.cursor/rules/supabase-db.mdc`.
 - For normal access control, do not use `for all`; create separate policies for `select`, `insert`, `update`, `delete`.
 - Split policies by role (`anon` and `authenticated`) when behavior differs.
 - Use `auth.uid()` (often as `(select auth.uid())`), never `current_user`.
@@ -158,7 +161,7 @@ src/lib/api/users/
 - Include concise rationale comments for non-trivial policy logic.
 - **Role checks must use JWT claims**, not `public.users` lookups in policies:
   - Prefer `(select private.is_manager_or_admin())` or `(select private.jwt_role())`.
-  - Claim `user_role` is set by `public.custom_access_token_hook` from `public.users.role`.
+  - Claim `user_role` is set by `private.custom_access_token_hook` from `public.user_access.role`.
   - Never authorize from `user_metadata`. Missing claim = fail closed.
   - Follow `.cursor/rules/supabase-db.mdc` for full JWT/RLS conventions.
 

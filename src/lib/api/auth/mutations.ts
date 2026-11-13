@@ -43,8 +43,16 @@ export async function signInWithPassword(params: SignInRequest): Promise<void> {
     } satisfies ApiError;
   }
 
-  // blocked users authenticate at the supabase auth layer but must not enter the app
-  const profile = await fetchSessionProfile();
+  // blocked users, and users whose profile or access row can't load, authenticate at the
+  // supabase auth layer but must not keep a session: the app layout can't render without a profile
+  let profile: UserProfile | null;
+
+  try {
+    profile = await fetchSessionProfile();
+  } catch (profileError) {
+    await supabase.auth.signOut();
+    throw profileError;
+  }
 
   if (profile?.isBlocked) {
     await supabase.auth.signOut();
@@ -104,17 +112,13 @@ export async function signUpWithProfile(params: SignUpRequest): Promise<void> {
   const supabase = createBrowserClient();
 
   // metadata keys mirror public.users columns so the handle_new_user trigger maps them 1:1;
-  // role/is_confirmed/is_blocked are server-enforced by the trigger regardless of these values
   const metadata: SignUpMetadata = {
-    role: 'worker',
     username: params.username,
     first_name: params.firstName,
     last_name: params.lastName,
     phone: params.phone || null,
     linkedin: params.linkedin || null,
-    upwork: params.upwork || null,
-    is_confirmed: false,
-    is_blocked: false
+    upwork: params.upwork || null
   };
 
   const { error } = await supabase.auth.signUp({
