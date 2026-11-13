@@ -42,6 +42,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  redirectTo.pathname = ROUTES.LOGIN;
+  // expired, already used or superseded link: explain it instead of dropping
+  // the user on /login (an invitee has no password yet). a public page, not
+  // /login: /login is guest-only, so a signed-in user who clicks an old email
+  // would be bounced home and never see the explanation
+  redirectTo.pathname = ROUTES.LINK_INVALID;
   return NextResponse.redirect(redirectTo);
 }

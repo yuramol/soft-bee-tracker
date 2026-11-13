@@ -145,7 +145,8 @@
     "roleDescription": "Managers can approve time and see reports.",
     "cancelButton": "Cancel",
     "sendButton": "Send invite",
-    "sendUnavailable": "Available with SBT-12"
+    "networkError": "We couldn't reach the server. Check your connection and try again.",
+    "resendButton": "Resend invite"
   },
   "employment": {
     "positionPlaceholder": "Any position, e.g. Frontend engineer",

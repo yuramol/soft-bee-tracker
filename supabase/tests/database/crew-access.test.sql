@@ -75,7 +75,8 @@ select is(
 select throws_ok(
   $$ update public.users set email = 'taken@softbee.dev' where id = '00000000-0000-0000-0000-000000000a03' $$,
   '42501',
-  'only position and employment date can be changed on another person''s profile',
+  -- refused by the column grant (sbt-55) before the guard trigger runs; either is fine
+  null,
   'an admin cannot change someone else''s email'
 );
 

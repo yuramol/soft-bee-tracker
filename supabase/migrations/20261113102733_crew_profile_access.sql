@@ -10,11 +10,14 @@
 --   - admins can update other people's rows, but private.guard_users_update() only lets
 --     positions and date_employment change there; names, email and contacts stay owner-only.
 --     owners can't change their own positions or date_employment.
---   - grants update (positions, date_employment) to authenticated so admin edits keep
---     working after sbt-55's column-level grant on public.users; the trigger above keeps
---     owners out of those two columns.
+--   - grants update (positions, date_employment) to authenticated: sbt-55
+--     (20261113081253) limits that role to the profile columns, and admins write these
+--     two through it. the guard trigger keeps owners out of them.
 --   - role and blocking are not touched here: they live in public.user_access, where
 --     admins already have an update policy (20261106123719).
+-- ordering: must run after 20261113081253_restrict_user_profile_updates.sql. its
+--   "revoke update on table public.users" also drops column-level update grants, so
+--   granting here first would be undone.
 
 create policy "users_select_management"
   on public.users
@@ -85,7 +88,6 @@ create trigger guard_users_update
   before update on public.users
   for each row execute function private.guard_users_update();
 
--- admins write these through the authenticated role. sbt-55 narrows the update grant
--- on public.users to the profile columns, so name the two admin-managed ones here;
--- while the table-wide grant still exists this changes nothing.
+-- admins write these through the authenticated role, which sbt-55 limits to the
+-- profile columns; add the two admin-managed ones (owners are stopped by the trigger)
 grant update (positions, date_employment) on table public.users to authenticated;

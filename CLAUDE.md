@@ -86,6 +86,7 @@ src/lib/api/users/
   mutations.ts   # pure write helpers; optional useMutation hooks
   types.ts       # optional — aliases and Pick/Omit of generated database types
   mappers.ts     # only when a value changes at runtime
+  actions.ts     # optional — 'use server' actions for privileged server work; the only lib/api file besides server.ts that may import server-only modules
 ```
 
 - **`index.ts`**: components import from `@/lib/api/users` only — no deep paths.
