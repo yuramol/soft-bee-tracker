@@ -21,6 +21,7 @@ export interface UserProfile {
   positions: UserPositions | null;
   linkedin: string | null;
   upwork: string | null;
+  timeZone: string | null;
   isConfirmed: boolean;
   isBlocked: boolean;
 }
@@ -50,9 +51,17 @@ export interface UpdateProfileRequest {
   firstName: string;
   lastName: string;
   phone: string | null;
-  avatarUrl: string | null;
   linkedin: string | null;
   upwork: string | null;
+  timeZone: string | null;
+}
+
+export interface UpdateAvatarRequest {
+  avatarUrl: string | null;
+}
+
+export interface RequestEmailChangeRequest {
+  email: string;
 }
 
 export interface UpdatePasswordRequest {

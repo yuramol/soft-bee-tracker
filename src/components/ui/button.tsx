@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'rounded-full bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 active:scale-[0.98] disabled:active:scale-100',
+          'rounded-full bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary),var(--background)_15%)] active:scale-[0.98] disabled:active:scale-100',
         brand:
           'bg-electric-green text-brand-black shadow-sm hover:bg-lime-glow hover:shadow-glow focus-visible:ring-electric-green/50 aria-expanded:bg-lime-glow',
         outline:

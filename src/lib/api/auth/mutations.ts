@@ -5,12 +5,14 @@ import { toast } from 'sonner';
 
 import { ROUTES } from '@/constants';
 import { authKeys, fetchSessionProfile } from '@/lib/api/auth/queries';
-import { mapProfileUpdateToUserRow, mapUserRowToProfile, USER_COLUMNS } from '@/lib/api/auth/mappers';
+import { mapAvatarUpdateToUserRow, mapProfileUpdateToUserRow, mapUserRowToProfile, USER_COLUMNS } from '@/lib/api/auth/mappers';
+import { AVATAR_BUCKET, buildAvatarPath, validateAvatarFile } from '@/lib/avatar';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { clearSupabaseAuthCookies } from '@/lib/supabase/cookies';
 import { resetClientState } from '@/lib/api/reset-client-state';
 import type {
   RecoverPasswordRequest,
+  RequestEmailChangeRequest,
   SignInRequest,
   SignUpMetadata,
   SignUpRequest,
@@ -18,6 +20,7 @@ import type {
   UpdateProfileRequest,
   UserProfile
 } from '@/lib/api/auth/types';
+import type { Database } from '@/types';
 import type { ApiError } from '@/types/api-error';
 import content from './content.json';
 
@@ -205,22 +208,132 @@ export function useUpdatePassword(options?: UseAuthMutationOptions) {
 }
 
 export async function updateProfile(params: UpdateProfileRequest): Promise<UserProfile> {
-  const supabase = createBrowserClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = await getSessionUserId(createBrowserClient());
 
-  if (userError || !userData.user) {
+  return updateSessionUserRow(userId, mapProfileUpdateToUserRow(params));
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation<UserProfile, ApiError, UpdateProfileRequest>({
+    mutationFn: updateProfile,
+    onSuccess: (profile) => {
+      queryClient.setQueryData(authKeys.sessionProfile(), profile);
+    }
+  });
+}
+
+// the file goes to storage first so the row only ever points at an object that exists
+export async function uploadAvatar(file: File): Promise<UserProfile> {
+  const validationError = validateAvatarFile(file);
+
+  if (validationError) {
+    throw {
+      message: validationError,
+      statusCode: 400
+    } satisfies ApiError;
+  }
+
+  const supabase = createBrowserClient();
+  const userId = await getSessionUserId(supabase);
+  const path = buildAvatarPath(userId, file, Date.now());
+  const bucket = supabase.storage.from(AVATAR_BUCKET);
+  const { error: uploadError } = await bucket.upload(path, file, { contentType: file.type, cacheControl: '3600' });
+
+  if (uploadError) {
+    throw {
+      message: uploadError.message,
+      statusCode: 500
+    } satisfies ApiError;
+  }
+
+  try {
+    const profile = await updateSessionUserRow(userId, mapAvatarUpdateToUserRow({ avatarUrl: bucket.getPublicUrl(path).data.publicUrl }));
+    await removeStoredAvatars(supabase, userId, path);
+
+    return profile;
+  } catch (error) {
+    await removeStoredAvatars(supabase, userId, null, [path]);
+    throw error;
+  }
+}
+
+export async function removeAvatar(): Promise<UserProfile> {
+  const supabase = createBrowserClient();
+  const userId = await getSessionUserId(supabase);
+  const profile = await updateSessionUserRow(userId, mapAvatarUpdateToUserRow({ avatarUrl: null }));
+
+  await removeStoredAvatars(supabase, userId, null);
+
+  return profile;
+}
+
+export function useUploadAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation<UserProfile, ApiError, File>({
+    mutationFn: uploadAvatar,
+    onSuccess: (profile) => {
+      queryClient.setQueryData(authKeys.sessionProfile(), profile);
+    }
+  });
+}
+
+export function useRemoveAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation<UserProfile, ApiError, void>({
+    mutationFn: removeAvatar,
+    onSuccess: (profile) => {
+      queryClient.setQueryData(authKeys.sessionProfile(), profile);
+    }
+  });
+}
+
+// supabase keeps the old address until the link sent to the new one is opened
+export async function requestEmailChange(params: RequestEmailChangeRequest): Promise<void> {
+  const supabase = createBrowserClient();
+  const { error } = await supabase.auth.updateUser(
+    { email: params.email },
+    { emailRedirectTo: `${window.location.origin}/auth/confirm?next=${ROUTES.PROFILE}` }
+  );
+
+  if (error) {
+    throw {
+      message: error.message,
+      statusCode: error.status
+    } satisfies ApiError;
+  }
+}
+
+export function useRequestEmailChange() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, ApiError, RequestEmailChangeRequest>({
+    mutationFn: requestEmailChange,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: authKeys.pendingEmail() });
+    }
+  });
+}
+
+async function getSessionUserId(supabase: BrowserClient): Promise<string> {
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
     throw {
       message: content.sessionExpired,
       statusCode: 401
     } satisfies ApiError;
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .update(mapProfileUpdateToUserRow(params))
-    .eq('id', userData.user.id)
-    .select(USER_COLUMNS)
-    .single();
+  return data.user.id;
+}
+
+async function updateSessionUserRow(userId: string, update: UserUpdate): Promise<UserProfile> {
+  const supabase = createBrowserClient();
+  const { data, error } = await supabase.from('users').update(update).eq('id', userId).select(USER_COLUMNS).single();
 
   if (error) {
     throw {
@@ -232,3 +345,22 @@ export async function updateProfile(params: UpdateProfileRequest): Promise<UserP
 
   return mapUserRowToProfile(data);
 }
+
+// cleanup is best effort: a leftover file must never fail a save that already landed
+async function removeStoredAvatars(supabase: BrowserClient, userId: string, keepPath: string | null, paths?: string[]) {
+  try {
+    const stalePaths =
+      paths ?? ((await supabase.storage.from(AVATAR_BUCKET).list(userId)).data ?? []).map((object) => `${userId}/${object.name}`);
+    const pathsToRemove = stalePaths.filter((path) => path !== keepPath);
+
+    if (pathsToRemove.length > 0) {
+      await supabase.storage.from(AVATAR_BUCKET).remove(pathsToRemove);
+    }
+  } catch {
+    // orphaned files only cost storage; the profile row is already correct
+  }
+}
+
+type UserUpdate = Database['public']['Tables']['users']['Update'];
+
+type BrowserClient = ReturnType<typeof createBrowserClient>;

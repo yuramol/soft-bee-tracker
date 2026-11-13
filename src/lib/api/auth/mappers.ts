@@ -1,6 +1,6 @@
 import type { Database } from '@/types';
 import type { ApiError } from '@/types/api-error';
-import type { UpdateProfileRequest, UserAccess, UserPositions, UserProfile } from '@/lib/api/auth/types';
+import type { UpdateAvatarRequest, UpdateProfileRequest, UserAccess, UserPositions, UserProfile } from '@/lib/api/auth/types';
 import content from './content.json';
 
 type UserRow = Database['public']['Tables']['users']['Row'];
@@ -8,7 +8,7 @@ type UserUpdate = Database['public']['Tables']['users']['Update'];
 type Json = Database['public']['Tables']['users']['Row']['positions'];
 
 export const USER_COLUMNS =
-  'id, created_at, updated_at, username, email, first_name, last_name, phone, avatar_url, date_employment, positions, linkedin, upwork, user_access(role, is_confirmed, is_blocked)';
+  'id, created_at, updated_at, username, email, first_name, last_name, phone, avatar_url, date_employment, positions, linkedin, upwork, time_zone, user_access(role, is_confirmed, is_blocked)';
 
 interface UserProfileRow extends UserRow {
   user_access: Pick<UserAccess, 'role' | 'is_confirmed' | 'is_blocked'> | null;
@@ -37,6 +37,7 @@ export function mapUserRowToProfile(row: UserProfileRow): UserProfile {
     positions: parseUserPositions(row.positions),
     linkedin: row.linkedin,
     upwork: row.upwork,
+    timeZone: row.time_zone,
     isConfirmed: access.is_confirmed,
     isBlocked: access.is_blocked
   };
@@ -63,8 +64,13 @@ export function mapProfileUpdateToUserRow(request: UpdateProfileRequest): UserUp
     first_name: request.firstName,
     last_name: request.lastName,
     phone: request.phone,
-    avatar_url: request.avatarUrl,
     linkedin: request.linkedin,
-    upwork: request.upwork
+    upwork: request.upwork,
+    time_zone: request.timeZone
   };
+}
+
+// the photo is saved on its own so it never carries unsaved form edits with it
+export function mapAvatarUpdateToUserRow(request: UpdateAvatarRequest): UserUpdate {
+  return { avatar_url: request.avatarUrl };
 }

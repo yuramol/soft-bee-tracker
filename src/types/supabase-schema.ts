@@ -243,6 +243,7 @@ export type Database = {
           linkedin: string | null
           phone: string | null
           positions: Json | null
+          time_zone: string | null
           updated_at: string
           upwork: string | null
           username: string
@@ -258,6 +259,7 @@ export type Database = {
           linkedin?: string | null
           phone?: string | null
           positions?: Json | null
+          time_zone?: string | null
           updated_at?: string
           upwork?: string | null
           username: string
@@ -273,6 +275,7 @@ export type Database = {
           linkedin?: string | null
           phone?: string | null
           positions?: Json | null
+          time_zone?: string | null
           updated_at?: string
           upwork?: string | null
           username?: string

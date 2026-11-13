@@ -138,10 +138,7 @@ describe('requireRouteAccess', () => {
     await expect(requireRouteAccess(ROUTES.CREW)).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.LOGIN}?next=%2Fcrew`);
   });
 
-  it.each<[string, UserRole]>([
-    [ROUTES.CREW, 'worker'],
-    [ROUTES.REPORTS, 'worker']
-  ])('redirects %s for %s to access denied', async (route, role) => {
+  it.each<[string, UserRole]>([[ROUTES.CREW, 'worker']])('redirects %s for %s to access denied', async (route, role) => {
     signInAs(role);
 
     await expect(requireRouteAccess(route)).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.ACCESS_DENIED}`);
@@ -157,6 +154,8 @@ describe('requireRouteAccess', () => {
   it.each<[string, UserRole]>([
     [ROUTES.CREW, 'manager'],
     [ROUTES.REPORTS, 'manager'],
+    // staff open Reports for their own time
+    [ROUTES.REPORTS, 'worker'],
     [ROUTES.CREW, 'admin']
   ])('allows %s for %s', async (route, role) => {
     signInAs(role);
