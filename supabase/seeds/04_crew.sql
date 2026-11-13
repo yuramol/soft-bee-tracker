@@ -31,7 +31,8 @@ select
   'authenticated',
   person.email,
   extensions.crypt('Password1', extensions.gen_salt('bf')),
-  now(),
+  -- an invite that hasn't been accepted has no confirmed email yet
+  case when person.email = 'taras@softbee.example' then null else now() end,
   '{"provider": "email", "providers": ["email"]}',
   person.meta,
   now(),
