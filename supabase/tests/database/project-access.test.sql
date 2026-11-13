@@ -1,6 +1,6 @@
 begin;
 
-select plan(25);
+select plan(26);
 
 -- seeded: admin a01, manager a02 (responsible for the seeded projects), worker a03.
 -- two more managers are added here.
@@ -184,6 +184,16 @@ select is(
   (select count(*)::int from public.project_rates where project_id = '00000000-0000-0000-0000-00000000fb02'),
   1,
   'an admin who creates a project for someone else is not added to it'
+);
+
+delete from public.project_rates
+where project_id = '00000000-0000-0000-0000-00000000fb02'
+  and user_id = '00000000-0000-0000-0000-00000000f003';
+
+select is(
+  (select count(*)::int from public.project_rates where project_id = '00000000-0000-0000-0000-00000000fb02'),
+  1,
+  'the responsible person cannot be removed from the project'
 );
 
 select is((select count(*)::int from public.projects), (select total from project_totals), 'an admin sees every project');

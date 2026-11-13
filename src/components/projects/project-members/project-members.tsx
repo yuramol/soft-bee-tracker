@@ -11,7 +11,7 @@ import { Field, FieldDescription, FieldLabel } from '@ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
 import { getFullName } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
-import { getShortName } from '@/lib/projects';
+import { getOrderedMembers, getShortName } from '@/lib/projects';
 import type { ProjectRecord } from '@/lib/api/projects';
 import type { ProjectPerson } from '@/lib/api/users';
 import content from '../content.json';
@@ -19,7 +19,7 @@ import content from '../content.json';
 export function ProjectMembers({ project, peopleById, canManage, addableMembers, onAdd, onRemove }: ProjectMembersProps) {
   const [pendingRemoval, setPendingRemoval] = useState<ProjectPerson | null>(null);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const members = project.memberIds.flatMap((id) => peopleById.get(id) ?? []);
+  const members = getOrderedMembers(project, peopleById);
 
   function handleRemoveRequest(member: ProjectPerson) {
     setPendingRemoval(member);

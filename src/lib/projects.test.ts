@@ -11,6 +11,7 @@ import {
   getAddableMembers,
   getDescriptionSummary,
   getManagerCandidates,
+  getOrderedMembers,
   getProjectAccess,
   getProjectChanges,
   getProjectsPermissions,
@@ -181,6 +182,15 @@ describe('getAddableMembers', () => {
     ];
 
     expect(getAddableMembers(project({}), people).map((item) => item.id)).toEqual(['outsider', 'team']);
+  });
+});
+
+describe('getOrderedMembers', () => {
+  it('puts the responsible person first and keeps the rest in order, skipping unknown ids', () => {
+    const peopleById = new Map(['a', 'b', 'new-mgr', 'c'].map((id) => [id, person({ id })]));
+    const handedOver = project({ managerId: 'new-mgr', memberIds: ['a', 'b', 'gone', 'new-mgr', 'c'] });
+
+    expect(getOrderedMembers(handedOver, peopleById).map((item) => item.id)).toEqual(['new-mgr', 'a', 'b', 'c']);
   });
 });
 

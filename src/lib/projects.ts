@@ -57,6 +57,16 @@ export function getAddableMembers(project: ProjectRecord, people: ProjectPerson[
     .sort((a, b) => a.firstName.localeCompare(b.firstName));
 }
 
+// the responsible person first, everyone else in their existing order
+export function getOrderedMembers(
+  project: Pick<ProjectRecord, 'managerId' | 'memberIds'>,
+  peopleById: Map<string, ProjectPerson>
+): ProjectPerson[] {
+  const members = project.memberIds.flatMap((id) => peopleById.get(id) ?? []);
+
+  return [...members.filter((member) => member.id === project.managerId), ...members.filter((member) => member.id !== project.managerId)];
+}
+
 // active managers and admins, plus the people in keepIds (the viewer, the current responsible
 // person) even when their account isn't active yet, so a preselected value is always listed
 export function getManagerCandidates(people: ProjectPerson[], keepIds: Array<string | null> = []): ProjectPerson[] {

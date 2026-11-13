@@ -288,13 +288,23 @@ create policy "project_rates_update_management"
     or ((select private.is_manager_or_admin()) and (select private.is_project_manager(project_id)))
   );
 
+-- the responsible person always stays a member; a policy (not a trigger) so deleting the
+-- project still cascades to every rate
 create policy "project_rates_delete_management"
   on public.project_rates
   for delete
   to authenticated
   using (
-    (select private.is_admin())
-    or ((select private.is_manager_or_admin()) and (select private.is_project_manager(project_id)))
+    (
+      (select private.is_admin())
+      or ((select private.is_manager_or_admin()) and (select private.is_project_manager(project_id)))
+    )
+    and not exists (
+      select 1
+      from public.projects p
+      where p.id = project_id
+        and p.manager_id = user_id
+    )
   );
 
 -- ---------------------------------------------------------------------------
