@@ -79,6 +79,13 @@ describe('getSessionProfile', () => {
     await expect(getSessionProfile()).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.SIGN_OUT}?reason=blocked`);
   });
 
+  it('resets the session when the access row is missing', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    single.mockResolvedValue({ data: { ...buildUserRow(), user_access: null }, error: null });
+
+    await expect(getSessionProfile()).rejects.toThrow(`NEXT_REDIRECT:${ROUTES.SIGN_OUT}`);
+  });
+
   it('returns the profile of an active user', async () => {
     getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     single.mockResolvedValue({ data: buildUserRow(), error: null });
@@ -192,14 +199,14 @@ describe('requireRouteAccess', () => {
   });
 });
 
-function signInAs(role: UserRole, row: Partial<UserRow> = {}) {
+function signInAs(role: UserRole, access: Partial<AccessRow> = {}) {
   getClaims.mockResolvedValue({ data: { claims: { sub: 'user-1', user_role: role } }, error: null });
   getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-  single.mockResolvedValue({ data: buildUserRow(row), error: null });
+  single.mockResolvedValue({ data: buildUserRow(access), error: null });
 }
 
 // role is deliberately 'worker' here: the guard must use the claim, not this row
-function buildUserRow(overrides: Partial<UserRow> = {}): UserRow {
+function buildUserRow(access: Partial<AccessRow> = {}) {
   return {
     id: 'user-1',
     created_at: '',
@@ -210,18 +217,12 @@ function buildUserRow(overrides: Partial<UserRow> = {}): UserRow {
     last_name: 'User',
     phone: null,
     avatar_url: null,
-    role: 'worker',
     date_employment: null,
     positions: null,
-    salary: null,
-    salary_info: null,
-    type_salary: null,
     linkedin: null,
     upwork: null,
-    is_confirmed: true,
-    is_blocked: false,
-    ...overrides
+    user_access: { role: 'worker', is_confirmed: true, is_blocked: false, ...access }
   };
 }
 
-type UserRow = Record<string, string | number | boolean | null | string[]>;
+type AccessRow = Record<string, string | boolean>;
