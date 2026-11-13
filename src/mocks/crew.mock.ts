@@ -1,5 +1,5 @@
 import type { UserRole } from '@/lib/api/auth';
-import type { LeaveAllowance, LeaveStatus, LeaveType } from '@/mocks/leave.mock';
+import type { LeaveAllowance, LeaveStatus, LeaveType } from '@/lib/api/leave';
 
 // Layout-only mock until crew gets its own backend task
 export const MOCK_CREW: CrewMember[] = [

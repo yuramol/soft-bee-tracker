@@ -20,66 +20,120 @@ import {
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
+import { EmptyState } from '@components/common/empty-state/empty-state';
+import { ErrorState } from '@components/common/error-state/error-state';
 import { LeaveNote } from '@components/crew/leave-note';
+import { EditableAllowance } from '@components/crew/member-profile/editable-allowance';
 import { EditableEmploymentDateRow, EditablePositionRow } from '@components/crew/member-profile/editable-detail-rows';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
+import { MemberProfileSkeleton } from '@components/crew/member-profile/member-profile-skeleton';
 import { MemberStatusBadge } from '@components/crew/member-status-badge';
 import { RoleBadge } from '@components/crew/role-badge';
 import { RequestLeaveDialog } from '@components/tracker/request-leave-dialog/request-leave-dialog';
-import { Avatar, AvatarFallback } from '@ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@ui/avatar';
 import { Button } from '@ui/button';
-import { computeMemberLeaveBalances, getFullName, toSafeExternalUrl } from '@/lib/crew';
+import {
+  useCrew,
+  useGrantLeave,
+  useReviewLeaveRequest,
+  useSetLeaveAllowance,
+  useUpdateMemberEmployment,
+  type Crew,
+  type CrewLeaveRequest,
+  type CrewMember,
+  type CrewViewer
+} from '@/lib/api/crew';
+import { canReviewLeaveRequest, computeMemberLeaveBalances, getFullName, getManagerNames, toSafeExternalUrl } from '@/lib/crew';
 import { formatClock } from '@/lib/format-duration';
 import { formatText } from '@/lib/format-text';
 import { countLeaveWorkingDays, formatLeaveDateRange, LEAVE_TYPES, type LeaveBalance } from '@/lib/leave-days';
 import type { LeaveRequestFormValues } from '@/lib/schemas/leave-request-form.schema';
 import { getUserAvatarFallback } from '@/lib/utils';
-import { MOCK_CREW_LEAVE_ALLOWANCES, type CrewLeaveRequest, type CrewMember } from '@/mocks/crew.mock';
-import type { LeaveType } from '@/mocks/leave.mock';
+import type { LeaveType } from '@/lib/api/leave';
 import content from '../content.json';
 
-export function MemberProfile({
-  member: initialMember,
-  managerName,
-  initialLeaveRequests,
-  canReviewLeave,
-  canEditEmployment
-}: MemberProfileProps) {
-  const [member, setMember] = useState<CrewMember>(initialMember);
-  const [leaveRequests, setLeaveRequests] = useState<CrewLeaveRequest[]>(initialLeaveRequests);
-  const [year] = useState(() => new Date().getFullYear());
-  const name = getFullName(member);
-  const balances = computeMemberLeaveBalances(leaveRequests, MOCK_CREW_LEAVE_ALLOWANCES, year);
+export function MemberProfile({ memberId, viewer, canReviewLeave, canEditEmployment }: MemberProfileProps) {
+  const { data: crew, isLoading, error, refetch } = useCrew();
 
-  function handleGrantLeave(values: LeaveRequestFormValues) {
-    setLeaveRequests((current) => [
-      ...current,
-      {
-        id: `granted-${Date.now()}`,
-        memberId: member.id,
-        leaveType: values.leaveType,
-        startDate: values.startDate,
-        endDate: values.endDate,
-        note: values.note.trim() || null,
-        status: 'approved'
-      }
-    ]);
+  function handleRetry() {
+    void refetch();
+  }
+
+  if (isLoading) {
+    return <MemberProfileSkeleton hasBackLink={false} />;
+  }
+
+  if (error || !crew) {
+    return <ErrorState error={error ?? { message: content.loadError }} title={content.loadErrorTitle} onRetry={handleRetry} />;
+  }
+
+  const member = crew.members.find((item) => item.id === memberId);
+
+  if (!member) {
+    return <EmptyState icon={UserRoundIcon} title={content.profile.notFoundTitle} description={content.loadError} />;
+  }
+
+  return (
+    <MemberProfileContent
+      member={member}
+      crew={crew}
+      viewer={viewer}
+      canReviewLeave={canReviewLeave}
+      canEditEmployment={canEditEmployment}
+    />
+  );
+}
+
+function MemberProfileContent({ member, crew, viewer, canReviewLeave, canEditEmployment }: MemberProfileContentProps) {
+  const [year] = useState(() => new Date().getFullYear());
+  const updateEmployment = useUpdateMemberEmployment();
+  const reviewLeave = useReviewLeaveRequest();
+  const grantLeave = useGrantLeave();
+  const setAllowance = useSetLeaveAllowance();
+  const name = getFullName(member);
+  const membersById = new Map(crew.members.map((item) => [item.id, item]));
+  const managerNames = getManagerNames(member, membersById);
+  const leaveRequests = crew.leaveRequests.filter((request) => request.memberId === member.id);
+  const allowances = crew.allowances.filter((allowance) => allowance.memberId === member.id);
+  const balances = computeMemberLeaveBalances(leaveRequests, allowances, year);
+  // managers can't grant or decide their own leave; admins can (the database agrees)
+  const canGrantLeave = canReviewLeave && (viewer.role === 'admin' || member.id !== viewer.id);
+
+  async function handleGrantLeave(values: LeaveRequestFormValues) {
+    await grantLeave.mutateAsync({
+      memberId: member.id,
+      leaveType: values.leaveType,
+      startDate: values.startDate,
+      endDate: values.endDate,
+      note: values.note.trim() || null
+    });
     toast.success(formatText(content.profile.granted, { name }));
   }
 
   function handlePositionSave(position: string) {
-    setMember((current) => ({ ...current, position }));
-    toast.success(formatText(content.employment.positionSaved, { name }));
+    updateEmployment.mutate(
+      { memberId: member.id, position },
+      { onSuccess: () => toast.success(formatText(content.employment.positionSaved, { name })) }
+    );
   }
 
   function handleEmploymentDateSave(employmentDate: string | null) {
-    setMember((current) => ({ ...current, employmentDate }));
-    toast.success(formatText(content.employment.dateSaved, { name }));
+    updateEmployment.mutate(
+      { memberId: member.id, employmentDate },
+      { onSuccess: () => toast.success(formatText(content.employment.dateSaved, { name })) }
+    );
   }
 
   function handleReview(request: CrewLeaveRequest, decision: 'approved' | 'rejected') {
-    setLeaveRequests((current) => current.map((item) => (item.id === request.id ? { ...item, status: decision } : item)));
-    toast.success(formatText(decision === 'approved' ? content.leave.approved : content.leave.rejected, { name }));
+    reviewLeave.mutate(
+      { requestId: request.id, decision },
+      { onSuccess: () => toast.success(formatText(decision === 'approved' ? content.leave.approved : content.leave.rejected, { name })) }
+    );
+  }
+
+  async function handleAllowanceSave(leaveType: LeaveType, days: number) {
+    await setAllowance.mutateAsync({ memberId: member.id, year, leaveType, days });
+    toast.success(formatText(content.profile.allowanceSaved, { type: content.profile.balances[leaveType], name }));
   }
 
   return (
@@ -87,11 +141,12 @@ export function MemberProfile({
       <section aria-label={content.profile.detailsLabel} className='bg-card flex flex-col gap-6 rounded-2xl border p-5 sm:p-8'>
         <div className='flex flex-col gap-5 sm:flex-row sm:items-center'>
           <Avatar className='size-24 sm:size-28'>
+            {member.avatarUrl ? <AvatarImage src={member.avatarUrl} alt='' /> : null}
             <AvatarFallback className='text-3xl font-semibold'>{getUserAvatarFallback(member)}</AvatarFallback>
           </Avatar>
           <div className='flex min-w-0 flex-col gap-2'>
             <h1 className='truncate text-2xl font-semibold tracking-tight sm:text-3xl'>{name}</h1>
-            <p className='text-muted-foreground'>{member.position}</p>
+            <p className='text-muted-foreground'>{member.position ?? content.people.noPosition}</p>
             <div className='flex flex-wrap gap-2'>
               <RoleBadge role={member.role} />
               <MemberStatusBadge status={member.status} />
@@ -108,11 +163,11 @@ export function MemberProfile({
             <EditablePositionRow icon={BriefcaseIcon} value={member.position} onSave={handlePositionSave} />
           ) : (
             <DetailRow icon={BriefcaseIcon} label={content.profile.position}>
-              {member.position}
+              {member.position ?? <NotAdded />}
             </DetailRow>
           )}
           <DetailRow icon={UserRoundIcon} label={content.profile.manager}>
-            {managerName ?? <NotAdded />}
+            {managerNames.length > 0 ? managerNames.join(', ') : <NotAdded />}
           </DetailRow>
           <DetailRow icon={FolderKanbanIcon} label={content.profile.projects}>
             {member.projects.length > 0 ? member.projects.join(', ') : content.people.noProjects}
@@ -146,11 +201,18 @@ export function MemberProfile({
         aria-label={content.profile.leaveLabel}
         className='bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5 lg:sticky lg:top-20'
       >
-        {canReviewLeave ? <RequestLeaveDialog mode='grant' onSubmit={handleGrantLeave} /> : null}
+        {canGrantLeave ? <RequestLeaveDialog mode='grant' onSubmit={handleGrantLeave} /> : null}
 
         <dl className='flex flex-col gap-3'>
           {LEAVE_TYPES.map((leaveType) => (
-            <BalanceRow key={leaveType} leaveType={leaveType} balance={balances[leaveType]} />
+            <BalanceRow
+              key={leaveType}
+              leaveType={leaveType}
+              balance={balances[leaveType]}
+              canEdit={canReviewLeave}
+              isSaving={setAllowance.isPending}
+              onSave={handleAllowanceSave}
+            />
           ))}
         </dl>
 
@@ -161,15 +223,19 @@ export function MemberProfile({
               {[...leaveRequests]
                 .sort((a, b) => b.startDate.localeCompare(a.startDate))
                 .map((request) => (
-                  <LeaveRequestItem key={request.id} request={request} canReview={canReviewLeave} onReview={handleReview} />
+                  <LeaveRequestItem
+                    key={request.id}
+                    request={request}
+                    canReview={canReviewLeave && canReviewLeaveRequest(request, viewer)}
+                    isReviewing={reviewLeave.isPending}
+                    onReview={handleReview}
+                  />
                 ))}
             </ul>
           ) : (
             <p className='text-muted-foreground text-sm'>{content.profile.noRequests}</p>
           )}
         </div>
-
-        <p className='text-muted-foreground text-xs'>{content.mockNotice}</p>
       </aside>
     </div>
   );
@@ -221,8 +287,12 @@ function NotAdded() {
   return <span className='text-muted-foreground'>{content.profile.notAdded}</span>;
 }
 
-function BalanceRow({ leaveType, balance }: BalanceRowProps) {
+function BalanceRow({ leaveType, balance, canEdit, isSaving, onSave }: BalanceRowProps) {
   const Icon = BALANCE_ICONS[leaveType];
+
+  function handleSave(days: number) {
+    return onSave(leaveType, days);
+  }
 
   return (
     <div className='flex items-center justify-between gap-3'>
@@ -237,18 +307,26 @@ function BalanceRow({ leaveType, balance }: BalanceRowProps) {
           ) : null}
         </span>
       </dt>
-      <dd className='font-semibold tabular-nums'>
+      <dd className='flex items-center gap-1 font-semibold tabular-nums'>
         {balance.allowanceDays === null ? (
           <span className='text-muted-foreground text-sm font-normal'>{content.profile.notConfigured}</span>
         ) : (
           formatText(content.profile.balanceValue, { used: balance.usedDays, total: balance.allowanceDays })
         )}
+        {canEdit ? (
+          <EditableAllowance
+            typeLabel={content.profile.balances[leaveType]}
+            days={balance.allowanceDays}
+            isSaving={isSaving}
+            onSave={handleSave}
+          />
+        ) : null}
       </dd>
     </div>
   );
 }
 
-function LeaveRequestItem({ request, canReview, onReview }: LeaveRequestItemProps) {
+function LeaveRequestItem({ request, canReview, isReviewing, onReview }: LeaveRequestItemProps) {
   const days = countLeaveWorkingDays(request.startDate, request.endDate);
   const isReviewable = canReview && request.status === 'pending';
 
@@ -275,11 +353,11 @@ function LeaveRequestItem({ request, canReview, onReview }: LeaveRequestItemProp
       {request.note ? <LeaveNote note={request.note} /> : null}
       {isReviewable ? (
         <div className='flex justify-end gap-2'>
-          <Button variant='outline' size='sm' onClick={handleRejectClick}>
+          <Button variant='outline' size='sm' disabled={isReviewing} onClick={handleRejectClick}>
             <XIcon data-icon='inline-start' />
             {content.leave.reject}
           </Button>
-          <Button size='sm' onClick={handleApproveClick}>
+          <Button size='sm' disabled={isReviewing} onClick={handleApproveClick}>
             <CheckIcon data-icon='inline-start' />
             {content.leave.approve}
           </Button>
@@ -301,9 +379,16 @@ const BALANCE_ICONS: Record<LeaveType, LucideIcon> = {
 };
 
 interface MemberProfileProps {
+  memberId: string;
+  viewer: CrewViewer;
+  canReviewLeave: boolean;
+  canEditEmployment: boolean;
+}
+
+interface MemberProfileContentProps {
   member: CrewMember;
-  managerName: string | null;
-  initialLeaveRequests: CrewLeaveRequest[];
+  crew: Crew;
+  viewer: CrewViewer;
   canReviewLeave: boolean;
   canEditEmployment: boolean;
 }
@@ -327,10 +412,14 @@ interface ExternalLinkProps {
 interface BalanceRowProps {
   leaveType: LeaveType;
   balance: LeaveBalance;
+  canEdit: boolean;
+  isSaving: boolean;
+  onSave: (leaveType: LeaveType, days: number) => Promise<void>;
 }
 
 interface LeaveRequestItemProps {
   request: CrewLeaveRequest;
   canReview: boolean;
+  isReviewing: boolean;
   onReview: (request: CrewLeaveRequest, decision: 'approved' | 'rejected') => void;
 }

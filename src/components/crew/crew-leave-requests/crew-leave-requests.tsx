@@ -8,16 +8,26 @@ import { LeaveNote } from '@components/crew/leave-note';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
 import { Avatar, AvatarFallback } from '@ui/avatar';
 import { Button } from '@ui/button';
-import { getFullName } from '@/lib/crew';
+import { canReviewLeaveRequest, getFullName } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
 import type { LeaveConflict } from '@/lib/leave-conflicts';
 import { countLeaveWorkingDays, formatLeaveDateRange } from '@/lib/leave-days';
 import { getUserAvatarFallback } from '@/lib/utils';
-import type { CrewLeaveRequest, CrewMember } from '@/mocks/crew.mock';
-import type { LeaveStatus } from '@/mocks/leave.mock';
+import type { CrewLeaveRequest, CrewMember } from '@/lib/api/crew';
+import type { UserRole } from '@/lib/api/auth';
+import type { LeaveStatus } from '@/lib/api/leave';
 import content from '../content.json';
 
-export function CrewLeaveRequests({ requests, membersById, conflictsByRequest, canReview, onReview }: CrewLeaveRequestsProps) {
+export function CrewLeaveRequests({
+  requests,
+  membersById,
+  conflictsByRequest,
+  viewerId,
+  viewerRole,
+  canReview,
+  isReviewing,
+  onReview
+}: CrewLeaveRequestsProps) {
   if (requests.length === 0) {
     return <EmptyState icon={PalmtreeIcon} title={content.leave.emptyTitle} description={content.leave.emptyDescription} />;
   }
@@ -34,7 +44,8 @@ export function CrewLeaveRequests({ requests, membersById, conflictsByRequest, c
             member={member}
             conflicts={conflictsByRequest.get(request.id) ?? []}
             membersById={membersById}
-            canReview={canReview}
+            canReview={canReview && canReviewLeaveRequest(request, { id: viewerId, role: viewerRole })}
+            isReviewing={isReviewing}
             onReview={onReview}
           />
         ) : null;
@@ -43,7 +54,7 @@ export function CrewLeaveRequests({ requests, membersById, conflictsByRequest, c
   );
 }
 
-function LeaveRequestRow({ request, member, conflicts, membersById, canReview, onReview }: LeaveRequestRowProps) {
+function LeaveRequestRow({ request, member, conflicts, membersById, canReview, isReviewing, onReview }: LeaveRequestRowProps) {
   const days = countLeaveWorkingDays(request.startDate, request.endDate);
   const isReviewable = canReview && request.status === 'pending';
 
@@ -81,11 +92,11 @@ function LeaveRequestRow({ request, member, conflicts, membersById, canReview, o
 
       {isReviewable ? (
         <div className='flex justify-end gap-2'>
-          <Button variant='outline' onClick={handleRejectClick}>
+          <Button variant='outline' disabled={isReviewing} onClick={handleRejectClick}>
             <XIcon data-icon='inline-start' />
             {content.leave.reject}
           </Button>
-          <Button onClick={handleApproveClick}>
+          <Button disabled={isReviewing} onClick={handleApproveClick}>
             <CheckIcon data-icon='inline-start' />
             {content.leave.approve}
           </Button>
@@ -101,7 +112,10 @@ interface CrewLeaveRequestsProps {
   requests: CrewLeaveRequest[];
   membersById: Map<string, CrewMember>;
   conflictsByRequest: Map<string, LeaveConflict[]>;
+  viewerId: string;
+  viewerRole: UserRole;
   canReview: boolean;
+  isReviewing: boolean;
   onReview: (request: CrewLeaveRequest, decision: LeaveReviewDecision) => void;
 }
 
@@ -111,5 +125,6 @@ interface LeaveRequestRowProps {
   conflicts: LeaveConflict[];
   membersById: Map<string, CrewMember>;
   canReview: boolean;
+  isReviewing: boolean;
   onReview: (request: CrewLeaveRequest, decision: LeaveReviewDecision) => void;
 }

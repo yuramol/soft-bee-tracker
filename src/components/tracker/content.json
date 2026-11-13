@@ -156,7 +156,8 @@
       "rejected": "Rejected",
       "cancelled": "Cancelled"
     },
-    "mockNotice": "Sample data. Leave requests aren't connected yet.",
+    "loadError": "Couldn't load your leave",
+    "cancelRequest": "Cancel {type} request for {dates}",
     "dialog": {
       "title": "Request leave",
       "description": "Your manager reviews the request before it's added to your calendar.",
@@ -168,7 +169,7 @@
       "workingDays": "{count} working {unit}",
       "cancelButton": "Cancel",
       "submitButton": "Send request",
-      "notConnected": "Leave requests aren't connected yet, so nothing was sent."
+      "submitError": "We couldn't send this request. Try again in a moment."
     },
     "grantDialog": {
       "triggerButton": "Approve vacation",

@@ -2,7 +2,7 @@ import { addDays, eachDayOfInterval, isWeekend, parseISO, startOfWeek, subDays }
 
 import { toDateKey } from '@/lib/tracker-days';
 import { MOCK_CREW_LEAVE_REQUESTS } from '@/mocks/crew.mock';
-import type { LeaveType } from '@/mocks/leave.mock';
+import type { LeaveType } from '@/lib/api/leave';
 import { MOCK_PROJECTS } from '@/mocks/projects.mock';
 
 // Layout-only mock until reports get their backend task. Entries are generated from the

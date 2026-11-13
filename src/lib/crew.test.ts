@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CrewLeaveRequest, CrewMember } from '@/mocks/crew.mock';
+import type { CrewLeaveRequest, CrewMember } from '@/lib/api/crew';
 import {
   computeMemberLeaveBalances,
   countPendingLeave,
@@ -20,7 +20,9 @@ function member(overrides: Partial<CrewMember>): CrewMember {
     id: 'm1',
     firstName: 'Iryna',
     lastName: 'Shevchenko',
+    username: 'iryna',
     email: 'iryna@softbee.dev',
+    avatarUrl: null,
     role: 'worker',
     position: 'Frontend engineer',
     status: 'active',
@@ -28,7 +30,7 @@ function member(overrides: Partial<CrewMember>): CrewMember {
     linkedin: null,
     upwork: null,
     employmentDate: null,
-    managerId: 'boss',
+    managerIds: ['boss'],
     projects: [],
     weekMinutesByProject: {},
     monthMinutes: 0,
@@ -52,7 +54,7 @@ function leave(overrides: Partial<CrewLeaveRequest>): CrewLeaveRequest {
 const CREW = [
   member({ id: 'm1' }),
   member({ id: 'm2', firstName: 'Taras', email: 'taras@softbee.dev', position: 'Backend engineer', status: 'blocked' }),
-  member({ id: 'm3', managerId: 'other', role: 'manager', position: 'Project manager', status: 'pending' })
+  member({ id: 'm3', managerIds: ['other'], role: 'manager', position: 'Project manager', status: 'pending' })
 ];
 
 describe('getVisibleMembers', () => {
@@ -60,8 +62,8 @@ describe('getVisibleMembers', () => {
     expect(getVisibleMembers(CREW, { id: 'x', role: 'admin' })).toHaveLength(3);
   });
 
-  it('limits a manager to their assigned team', () => {
-    expect(getVisibleMembers(CREW, { id: 'boss', role: 'manager' }).map((item) => item.id)).toEqual(['m1', 'm2']);
+  it('shows everyone to a manager', () => {
+    expect(getVisibleMembers(CREW, { id: 'boss', role: 'manager' }).map((item) => item.id)).toEqual(['m1', 'm2', 'm3']);
   });
 
   it('limits staff to themselves', () => {
@@ -92,6 +94,10 @@ describe('filterMembers', () => {
 describe('getPositions', () => {
   it('returns unique positions sorted alphabetically', () => {
     expect(getPositions([...CREW, member({ id: 'm4' })])).toEqual(['Backend engineer', 'Frontend engineer', 'Project manager']);
+  });
+
+  it('skips people without a position', () => {
+    expect(getPositions([member({ id: 'm5', position: null })])).toEqual([]);
   });
 });
 

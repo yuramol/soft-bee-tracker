@@ -1,6 +1,6 @@
 import type { UserProfile } from '@/lib/api/auth';
 import type { MemberProject } from '@/lib/api/projects';
-import type { CrewStatus } from '@/mocks/crew.mock';
+import type { CrewStatus } from '@/lib/api/crew';
 
 export function getProfileDisplayName(profile: Pick<UserProfile, 'firstName' | 'lastName' | 'username'>): string {
   return `${profile.firstName} ${profile.lastName}`.trim() || profile.username;

@@ -55,6 +55,7 @@
     "typeRequired": "Select a leave type",
     "invalidDate": "Enter a valid date",
     "endBeforeStart": "End date must be on or after the start date",
-    "noteTooLong": "Comment can be at most 500 characters"
+    "noteTooLong": "Comment can be at most 500 characters",
+    "allowanceInvalid": "Enter a whole number of days from 0 to 366"
   }
 }

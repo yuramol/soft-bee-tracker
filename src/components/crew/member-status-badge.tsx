@@ -1,5 +1,5 @@
 import { Badge } from '@ui/badge';
-import type { CrewStatus } from '@/mocks/crew.mock';
+import type { CrewStatus } from '@/lib/api/crew';
 import content from './content.json';
 
 export function MemberStatusBadge({ status }: MemberStatusBadgeProps) {

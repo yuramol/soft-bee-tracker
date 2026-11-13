@@ -1,0 +1,12 @@
+{
+  "requested": "Leave request sent",
+  "cancelled": "Leave request cancelled",
+  "errors": {
+    "overlap": "You already have leave on some of these days.",
+    "noWorkingDays": "Pick dates that include at least one working day.",
+    "invalidRequest": "This request isn't valid. Check the dates and try again.",
+    "notAllowed": "You don't have permission to do this.",
+    "cannotCancel": "This request can no longer be cancelled.",
+    "unexpected": "Something went wrong. Try again in a moment."
+  }
+}

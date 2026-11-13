@@ -17,7 +17,7 @@ import { getShortName } from '@/lib/projects';
 import { isReportPeriod, REPORT_PERIODS, type ReportPeriod } from '@/lib/team-report-params';
 import { toDateKey } from '@/lib/tracker-days';
 import type { CrewMember } from '@/mocks/crew.mock';
-import type { LeaveType } from '@/mocks/leave.mock';
+import type { LeaveType } from '@/lib/api/leave';
 import type { ProjectRecord } from '@/mocks/projects.mock';
 import type { ReportAbsence, ReportTimeEntry } from '@/mocks/reports.mock';
 

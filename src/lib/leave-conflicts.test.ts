@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { getLeaveConflicts } from '@/lib/leave-conflicts';
-import type { CrewLeaveRequest } from '@/mocks/crew.mock';
+import type { CrewLeaveRequest } from '@/lib/api/crew';
 import type { ProjectRecord } from '@/mocks/projects.mock';
 
 describe('getLeaveConflicts', () => {
