@@ -1,3 +1,7 @@
+import { redirect } from 'next/navigation';
+
+import { ROUTES } from '@/constants';
+
 export default function Page() {
-  return <h1 className='text-4xl font-bold'>Welcome to Next.js!</h1>;
+  redirect(ROUTES.TRACKER);
 }

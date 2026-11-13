@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import content from './content.json';
 
 export const passwordSchema = z
   .string()
-  .min(1, 'Password is required')
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number');
+  .min(1, content.password.required)
+  .min(8, content.password.minLength)
+  .regex(/[A-Z]/, content.password.uppercase)
+  .regex(/[a-z]/, content.password.lowercase)
+  .regex(/[0-9]/, content.password.number);

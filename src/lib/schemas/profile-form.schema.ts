@@ -1,26 +1,40 @@
 import { z } from 'zod';
 
-const optionalUrlSchema = z.url('Enter a valid URL').or(z.literal(''));
+import { emailSchema } from '@/lib/schemas/email.schema';
+import { isValidTimeZone } from '@/lib/time-zones';
+import content from './content.json';
+
+const optionalUrlSchema = z.url(content.profile.invalidUrl).or(z.literal(''));
 
 export const profileFormSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+  username: z.string().trim().min(1, content.profile.usernameRequired),
+  firstName: z.string().trim().min(1, content.profile.firstNameRequired),
+  lastName: z.string().trim().min(1, content.profile.lastNameRequired),
   phone: z
     .string()
-    .regex(/^\+?[\d\s()-]{7,20}$/, 'Enter a valid phone number')
+    .regex(/^\+?[\d\s()-]{7,20}$/, content.profile.invalidPhone)
     .or(z.literal('')),
-  avatarUrl: optionalUrlSchema,
   linkedin: optionalUrlSchema,
-  upwork: optionalUrlSchema
+  upwork: optionalUrlSchema,
+  timeZone: z.string().refine((value) => value === '' || isValidTimeZone(value), content.profile.invalidTimeZone)
 });
+
+export function createEmailChangeFormSchema(currentEmail: string) {
+  return z.object({
+    email: emailSchema.refine((value) => value.trim().toLowerCase() !== currentEmail.trim().toLowerCase(), content.profile.sameEmail)
+  });
+}
 
 export interface ProfileFormValues {
   username: string;
   firstName: string;
   lastName: string;
   phone: string;
-  avatarUrl: string;
   linkedin: string;
   upwork: string;
+  timeZone: string;
+}
+
+export interface EmailChangeFormValues {
+  email: string;
 }

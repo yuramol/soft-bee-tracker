@@ -97,7 +97,7 @@ openai_api_key = "env(OPENAI_API_KEY)"
 
 # Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
 # are monitored, and you can view the emails that would have been sent from the web interface.
-[inbucket]
+[local_smtp]
 enabled = true
 # Port to use for the email testing server web interface.
 port = 54324
@@ -219,7 +219,7 @@ web3 = 30
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
+double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
@@ -241,15 +241,21 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+[auth.email.template.invite]
+subject = "You're invited to Soft Bee Tracker"
+content_path = "./supabase/templates/invite.html"
 
 # recovery links go to the app's /auth/confirm route with a token_hash (pkce-safe)
 [auth.email.template.recovery]
 subject = "Reset your Soft Bee Tracker password"
 content_path = "./supabase/templates/recovery.html"
+
+# email changes are confirmed only by the new address (double_confirm_changes = false),
+# so the old address is told afterwards; enable the same notification in the hosted dashboard
+[auth.email.notification.email_changed]
+enabled = true
+subject = "Your Soft Bee Tracker email was changed"
+content_path = "./supabase/templates/email-changed-notification.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -278,10 +284,10 @@ max_frequency = "5s"
 # Force log out if the user has been inactive longer than the specified duration.
 # inactivity_timeout = "8h"
 
-# Inject public.users.role into JWT claims.user_role for RLS (see custom_access_token_hook).
+# Inject public.user_access.role into JWT claims.user_role for RLS (see custom_access_token_hook).
 [auth.hook.custom_access_token]
 enabled = true
-uri = "pg-functions://postgres/public/custom_access_token_hook"
+uri = "pg-functions://postgres/private/custom_access_token_hook"
 
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
 # [auth.hook.before_user_created]

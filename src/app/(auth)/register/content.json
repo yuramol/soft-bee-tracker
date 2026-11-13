@@ -1,0 +1,9 @@
+{
+  "inviteOnly": {
+    "title": "Sign-up is invite-only",
+    "description": "Ask an admin to invite you, then open the link from the invitation email.",
+    "backToSignInLink": "Back to sign in"
+  },
+  "title": "Create your account",
+  "description": "Set a password to finish joining Soft Bee Tracker."
+}

@@ -8,7 +8,7 @@ alwaysApply: false
 
 - Export components as named functions; avoid default exports and class components.
 - Prefer pure functions with the `function` keyword.
-- Use `useCallback` for event handlers passed as props instead of inline lambdas when practical.
+- Use named handler functions for event handlers passed as props instead of inline lambdas; wrap them in `useCallback` only when passed to a memoized child or used as an effect dependency.
 - Keep async handlers separate and pass `void`-safe wrapper functions to void-returning props.
 - Keep components declarative and presentational; move imperative logic to helpers/hooks.
 - Use descriptive camelCase identifiers; component names use PascalCase.
@@ -29,4 +29,4 @@ alwaysApply: false
 # Data access
 
 - Do not call `fetch` or Supabase directly in components.
-- Use dedicated hooks/helpers (for client, TanStack Query hooks).
+- Use the domain's public TanStack Query hooks from `@/lib/api/<feature>`; Zustand selectors only for UI state.

@@ -1,8 +1,12 @@
-import type { CreateTrackerInput, Tracker } from '@/lib/api/trackers/types';
+import type { CreateTrackerInput, StartLiveTrackerInput, Tracker } from '@/lib/api/trackers/types';
 import type { Database } from '@/types';
 
 type TrackerRow = Database['public']['Tables']['trackers']['Row'];
 type InputTrackerRow = Database['public']['Tables']['trackers']['Insert'];
+export type UpdateTrackerRow = Database['public']['Tables']['trackers']['Update'];
+
+export const TRACKER_COLUMNS =
+  'id, created_at, updated_at, date, description, duration_minutes, is_live, live_duration_minutes, live_status, status, start_live_date, project_id, user_id, transaction_id';
 
 export function mapTrackerRowToTracker(row: TrackerRow): Tracker {
   return {
@@ -33,5 +37,18 @@ export function mapCreateTrackerInputToRow(input: CreateTrackerInput): InputTrac
     description: input.description,
     duration_minutes: input.durationMinutes,
     project_id: input.projectId
+  };
+}
+
+export function mapStartLiveTrackerInputToRow(input: StartLiveTrackerInput, startedAt: Date, date: string): InputTrackerRow {
+  return {
+    date,
+    description: input.description,
+    duration_minutes: 0,
+    project_id: input.projectId,
+    is_live: true,
+    live_status: 'start',
+    live_duration_minutes: 0,
+    start_live_date: startedAt.toISOString()
   };
 }

@@ -1,0 +1,6 @@
+{
+  "passwordLabel": "New password",
+  "confirmPasswordLabel": "Confirm new password",
+  "passwordPlaceholder": "••••••••",
+  "submitButton": "Change password"
+}

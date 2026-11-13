@@ -35,8 +35,9 @@ src/lib/api/users/
   index.ts       # barrel — re-export public API
   queries.ts     # query key factory, read helpers, useQuery hooks
   mutations.ts     # write helpers, useMutation hooks
-  types.ts       # optional — request/response interfaces
-  mappers.ts     # optional — DB row ↔ domain mapping
+  types.ts       # optional — aliases and Pick/Omit of generated database types
+  mappers.ts     # only when a value changes at runtime
+  actions.ts     # optional — 'use server' actions for privileged server work; the only lib/api file besides server.ts that may import server-only modules
 ```
 
 ### File responsibilities
@@ -54,7 +55,32 @@ src/lib/api/users/
 - Throw `{ message, statusCode? } satisfies ApiError` from helpers (`src/types/api-error.ts`).
 - Query keys live in `queries.ts` next to their hooks — not in components.
 - Do not add one-off `fetch` or Supabase calls in `components/`, `app/` pages, or layouts.
-- Larger features may add `types.ts` or `mappers.ts`; keep `index.ts` as the sole public entry.
+- `types.ts` holds aliases and `Pick` / `Omit` of generated types. Add `mappers.ts` only under the Mappers rule below. `index.ts` stays the sole public entry.
+
+## Mappers
+
+A domain type is the generated database type. Alias it, do not copy it.
+
+```typescript
+export type Project = Database['public']['Tables']['projects']['Row'];
+
+export type CreateProjectInput = Pick<
+  Database['public']['Tables']['projects']['Insert'],
+  'name' | 'client' | 'note' | 'picture_url' | 'start_date' | 'end_date' | 'type'
+>;
+```
+
+Enums come from `Database['public']['Enums']`. Queries return the Supabase result directly. Server-owned columns (`manager_id`, `user_id`) are set in the mutation, next to the insert.
+
+Add `mappers.ts` only when a type alias cannot express the conversion because a value changes at runtime:
+
+- a `Json` or text column is parsed into a narrower structure (`users.positions` → `{ titles: string[] } | null`)
+- several rows or an embed are folded into one object
+- a field is derived and has no column
+
+Do not add a mapper to rename `snake_case` to `camelCase`, to copy a row field by field, or to wrap `rows.map`. Omitting columns on write is a `Pick` or `Omit` of `Insert` / `Update`, not a function.
+
+If a mapper exists, it is the only place that conversion happens. A `rows.map(mapOne)` helper is not a second function.
 
 ### Import example
 

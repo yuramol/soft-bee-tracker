@@ -5,6 +5,8 @@ import type { CreateProjectRateInput, ProjectRate } from './types';
 type ProjectRateRow = Database['public']['Tables']['project_rates']['Row'];
 type ProjectRateInsert = Database['public']['Tables']['project_rates']['Insert'];
 
+export const PROJECT_RATE_COLUMNS = 'project_id, user_id, rate, created_at, updated_at';
+
 export function mapProjectRateRowToProjectRate(row: ProjectRateRow): ProjectRate {
   return {
     projectId: row.project_id,

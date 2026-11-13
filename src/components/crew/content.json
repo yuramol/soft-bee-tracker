@@ -1,0 +1,155 @@
+{
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "worker": "Staff"
+  },
+  "roleDescriptions": {
+    "worker": "Logs time on assigned projects.",
+    "manager": "Can approve time and see reports.",
+    "admin": "Full access, including crew management."
+  },
+  "status": {
+    "pending": "Pending",
+    "active": "Active",
+    "blocked": "Blocked"
+  },
+  "tabs": {
+    "label": "Crew sections",
+    "people": "People",
+    "leave": "Leave requests",
+    "pendingCount": "{count} pending"
+  },
+  "filters": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Name or email",
+    "roleLabel": "Role",
+    "allRoles": "All roles",
+    "positionLabel": "Position",
+    "allPositions": "All positions",
+    "statusLabel": "Status",
+    "allStatuses": "All statuses"
+  },
+  "people": {
+    "count": "{count} people",
+    "emptyTitle": "No one matches",
+    "emptyDescription": "Try another name or clear the filters.",
+    "noProjects": "No active projects",
+    "managerLabel": "Manager",
+    "noManager": "No manager",
+    "open": "Open",
+    "openLabel": "Open profile of {name}"
+  },
+  "profile": {
+    "detailsLabel": "Details",
+    "position": "Position",
+    "manager": "Manager",
+    "projects": "Projects",
+    "email": "Email",
+    "phone": "Phone",
+    "linkedin": "LinkedIn",
+    "upwork": "Upwork",
+    "employmentDate": "Employed since",
+    "notAdded": "Not added",
+    "openExternal": "{label} (opens in a new tab)",
+    "pendingHint": "Invite sent. They haven't signed in yet.",
+    "monthTime": "Tracked this month",
+    "leaveLabel": "Leave",
+    "balances": {
+      "vacation": "Vacation",
+      "sick_leave": "Sick leave"
+    },
+    "balanceValue": "{used} / {total}",
+    "balanceHint": "{remaining} days left",
+    "notConfigured": "Not configured",
+    "requestsTitle": "Requests",
+    "noRequests": "No leave requests yet.",
+    "granted": "Vacation approved for {name}"
+  },
+  "summary": {
+    "title": "Team summary",
+    "trackedTime": "Tracked time",
+    "scope": "{count} people in view",
+    "empty": "No time tracked this week.",
+    "openReport": "Open team report"
+  },
+  "leave": {
+    "emptyTitle": "No leave requests",
+    "emptyDescription": "Requests from your crew show up here.",
+    "types": {
+      "vacation": "Vacation",
+      "sick_leave": "Sick leave"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "workingDays": "{count} working {unit}",
+    "day": "day",
+    "days": "days",
+    "noteLabel": "Comment",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Leave approved for {name}",
+    "rejected": "Leave rejected for {name}",
+    "conflicts": {
+      "alsoAway": "Also away on {project}",
+      "uncovered": "Nobody on {project} is available on {days}",
+      "overlap": "{name} · {type} · {dates} · {status}",
+      "moreDays": "{days} and {count} more",
+      "unknownPerson": "Someone"
+    }
+  },
+  "actions": {
+    "menuLabel": "Actions for {name}",
+    "changeRole": "Change role",
+    "block": "Block",
+    "reactivate": "Reactivate",
+    "roleChanged": "{name} is now {role}",
+    "blocked": "{name} is blocked",
+    "reactivated": "{name} is active again",
+    "blockDialog": {
+      "title": "Block {name}?",
+      "description": "{name} will be signed out and won't be able to sign in. Their logged time stays in reports.",
+      "confirmButton": "Block"
+    },
+    "reactivateDialog": {
+      "title": "Reactivate {name}?",
+      "description": "{name} will be able to sign in and log time again.",
+      "confirmButton": "Reactivate"
+    }
+  },
+  "changeRoleDialog": {
+    "title": "Change role",
+    "description": "Update the access level for {name}. It applies on their next sign-in.",
+    "roleLabel": "Role",
+    "cancelButton": "Cancel",
+    "saveButton": "Save role"
+  },
+  "inviteDialog": {
+    "triggerButton": "Invite person",
+    "title": "Invite a teammate",
+    "description": "They will get a sign-in link by email and complete their profile on first visit.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "teammate@softbee.dev",
+    "roleLabel": "Role",
+    "roleDescription": "Managers can approve time and see reports.",
+    "cancelButton": "Cancel",
+    "sendButton": "Send invite",
+    "networkError": "We couldn't reach the server. Check your connection and try again.",
+    "resendButton": "Resend invite"
+  },
+  "mockNotice": "Sample data. Available actions depend on your role and team.",
+  "employment": {
+    "positionPlaceholder": "Any position, e.g. Frontend engineer",
+    "datePlaceholder": "Pick a date",
+    "clearDate": "Clear",
+    "cancelButton": "Cancel",
+    "editLabel": "Edit {label}",
+    "saveLabel": "Save {label}",
+    "positionSaved": "Position updated for {name}",
+    "dateSaved": "Employment date updated for {name}"
+  }
+}

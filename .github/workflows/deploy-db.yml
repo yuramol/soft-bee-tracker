@@ -1,0 +1,49 @@
+name: Deploy database migrations
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-db-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate database
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/validate-db.yml
+
+  deploy:
+    name: Deploy to production
+    if: github.ref == 'refs/heads/main'
+    needs: [validate]
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.116.0
+
+      - name: Check required secret
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "Error: secret SUPABASE_DB_URL is not set in the 'production' environment"
+            echo "Missing secret \`SUPABASE_DB_URL\` in the \`production\` environment" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Show pending migrations (dry run)
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+
+      - name: Apply migrations
+        run: supabase db push --db-url "$SUPABASE_DB_URL"

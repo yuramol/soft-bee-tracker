@@ -79,6 +79,7 @@ export type Database = {
           created_at: string
           end_date: string | null
           id: string
+          links: Json
           manager_id: string | null
           name: string
           note: string | null
@@ -89,17 +90,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          client: string
+          client?: string
           created_at?: string
           end_date?: string | null
           id?: string
+          links?: Json
           manager_id?: string | null
           name: string
           note?: string | null
           picture_url?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
-          type: Database["public"]["Enums"]["project_type"]
+          type?: Database["public"]["Enums"]["project_type"]
           updated_at?: string
         }
         Update: {
@@ -107,6 +109,7 @@ export type Database = {
           created_at?: string
           end_date?: string | null
           id?: string
+          links?: Json
           manager_id?: string | null
           name?: string
           note?: string | null
@@ -196,6 +199,41 @@ export type Database = {
           },
         ]
       }
+      user_access: {
+        Row: {
+          created_at: string
+          is_blocked: boolean
+          is_confirmed: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_blocked?: boolean
+          is_confirmed?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_blocked?: boolean
+          is_confirmed?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -204,16 +242,11 @@ export type Database = {
           email: string
           first_name: string
           id: string
-          is_blocked: boolean
-          is_confirmed: boolean
           last_name: string
           linkedin: string | null
           phone: string | null
           positions: Json | null
-          role: Database["public"]["Enums"]["user_role"]
-          salary: number | null
-          salary_info: string | null
-          type_salary: Database["public"]["Enums"]["salary_type"] | null
+          time_zone: string | null
           updated_at: string
           upwork: string | null
           username: string
@@ -225,16 +258,11 @@ export type Database = {
           email: string
           first_name: string
           id: string
-          is_blocked?: boolean
-          is_confirmed?: boolean
           last_name: string
           linkedin?: string | null
           phone?: string | null
           positions?: Json | null
-          role?: Database["public"]["Enums"]["user_role"]
-          salary?: number | null
-          salary_info?: string | null
-          type_salary?: Database["public"]["Enums"]["salary_type"] | null
+          time_zone?: string | null
           updated_at?: string
           upwork?: string | null
           username: string
@@ -246,16 +274,11 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
-          is_blocked?: boolean
-          is_confirmed?: boolean
           last_name?: string
           linkedin?: string | null
           phone?: string | null
           positions?: Json | null
-          role?: Database["public"]["Enums"]["user_role"]
-          salary?: number | null
-          salary_info?: string | null
-          type_salary?: Database["public"]["Enums"]["salary_type"] | null
+          time_zone?: string | null
           updated_at?: string
           upwork?: string | null
           username?: string
@@ -267,12 +290,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      create_project: {
+        Args: {
+          manager_ids?: string[]
+          project_client?: string
+          project_name: string
+          project_note?: string
+          responsible_id: string
+        }
+        Returns: string
+      }
+      get_project_members: {
+        Args: never
+        Returns: {
+          project_id: string
+          user_id: string
+        }[]
+      }
+      get_project_people: {
+        Args: never
+        Returns: {
+          first_name: string
+          id: string
+          is_blocked: boolean
+          is_confirmed: boolean
+          last_name: string
+          positions: Json
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
     }
     Enums: {
       project_status: "active" | "archived"
       project_type: "fixed_price" | "non_profit" | "time_material"
-      salary_type: "hourly" | "fixed" | "project"
       tracker_live_status: "finish" | "pause" | "start"
       tracker_status: "approved" | "new" | "rejected"
       user_role: "worker" | "manager" | "admin"
@@ -408,7 +458,6 @@ export const Constants = {
     Enums: {
       project_status: ["active", "archived"],
       project_type: ["fixed_price", "non_profit", "time_material"],
-      salary_type: ["hourly", "fixed", "project"],
       tracker_live_status: ["finish", "pause", "start"],
       tracker_status: ["approved", "new", "rejected"],
       user_role: ["worker", "manager", "admin"],

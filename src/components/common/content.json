@@ -1,0 +1,31 @@
+{
+  "loading": {
+    "label": "Loading"
+  },
+  "durationPicker": {
+    "placeholder": "HH:mm",
+    "listLabel": "Duration"
+  },
+  "passwordInput": {
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "datePicker": {
+    "placeholder": "Pick a date"
+  },
+  "errorState": {
+    "title": "Something went wrong",
+    "retryButton": "Try again"
+  },
+  "confirmDialog": {
+    "confirmButton": "Confirm",
+    "cancelButton": "Cancel"
+  },
+  "stagedDatePicker": {
+    "previous": "Previous",
+    "next": "Next",
+    "yearRange": "{from} – {to}",
+    "chooseYear": "Choose a different year",
+    "chooseMonth": "Choose a different month"
+  }
+}

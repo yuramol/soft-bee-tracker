@@ -4,19 +4,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { ArrowRightIcon, Loader2Icon, MailIcon } from 'lucide-react';
 
+import { FormField } from '@components/common/form/form-field';
+import { IconInput } from '@components/common/form/icon-input';
+import { PasswordInput } from '@components/common/form/password-input';
 import { Button } from '@ui/button';
-import { Input } from '@ui/input';
-import { Label } from '@ui/label';
 import { ROUTES } from '@/constants';
 import { useSignIn } from '@/lib/api/auth';
 import { loginFormSchema, type LoginFormValues } from '@/lib/schemas/login-form.schema';
+import content from './content.json';
 
-export function LoginForm() {
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter();
   const signIn = useSignIn({
     onSuccess: () => {
-      router.push(ROUTES.DASHBOARD);
+      router.push(redirectTo);
       router.refresh();
     }
   });
@@ -45,47 +48,47 @@ export function LoginForm() {
 
   return (
     <form className='flex flex-col gap-5' onSubmit={handleFormSubmit} noValidate>
-      <div className='flex flex-col gap-2'>
-        <Label htmlFor='email'>Email</Label>
-        <Input
+      <FormField label={content.emailLabel} htmlFor='email' error={errors.email}>
+        <IconInput
           id='email'
+          icon={MailIcon}
           type='email'
           autoComplete='email'
-          placeholder='you@example.com'
+          placeholder={content.emailPlaceholder}
           aria-invalid={Boolean(errors.email)}
           {...register('email')}
         />
-        {errors.email ? <p className='text-destructive text-sm'>{errors.email.message}</p> : null}
-      </div>
+      </FormField>
 
-      <div className='flex flex-col gap-2'>
-        <Label htmlFor='password'>Password</Label>
-        <Input
+      <FormField label={content.passwordLabel} htmlFor='password' error={errors.password}>
+        <PasswordInput
           id='password'
-          type='password'
           autoComplete='current-password'
-          placeholder='••••••••'
+          placeholder={content.passwordPlaceholder}
           aria-invalid={Boolean(errors.password)}
           {...register('password')}
         />
-        {errors.password ? <p className='text-destructive text-sm'>{errors.password.message}</p> : null}
-      </div>
+      </FormField>
 
-      <Button className='w-full' disabled={isBusy} type='submit'>
-        Sign in
+      <Button className='w-full' size='xl' disabled={isBusy} type='submit'>
+        {isBusy ? <Loader2Icon data-icon='inline-start' className='animate-spin' /> : null}
+        {content.submitButton}
+        {isBusy ? null : <ArrowRightIcon data-icon='inline-end' />}
       </Button>
 
       <div className='flex flex-col gap-2 text-center text-sm'>
-        <Link className='text-muted-foreground hover:text-foreground transition-colors' href={ROUTES.FORGOT_PASSWORD}>
-          Forgot password?
+        <Link
+          className='text-muted-foreground hover:text-foreground underline-offset-4 transition-colors hover:underline'
+          href={ROUTES.FORGOT_PASSWORD}
+        >
+          {content.forgotPasswordLink}
         </Link>
-        <p className='text-muted-foreground'>
-          Not registered yet?{' '}
-          <Link className='text-foreground font-medium hover:underline' href={ROUTES.REGISTER}>
-            Create an account
-          </Link>
-        </p>
       </div>
     </form>
   );
+}
+
+interface LoginFormProps {
+  // already validated by getSafeRedirectPath on the server
+  redirectTo: string;
 }

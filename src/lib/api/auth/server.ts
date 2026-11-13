@@ -1,23 +1,155 @@
+import 'server-only';
+
+import { isAuthApiError, isAuthSessionMissingError, type AuthError } from '@supabase/supabase-js';
+import { redirect } from 'next/navigation';
+import { cache } from 'react';
+
+import { ROUTES, SIGN_OUT_REASON_BLOCKED, SIGN_OUT_REASON_PARAM } from '@/constants';
 import { createServerClient } from '@/lib/supabase/server';
-import { mapUserRowToProfile } from '@/lib/api/auth/mappers';
+import { mapUserRowToProfile, USER_COLUMNS } from '@/lib/api/auth/mappers';
 import type { UserProfile } from '@/lib/api/auth/types';
+import type { ApiError } from '@/types/api-error';
+import { buildLoginPath, getRouteAccess, getRouteSessionFromClaim, type RouteSession } from '@/lib/route-access';
 
 // server-component/route-handler counterpart of useSessionProfile.
 // imported via '@/lib/api/auth/server' (not the barrel) so client bundles
 // never pull in next/headers.
-export async function getSessionProfile(): Promise<UserProfile | null> {
+// cache() dedupes it per request: the root layout and requireRouteAccess on the
+// page share one getUser() and one users query.
+// a session that must be reset is sent to the sign-out route handler, because
+// server components can't write cookies
+export const getSessionProfile = cache(async (): Promise<UserProfile | null> => {
+  const state = await resolveSessionProfile();
+
+  if (state.kind === 'reset') {
+    redirect(state.signOutPath);
+  }
+
+  return state.kind === 'active' ? state.profile : null;
+});
+
+/**
+ * The same checks as getSessionProfile, returned as a value instead of a
+ * redirect. For callers that can't follow a server-side redirect to a route
+ * handler, such as server actions called through useMutation: they hand
+ * signOutPath to the client, which loads it as a full page.
+ */
+export const resolveSessionProfile = cache(async (): Promise<SessionProfileState> => {
   const supabase = await createServerClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (userError || !userData.user) {
-    return null;
+  if (userError && !isInvalidSessionError(userError)) {
+    // timeout, 5xx or rate limit from the Auth server: like the database errors
+    // below, surface it to the error boundary instead of logging the user out
+    throw {
+      message: userError.message,
+      statusCode: isAuthApiError(userError) ? userError.status : 503
+    } satisfies ApiError;
   }
 
-  const { data, error } = await supabase.from('users').select('*').eq('id', userData.user.id).single();
+  if (!userData.user) {
+    return { kind: 'none' };
+  }
 
+  const { data, error } = await supabase.from('users').select(USER_COLUMNS).eq('id', userData.user.id).single();
+
+  // no profile row: the session can never use the app, so clear its cookies
+  if (error?.code === NO_ROWS_ERROR_CODE) {
+    return { kind: 'reset', signOutPath: ROUTES.SIGN_OUT };
+  }
+
+  // anything else (timeout, network, RLS) is likely transient: surface it to the
+  // error boundary instead of logging the user out
   if (error) {
-    return null;
+    throw {
+      message: error.message,
+      statusCode: 500
+    } satisfies ApiError;
   }
 
-  return mapUserRowToProfile(data);
+  // no access row: same dead end as a missing profile row
+  if (!data.user_access) {
+    return { kind: 'reset', signOutPath: ROUTES.SIGN_OUT };
+  }
+
+  const profile = mapUserRowToProfile(data);
+
+  // the JWT hook copies user_role only, so the proxy can't see a block; cut a
+  // blocked user's live session here, the same way signInWithPassword does
+  if (profile.isBlocked) {
+    return { kind: 'reset', signOutPath: `${ROUTES.SIGN_OUT}?${SIGN_OUT_REASON_PARAM}=${SIGN_OUT_REASON_BLOCKED}` };
+  }
+
+  return { kind: 'active', profile };
+});
+
+// server counterpart of the proxy session: role from the verified user_role
+// claim, so the sidebar, page guards, proxy and RLS never disagree.
+// null means no valid session. cached per request like getSessionProfile.
+export const getRouteSession = cache(async (): Promise<RouteSession | null> => {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.auth.getClaims();
+
+  return error || !data ? null : getRouteSessionFromClaim(data.claims.user_role);
+});
+
+/**
+ * Page guard; call it at the top of every app page.tsx.
+ *
+ * It does not decide roles itself: it applies ROLE_RESTRICTED_ROUTES through
+ * getRouteAccess, the same decision and the same user_role claim the proxy
+ * uses. A route missing from that map is open to every signed-in role, so
+ * restricting a page means adding it there (route-access.test.ts enforces a
+ * decision for every ROUTES entry).
+ *
+ * On top of the proxy it adds two checks the claim can't carry: getUser() asks
+ * the Auth server, so a revoked session is caught even when getClaims verified
+ * the JWT locally, and getSessionProfile() cuts blocked users. The role itself
+ * never comes from public.users. Those session checks run before the role
+ * check, so a revoked or blocked user is signed out rather than shown access
+ * denied.
+ *
+ * pathname is the route the page serves, used for the role decision and the
+ * login ?next= target. Pass ROUTES.X for a static page; a dynamic route (e.g.
+ * /projects/[id]) must pass its real path, built from params, so the role
+ * match and the post-login redirect point at the right page.
+ */
+export async function requireRouteAccess(pathname: string): Promise<UserProfile> {
+  const access = getRouteAccess(pathname, await getRouteSession());
+
+  if (access === 'login') {
+    redirect(buildLoginPath(pathname));
+  }
+
+  const profile = await getSessionProfile();
+
+  // the claim said "signed in" but the Auth server says no (revoked session or
+  // deleted user). /login would bounce straight back here, because the proxy
+  // still sees a valid JWT and treats /login as guest-only, so clear the stale
+  // cookies first
+  if (!profile) {
+    redirect(ROUTES.SIGN_OUT);
+  }
+
+  if (access === 'denied') {
+    redirect(ROUTES.ACCESS_DENIED);
+  }
+
+  return profile;
 }
+
+// only these mean the session is really gone: no cookie at all, or the Auth
+// server rejecting the JWT (401/403 covers bad_jwt, session_not_found and
+// user_not_found). anything else is the Auth server being unavailable
+function isInvalidSessionError(error: AuthError): boolean {
+  return isAuthSessionMissingError(error) || (isAuthApiError(error) && INVALID_SESSION_STATUSES.includes(error.status));
+}
+
+// postgREST code for .single() matching zero rows
+const NO_ROWS_ERROR_CODE = 'PGRST116';
+
+const INVALID_SESSION_STATUSES: readonly number[] = [401, 403];
+
+// active: a usable session. none: no session (signed out, revoked or deleted
+// user). reset: a session that must never be used again; signOutPath clears it
+export type SessionProfileState = { kind: 'active'; profile: UserProfile } | { kind: 'none' } | { kind: 'reset'; signOutPath: string };

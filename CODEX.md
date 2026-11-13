@@ -8,13 +8,14 @@
 
 ## State and data access
 
-- UI components must consume domain hooks/stores and must not call Supabase or `fetch` directly.
-- Use the state owner already established for a domain: TanStack Query or Zustand; never duplicate the same remote data in both.
-- Keep Zustand stores separated by entity.
-- Keep independent get/create operations in separate stores so their loading and error states do not interfere.
-- Keep pure reads in `queries.ts`, pure writes in `mutations.ts`, row mapping in `mappers.ts`, and domain contracts in `types.ts`.
+- UI components must consume domain TanStack Query hooks and must not call Supabase or `fetch` directly.
+- Use TanStack Query for all server data and CRUD; do not use Zustand for CRUD.
+- Use Zustand only for ephemeral UI state in `src/features/<name>/store/`.
+- Existing Zustand stores under `src/lib/api/**` (`projects`, `project-rates`, `auth` profile) predate this decision: do not add new domain stores or extend them.
+- Keep pure reads in `queries.ts`, pure writes in `mutations.ts`, and domain contracts in `types.ts`. Domain types alias generated `Database` types. Add `mappers.ts` only when a value changes at runtime; see `.cursor/rules/lib-services.mdc`.
 - Normalize async failures to `ApiError` and preserve the Supabase response status.
-- Add or update Vitest coverage for store success, failure, and overlapping-request behavior.
+- Add or update Vitest coverage for query and mutation helpers: success and failure (normalized `ApiError`).
+- Route access is decided by `getRouteAccess` (`src/lib/route-access.ts`) from the verified `user_role` JWT claim; rules live in `src/constants/index.ts`. Every app `page.tsx` calls `requireRouteAccess` (`@/lib/api/auth/server`) at the top. It only applies the rules, so restrict a page by adding it to `ROLE_RESTRICTED_ROUTES`, and classify every new route in `ROUTE_CLASSIFICATION` (`src/lib/route-access.test.ts`); unlisted routes allow every signed-in role, and a missing role fails closed. Never read the role from `user_metadata` or `public.users`.
 
 ## Scope filter for frontend conventions
 
@@ -37,6 +38,14 @@
 
 - Follow `.cursor/rules/supabase-db.mdc` for migrations and RLS.
 - Role checks in RLS must use JWT helpers (`private.is_manager_or_admin()`, `private.jwt_role()`), never `select … from public.users` for role.
+
+## Secrets and environments (strict)
+
+- Keep local secrets in `.env` (gitignored by `.env` and `.env.*`); `.example.env` lists variable names only, never values.
+- Never commit, log, print, or paste secret values. Agents must not read or echo `.env` values; when debugging, check only whether each variable is set.
+- `SUPABASE_SECRET_KEY` is server-only: read it only in `createServiceClient()` in `src/lib/supabase/server.ts`. Never import `lib/supabase/server` from `"use client"` modules or from `lib/supabase/client`.
+- Never expose a secret through a `NEXT_PUBLIC_*` variable; only the Supabase URL and anon key are public.
+- Each developer works against their own environment (local Supabase via `supabase start` or a personal dev project). Do not run migrations or write SQL against shared or production projects without team agreement.
 
 ## Safety
 

@@ -1,0 +1,13 @@
+{
+  "notFound": {
+    "code": "404",
+    "title": "This page wandered off",
+    "description": "The link may be broken or the page may have been moved.",
+    "backLink": "Back to Tracker"
+  },
+  "globalError": {
+    "title": "Something went badly wrong",
+    "description": "The app failed to load. Try again, and contact an admin if it keeps happening.",
+    "retryButton": "Try again"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "created": "Tracker created",
+  "timerStarted": "Timer started",
+  "timerPaused": "Timer paused",
+  "timerResumed": "Timer resumed",
+  "entrySaved": "Time entry saved",
+  "entryUpdated": "Entry updated",
+  "entryDeleted": "Entry deleted",
+  "timerDiscarded": "Timer discarded"
+}

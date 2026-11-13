@@ -21,3 +21,8 @@ tsconfig.tsbuildinfo
 supabase/.temp
 supabase/.branches
 docs/
+playwright-report/
+test-results/
+blob-report/
+.claude/settings.local.json
+.cursor/mcp.json

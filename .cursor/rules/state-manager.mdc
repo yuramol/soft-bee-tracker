@@ -18,7 +18,7 @@ Mount a single `QueryClientProvider` at the app root (`src/providers/query-provi
 
 ## 2. Query and mutation pattern
 
-Each domain lives under `src/lib/api/<feature>/`. See **lib-services.mdc** for the full file layout (`index.ts`, `queries.ts`, `mutations.ts`, optional `types.ts` / `mappers.ts`).
+Each domain lives under `src/lib/api/<feature>/`. See **lib-services.mdc** for the file layout and for when `mappers.ts` is allowed.
 
 | Concern | Location |
 |---------|----------|
@@ -64,7 +64,7 @@ export async function fetchUser(id: string) {
     throw { message: error.message, statusCode: 500 } satisfies ApiError;
   }
 
-  return { id: data.id, status: data.status, updatedAt: data.updated_at };
+  return data;
 }
 ```
 

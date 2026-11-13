@@ -1,0 +1,109 @@
+name: CI Checks
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+  SUPABASE_SECRET_KEY: ci-canary-secret-must-never-reach-client-7f3c9a
+  PLAYWRIGHT_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+  PLAYWRIGHT_SUPABASE_SECRET_KEY: ci-canary-secret-must-never-reach-client-7f3c9a
+
+jobs:
+  checks:
+    name: Lint, Unit Tests, Build & E2E Safeguards
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run ESLint checks
+        run: yarn lint:ci
+
+      - name: Run unit and safeguard tests (Vitest)
+        run: yarn test
+
+      - name: Build Next.js production bundle
+        run: yarn build
+
+      - name: Verify client-delivered output contains no server-side secrets
+        run: |
+          # .next/static = JS/CSS bundles; .next/server/app *.html/*.rsc/*.body = prerendered pages and RSC payloads sent to the browser.
+          for dir in .next/static .next/server/app; do
+            if [ ! -d "$dir" ]; then
+              echo "Error: expected build output directory $dir is missing"
+              exit 1
+            fi
+          done
+          # grep exits 1 for "no match" and 2 for errors; treat errors as failures instead of a clean result.
+          search_client_output() {
+            local status
+            grep -R -l "$@" .next/static/ && return 0
+            status=$?
+            if [ "$status" -ne 1 ]; then
+              echo "Error: grep failed on .next/static (exit $status)"
+              exit 1
+            fi
+            grep -R -l --include='*.html' --include='*.rsc' --include='*.body' "$@" .next/server/app/ && return 0
+            status=$?
+            if [ "$status" -ne 1 ]; then
+              echo "Error: grep failed on .next/server/app (exit $status)"
+              exit 1
+            fi
+            return 1
+          }
+          if search_client_output -F "$SUPABASE_SECRET_KEY"; then
+            echo "Error: SUPABASE_SECRET_KEY value leaked into client-delivered output"
+            exit 1
+          fi
+          if search_client_output -E "sb_secret_[A-Za-z0-9_-]+"; then
+            echo "Error: Supabase secret key found in client-delivered output"
+            exit 1
+          fi
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install Playwright Chromium browser
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run Playwright E2E safeguard tests
+        run: yarn test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  db:
+    name: Validate database
+    uses: ./.github/workflows/validate-db.yml
