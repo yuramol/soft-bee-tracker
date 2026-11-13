@@ -12,14 +12,14 @@ import {
 } from 'date-fns';
 
 import type { UserRole } from '@/lib/api/auth';
+import type { LeaveType } from '@/lib/api/leave';
+import type { ProjectRecord } from '@/lib/api/projects';
+import type { ReportSource, ReportTimeEntry } from '@/lib/api/reports';
+import type { ProjectPerson } from '@/lib/api/users';
 import { getLeaveWorkingDays } from '@/lib/leave-days';
 import { getShortName } from '@/lib/projects';
 import { isReportPeriod, REPORT_PERIODS, type ReportPeriod } from '@/lib/team-report-params';
 import { toDateKey } from '@/lib/tracker-days';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { LeaveType } from '@/lib/api/leave';
-import type { ProjectRecord } from '@/mocks/projects.mock';
-import type { ReportAbsence, ReportTimeEntry } from '@/mocks/reports.mock';
 
 export function getTodayKey(timeZone: string, now: Date): string {
   // en-CA formats as yyyy-MM-dd
@@ -80,7 +80,8 @@ export function buildReportSearch(filters: ReportFilters): string {
   return `?${params.toString()}`;
 }
 
-// Admin sees the whole space, a manager their team plus the projects they run, staff only themselves.
+// Admin sees the whole space, a manager the people and time on the projects they manage, staff only themselves.
+// It mirrors the trackers RLS, which already limits the entries; the scope also limits the filter options.
 // Every report is built through this scope, so ids outside it are dropped even if requested directly.
 // Past entries stay visible after someone leaves a project, so their projects and people are added too
 export function getReportScope(viewer: ReportViewer, data: ReportData): ReportScope {
@@ -99,42 +100,42 @@ export function getReportScope(viewer: ReportViewer, data: ReportData): ReportSc
 function getAssignmentScope(viewer: ReportViewer, data: ReportData): ReportScope {
   if (viewer.role === 'admin') {
     return {
-      memberIds: new Set(data.crew.map((member) => member.id)),
+      memberIds: new Set(data.people.map((person) => person.id)),
       projectIds: new Set(data.projects.map((project) => project.id)),
       canSeeEntry: () => true
     };
   }
 
-  if (viewer.role === 'manager') {
-    const teamIds = new Set([viewer.id, ...data.crew.filter((member) => member.managerId === viewer.id).map((member) => member.id)]);
-    const managedProjects = data.projects.filter((project) => project.managerId === viewer.id);
-    const managedProjectIds = new Set(managedProjects.map((project) => project.id));
-    const projectIds = new Set([
-      ...managedProjectIds,
-      ...data.projects.filter((project) => project.memberIds.some((id) => teamIds.has(id))).map((project) => project.id)
-    ]);
+  const ownProjects = data.projects.filter((project) => isOnProject(project, viewer.id));
+  const ownProjectIds = new Set(ownProjects.map((project) => project.id));
 
+  // a manager manages every project they are responsible for or assigned to (private.is_project_manager)
+  if (viewer.role === 'manager') {
     return {
-      memberIds: new Set([...teamIds, ...managedProjects.flatMap((project) => project.memberIds)]),
-      projectIds,
-      canSeeEntry: (entry) => teamIds.has(entry.memberId) || managedProjectIds.has(entry.projectId)
+      memberIds: new Set([viewer.id, ...ownProjects.flatMap((project) => project.memberIds)]),
+      projectIds: ownProjectIds,
+      canSeeEntry: (entry) => entry.memberId === viewer.id || ownProjectIds.has(entry.projectId)
     };
   }
 
   return {
     memberIds: new Set([viewer.id]),
-    projectIds: new Set(data.projects.filter((project) => project.memberIds.includes(viewer.id)).map((project) => project.id)),
+    projectIds: ownProjectIds,
     canSeeEntry: (entry) => entry.memberId === viewer.id
   };
+}
+
+function isOnProject(project: ProjectRecord, personId: string): boolean {
+  return project.managerId === personId || project.memberIds.includes(personId);
 }
 
 export function getReportOptions(viewer: ReportViewer, data: ReportData): ReportOptions {
   const scope = getReportScope(viewer, data);
 
   return {
-    people: data.crew
-      .filter((member) => scope.memberIds.has(member.id))
-      .map((member) => ({ id: member.id, name: getShortName(member) }))
+    people: data.people
+      .filter((person) => scope.memberIds.has(person.id))
+      .map((person) => ({ id: person.id, name: getShortName(person) }))
       .sort(byName),
     projects: data.projects
       .filter((project) => scope.projectIds.has(project.id))
@@ -144,7 +145,8 @@ export function getReportOptions(viewer: ReportViewer, data: ReportData): Report
   };
 }
 
-// Rows, totals and exports all come from this one pass over the records, so they always agree
+// Rows, totals and exports all come from this one pass over the records, so they always agree.
+// Entries are already summed for the requested range, so only scope and selection filter them here
 export function buildReport(data: ReportData, requested: ReportFilters, viewer: ReportViewer): Report {
   const scope = getReportScope(viewer, data);
   const filters: ReportFilters = {
@@ -157,8 +159,6 @@ export function buildReport(data: ReportData, requested: ReportFilters, viewer: 
 
   const entries = data.entries.filter(
     (entry) =>
-      entry.date >= filters.from &&
-      entry.date <= filters.to &&
       scope.canSeeEntry(entry) &&
       (!selectedProjects || selectedProjects.has(entry.projectId)) &&
       (!selectedMembers || selectedMembers.has(entry.memberId))
@@ -296,7 +296,7 @@ function sumAbsenceTotals(summaries: ReportAbsenceSummary[]): ReportAbsenceSumma
 // One row per person and project. A person's absence sits on their first row only,
 // so the absence column adds up to the total; people with only absence get a row of their own.
 function buildRows(entries: ReportTimeEntry[], absenceByMember: Map<string, ReportAbsenceSummary>, data: ReportData): ReportRow[] {
-  const peopleById = new Map(data.crew.map((member) => [member.id, member]));
+  const peopleById = new Map(data.people.map((person) => [person.id, person]));
   const projectsById = new Map(data.projects.map((project) => [project.id, project]));
   const minutesByKey = new Map<string, Pick<ReportTimeEntry, 'memberId' | 'projectId' | 'minutes'>>();
 
@@ -348,8 +348,8 @@ function buildRows(entries: ReportTimeEntry[], absenceByMember: Map<string, Repo
   });
 }
 
-function getMemberName(member: CrewMember | undefined): string {
-  return member ? getShortName(member) : UNKNOWN_MEMBER;
+function getMemberName(person: ProjectPerson | undefined): string {
+  return person ? getShortName(person) : UNKNOWN_MEMBER;
 }
 
 function parseRange(from: string | undefined, to: string | undefined): ReportRange | null {
@@ -420,12 +420,8 @@ export interface ReportViewer {
   role: UserRole;
 }
 
-export interface ReportData {
-  entries: ReportTimeEntry[];
-  absences: ReportAbsence[];
-  crew: CrewMember[];
-  projects: ProjectRecord[];
-}
+// entries and absences cover the report's from–to range
+export type ReportData = ReportSource;
 
 export interface ReportScope {
   memberIds: Set<string>;
