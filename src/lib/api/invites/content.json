@@ -5,7 +5,11 @@
   "roleNotAllowed": "Your role can't invite someone as {role}.",
   "invalidInput": "Check the highlighted fields.",
   "alreadyMember": "{email} already has an account.",
-  "alreadyInvited": "{email} has already been invited and hasn't accepted yet.",
-  "readyToSend": "{email} can be invited. Sending invites arrives with SBT-55.",
-  "unexpectedError": "We couldn't check this invite. Try again in a moment."
+  "alreadyInvited": "{email} has already been invited and hasn't accepted yet. You can send the invite again.",
+  "unexpectedError": "We couldn't send this invite. Try again in a moment.",
+  "sent": "Invite sent to {email}.",
+  "resent": "Invite sent to {email} again.",
+  "rateLimited": "Too many invite emails were sent just now. Try again in a few minutes.",
+  "roleNotSet": "The invite to {email} was sent, but their role couldn't be saved. Send the invite again to fix it.",
+  "alreadyInvitedByOther": "{email} has already been invited and hasn't accepted yet. Ask an admin to send the invite again."
 }

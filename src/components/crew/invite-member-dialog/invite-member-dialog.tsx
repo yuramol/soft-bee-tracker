@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MailIcon, SendIcon, UserPlusIcon } from 'lucide-react';
+import { MailIcon, RotateCwIcon, SendIcon, UserPlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useController, useForm, type UseFormSetError } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -23,6 +23,9 @@ import content from '../content.json';
 export function InviteMemberDialog({ invitableRoles }: InviteMemberDialogProps) {
   const [open, setOpen] = useState(false);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
+  // set when the server offered to send a pending invite again; while it is,
+  // submitting the form (button or Enter) is the resend
+  const [isResendOffered, setIsResendOffered] = useState(false);
   const { mutate: inviteMember, isPending: isInviting, reset: resetInvite } = useInviteMember();
   const roleOptions = ROLE_OPTIONS.filter((option) => invitableRoles.includes(option.value));
   const defaultValues = getDefaultValues(invitableRoles);
@@ -40,17 +43,24 @@ export function InviteMemberDialog({ invitableRoles }: InviteMemberDialogProps) 
   const { field: roleField } = useController({ control, name: 'role' });
   const isBusy = isSubmitting || isInviting;
 
-  function handleInviteResult(result: InviteMemberResult) {
-    applyInviteResult(result, { setError, setResultMessage });
+  function closeDialog() {
+    resetDialog();
+    setOpen(false);
   }
 
+  function handleInviteResult(result: InviteMemberResult) {
+    applyInviteResult(result, { closeDialog, setError, setResultMessage });
+    setIsResendOffered(result.status === 'already-invited' && result.canResend);
+  }
+
+  // the resend offer survives a network error, so the user can just try again
   function handleInviteError() {
     setResultMessage(content.inviteDialog.networkError);
   }
 
   function handleInviteSubmit(values: InviteMemberFormValues) {
     setResultMessage(null);
-    inviteMember(values, { onSuccess: handleInviteResult, onError: handleInviteError });
+    inviteMember({ ...values, resend: isResendOffered }, { onSuccess: handleInviteResult, onError: handleInviteError });
   }
 
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -60,7 +70,7 @@ export function InviteMemberDialog({ invitableRoles }: InviteMemberDialogProps) 
   function resetDialog() {
     reset(defaultValues);
     resetInvite();
-    setResultMessage(null);
+    clearResultMessage();
   }
 
   function handleDialogOpenChange(nextOpen: boolean) {
@@ -74,15 +84,15 @@ export function InviteMemberDialog({ invitableRoles }: InviteMemberDialogProps) 
 
   function handleCancelClick() {
     if (!isBusy) {
-      resetDialog();
-      setOpen(false);
+      closeDialog();
     }
   }
 
   // a result describes the values that were submitted; once they change it no
-  // longer applies
+  // longer applies, and neither does an offer to resend
   function clearResultMessage() {
     setResultMessage(null);
+    setIsResendOffered(false);
   }
 
   function handleRoleChange(value: UserRole | null) {
@@ -150,8 +160,8 @@ export function InviteMemberDialog({ invitableRoles }: InviteMemberDialogProps) 
               {content.inviteDialog.cancelButton}
             </Button>
             <Button type='submit' disabled={isBusy}>
-              <SendIcon data-icon='inline-start' />
-              {content.inviteDialog.sendButton}
+              {isResendOffered ? <RotateCwIcon data-icon='inline-start' /> : <SendIcon data-icon='inline-start' />}
+              {isResendOffered ? content.inviteDialog.resendButton : content.inviteDialog.sendButton}
             </Button>
           </DialogFooter>
         </form>
@@ -160,11 +170,16 @@ export function InviteMemberDialog({ invitableRoles }: InviteMemberDialogProps) 
   );
 }
 
-// field problems go under their fields; everything else is one message in the
-// dialog. nothing is sent yet (SBT-55), so a passing check stays in the dialog
-// instead of closing it as if an email went out. a revoked or blocked session
-// leaves the page through sign-out
+// a sent invite closes the dialog with a toast; field problems go under their
+// fields; anything else stays in the dialog as one message, with the form kept
+// for a retry. a revoked or blocked session leaves the page through sign-out
 function applyInviteResult(result: InviteMemberResult, handlers: InviteResultHandlers) {
+  if (result.status === 'sent' || result.status === 'resent') {
+    toast.success(result.message);
+    handlers.closeDialog();
+    return;
+  }
+
   if (result.status === 'invalid') {
     if (result.fieldErrors.email) {
       handlers.setError('email', { message: result.fieldErrors.email });
@@ -173,10 +188,6 @@ function applyInviteResult(result: InviteMemberResult, handlers: InviteResultHan
     if (result.fieldErrors.role) {
       handlers.setError('role', { message: result.fieldErrors.role });
     }
-  }
-
-  if (result.status === 'not-sent') {
-    toast.info(result.message);
   }
 
   // a full page load, not router.push: the sign-out route handler clears the
@@ -197,6 +208,7 @@ interface InviteMemberDialogProps {
 }
 
 interface InviteResultHandlers {
+  closeDialog: () => void;
   setError: UseFormSetError<InviteMemberFormValues>;
   setResultMessage: (message: string) => void;
 }

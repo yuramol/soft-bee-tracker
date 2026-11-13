@@ -8,6 +8,7 @@ export const ROUTES = {
   AUTH_CONFIRM: '/auth/confirm',
   UPDATE_PASSWORD: '/auth/update-password',
   SIGN_OUT: '/auth/sign-out',
+  LINK_INVALID: '/auth/link-invalid',
   ACCESS_DENIED: '/access-denied',
   BLOCKED: '/blocked',
   TERMS: '/terms',
@@ -30,6 +31,7 @@ export const PUBLIC_ROUTES_LIST = [
   ROUTES.AUTH_CONFIRM,
   ROUTES.UPDATE_PASSWORD,
   ROUTES.SIGN_OUT,
+  ROUTES.LINK_INVALID,
   ROUTES.ACCESS_DENIED,
   ROUTES.BLOCKED,
   ROUTES.TERMS
