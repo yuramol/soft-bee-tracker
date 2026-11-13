@@ -4,6 +4,8 @@ export type UserRole = 'worker' | 'manager' | 'admin';
 
 export type UserAccess = Database['public']['Tables']['user_access']['Row'];
 
+export type UserStatus = 'pending' | 'active' | 'blocked';
+
 export interface UserPositions {
   titles: string[];
 }

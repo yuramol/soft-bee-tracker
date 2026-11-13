@@ -50,6 +50,8 @@ export function ChangeEmailDialog({ currentEmail }: ChangeEmailDialogProps) {
   }
 
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+    // the dialog is portaled, but React still bubbles submit to the profile form it sits in
+    event.stopPropagation();
     void handleSubmit(handleEmailSubmit)(event);
   }
 

@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useController, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -20,6 +20,7 @@ import type { UpdateProfileRequest, UserProfile } from '@/lib/api/auth';
 import { formatText } from '@/lib/format-text';
 import { getProfilePosition } from '@/lib/profile';
 import { profileFormSchema, type ProfileFormValues } from '@/lib/schemas/profile-form.schema';
+import { COMPANY_TIME_ZONE, COMPANY_TIME_ZONE_LABEL } from '@/lib/work-time-policy';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import type { ApiError } from '@/types/api-error';
 import content from '../content.json';
@@ -34,22 +35,13 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     control,
     handleSubmit,
     register,
-    reset,
-    resetField
+    reset
   } = useForm<ProfileFormValues>({
     defaultValues: buildProfileFormValues(profile),
     resolver: zodResolver(profileFormSchema)
   });
   const { field: timeZoneField } = useController({ control, name: 'timeZone' });
-  const isUsingDeviceDefault = !profile.timeZone && timeZoneField.value === deviceTimeZone;
-
-  // the device zone is only known in the browser, so it becomes the field's baseline
-  // after hydration: preselected, but not an unsaved change until the user saves
-  useEffect(() => {
-    if (!profile.timeZone && deviceTimeZone) {
-      resetField('timeZone', { defaultValue: deviceTimeZone });
-    }
-  }, [deviceTimeZone, profile.timeZone, resetField]);
+  const isUsingCompanyDefault = !profile.timeZone && timeZoneField.value === COMPANY_TIME_ZONE;
   const { isLeavePending, confirmLeave, cancelLeave } = useUnsavedChangesGuard(isDirty);
 
   const isBusy = updateProfile.isPending;
@@ -134,7 +126,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               label={content.form.timeZoneLabel}
               htmlFor='timeZone'
               error={errors.timeZone}
-              description={isUsingDeviceDefault ? content.form.timeZoneDeviceDefault : undefined}
+              description={
+                isUsingCompanyDefault ? formatText(content.form.timeZoneCompanyDefault, { timeZone: COMPANY_TIME_ZONE_LABEL }) : undefined
+              }
             >
               <TimeZoneCombobox
                 id='timeZone'
@@ -189,7 +183,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 }
 
 function buildProfileFormValues(profile: UserProfile): ProfileFormValues {
-  // the form works in empty strings so untouched optional inputs stay pristine
+  // the form works in empty strings so untouched optional inputs stay pristine;
+  // a profile without a saved zone starts on the company zone (UTC+2)
   return {
     username: profile.username,
     firstName: profile.firstName,
@@ -197,7 +192,7 @@ function buildProfileFormValues(profile: UserProfile): ProfileFormValues {
     phone: profile.phone ?? '',
     linkedin: profile.linkedin ?? '',
     upwork: profile.upwork ?? '',
-    timeZone: profile.timeZone ?? ''
+    timeZone: profile.timeZone ?? COMPANY_TIME_ZONE
   };
 }
 
