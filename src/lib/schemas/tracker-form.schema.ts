@@ -4,11 +4,15 @@ import { z } from 'zod';
 import type { CreateTrackerInput, Tracker } from '@/lib/api/trackers';
 import { MAX_DURATION_MINUTES } from '@/lib/format-duration';
 import { clampFinishedMinutes, getLiveElapsedMinutes } from '@/lib/live-tracker';
+import { isEntryDateOpen } from '@/lib/work-time-policy';
 import content from './content.json';
 
 export const trackerFormSchema = z.object({
   projectId: z.string().min(1, content.tracker.projectRequired),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, content.tracker.invalidDate),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, content.tracker.invalidDate)
+    .refine((date) => isEntryDateOpen(date, new Date()), content.tracker.dateClosed),
   durationMinutes: z
     .number({ error: content.tracker.durationFormat })
     .int(content.tracker.durationWhole)

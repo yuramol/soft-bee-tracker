@@ -1,70 +1,94 @@
+import type { ReactNode } from 'react';
+
 import { Skeleton } from '@ui/skeleton';
 import { cn } from '@/lib/utils';
 import content from '../content.json';
 
-export function ListSkeleton({ rows = 4, className }: SkeletonListProps) {
+export function SkeletonRegion({ children, className }: SkeletonRegionProps) {
   return (
-    <div aria-busy='true' aria-label={content.loading.label} className={cn('divide-border divide-y rounded-2xl border', className)}>
-      {Array.from({ length: rows }, (_, index) => (
-        <div key={index} className='flex items-center gap-3 px-4 py-3.5'>
-          <Skeleton className='size-9 rounded-xl' />
-          <div className='flex flex-1 flex-col gap-2'>
-            <Skeleton className='h-3.5 w-2/5' />
-            <Skeleton className='h-3 w-3/5' />
-          </div>
-        </div>
+    <div role='status' aria-busy='true' aria-label={content.loading.label} className={className}>
+      {children}
+    </div>
+  );
+}
+
+export function PageHeaderSkeleton({ hasEyebrow = false, hasDescription = false, hasAction = false }: PageHeaderSkeletonProps) {
+  return (
+    <div className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
+      <div className='flex flex-col gap-2.5'>
+        {hasEyebrow ? <Skeleton className='h-3 w-20' /> : null}
+        <Skeleton className='h-10 w-44' />
+        {hasDescription ? <Skeleton className='h-4 w-full max-w-md' /> : null}
+      </div>
+      {hasAction ? <Skeleton className='h-11 w-40 rounded-full' /> : null}
+    </div>
+  );
+}
+
+export function TabsSkeleton({ tabs = 2, className }: TabsSkeletonProps) {
+  return (
+    <div className={cn('bg-muted flex h-11 w-fit gap-1 rounded-full p-1', className)}>
+      {Array.from({ length: tabs }, (_, index) => (
+        <Skeleton key={index} className='bg-background/70 h-full w-24 flex-1 rounded-full' />
       ))}
+    </div>
+  );
+}
+
+export function FieldSkeleton({ className }: FieldSkeletonProps) {
+  return (
+    <div className={cn('flex flex-col gap-2', className)}>
+      <Skeleton className='h-3.5 w-16' />
+      <Skeleton className='h-12 w-full rounded-lg' />
     </div>
   );
 }
 
 export function TableSkeleton({ rows = 5, columns = 4, className }: TableSkeletonProps) {
   return (
-    <div aria-busy='true' aria-label={content.loading.label} className={cn('flex flex-col gap-3 rounded-2xl border p-4', className)}>
-      <Skeleton className='h-4 w-full max-w-xs' />
+    <SkeletonRegion className={cn('overflow-hidden rounded-2xl border', className)}>
+      <div className='bg-muted/50 grid gap-4 border-b px-4 py-3' style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+        {Array.from({ length: columns }, (_, columnIndex) => (
+          <Skeleton key={columnIndex} className='h-3.5 w-2/3' />
+        ))}
+      </div>
       {Array.from({ length: rows }, (_, rowIndex) => (
-        <div key={rowIndex} className='grid gap-4' style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+        <div
+          key={rowIndex}
+          className='grid items-center gap-4 border-b px-4 py-4 last:border-b-0'
+          style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+        >
           {Array.from({ length: columns }, (_, columnIndex) => (
-            <Skeleton key={columnIndex} className='h-8' />
+            <Skeleton key={columnIndex} className={cn('h-4', columnIndex === 0 ? 'w-4/5' : 'w-1/2')} />
           ))}
         </div>
       ))}
-    </div>
+    </SkeletonRegion>
   );
 }
 
-export function CardGridSkeleton({ cards = 6, className }: CardGridSkeletonProps) {
-  return (
-    <div aria-busy='true' aria-label={content.loading.label} className={cn('grid gap-4 sm:grid-cols-2 xl:grid-cols-3', className)}>
-      {Array.from({ length: cards }, (_, index) => (
-        <div key={index} className='flex flex-col gap-4 rounded-2xl border p-5'>
-          <div className='flex items-center gap-3'>
-            <Skeleton className='size-10 rounded-xl' />
-            <div className='flex flex-1 flex-col gap-2'>
-              <Skeleton className='h-3.5 w-1/2' />
-              <Skeleton className='h-3 w-1/3' />
-            </div>
-          </div>
-          <Skeleton className='h-3 w-4/5' />
-          <Skeleton className='h-5 w-24 rounded-full' />
-        </div>
-      ))}
-    </div>
-  );
+interface SkeletonRegionProps {
+  children: ReactNode;
+  className?: string;
 }
 
-interface SkeletonListProps {
-  rows?: number;
+interface PageHeaderSkeletonProps {
+  hasEyebrow?: boolean;
+  hasDescription?: boolean;
+  hasAction?: boolean;
+}
+
+interface TabsSkeletonProps {
+  tabs?: number;
+  className?: string;
+}
+
+interface FieldSkeletonProps {
   className?: string;
 }
 
 interface TableSkeletonProps {
   rows?: number;
   columns?: number;
-  className?: string;
-}
-
-interface CardGridSkeletonProps {
-  cards?: number;
   className?: string;
 }

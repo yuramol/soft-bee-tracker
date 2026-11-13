@@ -8,7 +8,7 @@ export function StatCard({ label, value, hint, icon: Icon, isHighlighted = false
     <div
       data-highlighted={isHighlighted}
       className={cn(
-        'group/stat bg-card relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5 shadow-sm',
+        'group/stat bg-card relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-5',
         'data-[highlighted=true]:bg-brand-black data-[highlighted=true]:text-brand-white data-[highlighted=true]:border-transparent',
         className
       )}

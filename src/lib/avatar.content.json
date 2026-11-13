@@ -1,0 +1,5 @@
+{
+  "invalidType": "Use a JPG, PNG, WebP or GIF image",
+  "tooLarge": "The image must be {size} MB or smaller",
+  "empty": "This file is empty"
+}

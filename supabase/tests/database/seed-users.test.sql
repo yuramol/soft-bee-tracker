@@ -3,10 +3,11 @@ begin;
 select plan(2);
 
 select results_eq(
-  $$ select email::text, role::text, is_confirmed
-     from public.users
-     where email like '%@softbee.dev'
-     order by email $$,
+  $$ select u.email::text, ua.role::text, ua.is_confirmed
+     from public.users u
+     join public.user_access ua on ua.user_id = u.id
+     where u.email like '%@softbee.dev'
+     order by u.email $$,
   $$ values
        ('admin@softbee.dev', 'admin', true),
        ('manager@softbee.dev', 'manager', true),

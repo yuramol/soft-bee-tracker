@@ -6,11 +6,15 @@
     "projects": "Projects",
     "profile": "Profile"
   },
-  "sidebar": {
+  "brand": {
     "appName": "Soft Bee Tracker",
     "brandName": "Soft Bee",
-    "brandSuffix": "Tracker",
-    "workspaceGroup": "Workspace"
+    "brandSuffix": "Tracker"
+  },
+  "header": {
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "menuTitle": "Navigation"
   },
   "accountMenu": {
     "openLabel": "Open account menu",
