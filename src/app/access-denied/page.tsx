@@ -17,9 +17,11 @@ export default async function AccessDeniedPage() {
   // only a fresh sign-in picks up a new claim
   const hasNoRole = session !== null && session.role === null;
 
-  if (hasNoRole) {
-    // a blocked user's token carries no role (custom_access_token_hook); the session
-    // check signs them out with the blocked reason instead of showing this page
+  if (session) {
+    // the proxy rewrites here on the JWT claim alone, so a blocked user can arrive
+    // with no role (a refreshed token, see custom_access_token_hook) or with a stale
+    // token that still carries one. either way the session check asks the database
+    // and signs them out with the blocked reason instead of showing this page
     await getSessionProfile();
   }
 

@@ -1,6 +1,6 @@
 begin;
 
-select plan(14);
+select plan(15);
 
 -- seeded users: a01 admin, a02 manager, a03 worker
 
@@ -141,6 +141,29 @@ select is(
   (select is_confirmed from public.user_access where user_id = '00000000-0000-0000-0000-00000000c0f1'),
   true,
   'a later auth update leaves the user confirmed'
+);
+
+-- an account created already confirmed (admin create_user, confirmations off)
+-- never gets a null -> set update, so the signup trigger records it
+
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-00000000c0f2',
+  'authenticated',
+  'authenticated',
+  'precreated@softbee.test',
+  now(),
+  '{"provider": "email", "providers": ["email"]}',
+  '{"username": "precreated", "first_name": "Pre", "last_name": "Created"}',
+  now(),
+  now()
+);
+
+select is(
+  (select is_confirmed from public.user_access where user_id = '00000000-0000-0000-0000-00000000c0f2'),
+  true,
+  'a user created with a confirmed email starts confirmed'
 );
 
 select * from finish();
