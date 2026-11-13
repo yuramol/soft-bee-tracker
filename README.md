@@ -224,10 +224,19 @@ yarn sb:db:types
 
 > **Warning:** `supabase db push` targets the **local** database. The linked hosted project needs `supabase db push --remote`, and the CLI asks for confirmation.
 
-Production migrations are deployed **manually only**: after the migrations are merged to `main`, the person responsible for the release opens **Actions → Deploy database migrations → Run workflow** with the `main` branch selected (other branches are skipped). Nothing deploys automatically on merge.
+There is a single hosted Supabase project. The Vercel deployments of `dev`, `test` (Preview) and `main` (Production) all use it, so its schema must work with the code on every one of these branches.
+
+Migrations are deployed **manually only**: after the migrations are merged to `dev`, the person responsible opens **Actions → Deploy database migrations → Run workflow** and selects the `dev`, `test` or `main` branch (other branches are skipped). Nothing deploys automatically on merge.
 
 1. `validate-db.yml` runs first: all migrations + seeds on a clean database, schema lint, pgTAP tests (`supabase/tests`), DB types.
-2. The `deploy` job waits for approval in the `production` GitHub Environment, prints the pending migrations (`db push --dry-run`) and applies them. Seeds are never applied to production.
+2. The `deploy` job waits for approval in the `production` GitHub Environment, prints the pending migrations (`db push --dry-run`) and applies them. Seeds are never applied to the hosted project.
+
+Because older code on `test` and `main` keeps running against the new schema:
+
+- Write backward-compatible migrations (expand → contract): add new columns, tables and functions first, and drop the old ones in a later migration once no deployed branch uses them.
+- If a migration must break older code, deploy it together with promoting the code to `main`.
+- Never edit or delete a migration that has been deployed; fix it with a new migration.
+- Running the workflow from a branch that lacks migrations already applied to the database fails at `db push`; run it from the branch with the newest migrations.
 
 Repository setup (owner, one time): create the `production` environment under **Settings → Environments**, add required reviewers, and add the `SUPABASE_DB_URL` secret (production connection string) to it.
 
@@ -246,7 +255,7 @@ Migrations use 14-digit UTC timestamps: `YYYYMMDDHHmmss_description.sql`. All ta
 - **ESLint** + **Prettier** — run `yarn lint` before committing
 - **Husky** pre-commit hooks via lint-staged
 - **CI** (`.github/workflows/ci.yml`) — lint, unit tests, build, secret-leak scan and Playwright safeguards on every PR, plus `validate-db.yml` in parallel: all migrations + seeds on a clean database, `supabase db lint`, pgTAP tests (`yarn sb:test`: seeded test accounts, RLS on every public table), and a check that `src/types/supabase-schema.ts` is up to date
-- **DB deploy** (`.github/workflows/deploy-db.yml`) — manually triggered, validated, approval-gated `supabase db push` to production from `main`
+- **DB deploy** (`.github/workflows/deploy-db.yml`) — manually triggered, validated, approval-gated `supabase db push` to the shared hosted project from `dev`, `test` or `main`
 - Path alias: `@/*` → `src/*`
 
 ## AI agent setup
