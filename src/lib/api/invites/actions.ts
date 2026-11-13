@@ -120,7 +120,7 @@ async function getInviter(): Promise<Inviter> {
 // lives in lib/supabase/server and this file only runs as a server action.
 async function findExistingAccount(email: string): Promise<ExistingAccount> {
   const supabase = createServiceClient();
-  const { data: row, error: rowError } = await supabase.from('users').select('id, role').eq('email', email).maybeSingle();
+  const { data: row, error: rowError } = await supabase.from('users').select('id, user_access(role)').eq('email', email).maybeSingle();
 
   if (rowError) {
     throw rowError;
@@ -138,13 +138,15 @@ async function findExistingAccount(email: string): Promise<ExistingAccount> {
 
   // an accepted invite (or any finished sign-up) confirms the email; anything
   // else is an invite or sign-up still waiting, which can be resent
-  return data.user.email_confirmed_at ? { kind: 'member' } : { kind: 'invited', role: row.role };
+  // no access row yet reads as the signup trigger's default, worker: the
+  // least privileged guess, so a manager is never refused a resend wrongly
+  return data.user.email_confirmed_at ? { kind: 'member' } : { kind: 'invited', role: row.user_access?.role ?? 'worker' };
 }
 
 // inviteUserByEmail creates the auth user (the signup trigger adds the
-// public.users row) and sends the email; for a user who hasn't accepted yet it
-// sends a fresh link. the trigger always creates a worker, so the invited role
-// is stored afterwards. if that write fails the user stays a worker, the safe
+// public.users and public.user_access rows) and sends the email; for a user who
+// hasn't accepted yet it sends a fresh link. the trigger always creates a worker,
+// so the invited role is stored in user_access afterwards. if that write fails the user stays a worker, the safe
 // direction, and a resend sets the role again.
 async function sendInvite(email: string, role: UserRole, sentStatus: 'sent' | 'resent'): Promise<InviteMemberResult> {
   const supabase = createServiceClient();
@@ -166,7 +168,7 @@ async function sendInvite(email: string, role: UserRole, sentStatus: 'sent' | 'r
 
   // .single() turns "no row matched" into an error; a plain update would
   // report success with nothing stored
-  const { error: roleError } = await supabase.from('users').update({ role }).eq('id', data.user.id).select('id').single();
+  const { error: roleError } = await supabase.from('user_access').update({ role }).eq('user_id', data.user.id).select('user_id').single();
 
   if (roleError) {
     return { status: 'error', message: formatText(content.roleNotSet, { email }) };

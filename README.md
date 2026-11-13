@@ -145,7 +145,7 @@ It then calls `auth.admin.inviteUserByEmail` with the service client and stores 
 
 The email uses `supabase/templates/invite.html`, which links to `/auth/confirm?token_hash=…&type=invite&next=/register`. There the invitee is signed in and sets a password. An expired, used or superseded link lands on `/auth/link-invalid`, a public page that explains it whether or not the visitor is signed in.
 
-Users can update only their own profile columns (`username`, `first_name`, `last_name`, `phone`, `avatar_url`, `linkedin`, `upwork`); `role`, `is_blocked` and the other fields are written by the signup trigger and the service role only (migration `20261110143609_restrict_user_profile_updates.sql`).
+Users can update only their own profile columns (`username`, `first_name`, `last_name`, `phone`, `avatar_url`, `linkedin`, `upwork`, `time_zone`); `email`, `positions` and `date_employment` are written by the signup trigger and the service role only (migration `20261113081253_restrict_user_profile_updates.sql`). Role and access flags live in `public.user_access`, which only admins can change, and the invite stores the invited role there.
 
 **Hosted projects:** set the invite email template in the Supabase dashboard (Authentication → Emails) to the contents of `supabase/templates/invite.html`, and set the Site URL to the app's URL. With the default template the link goes through `/auth/v1/verify` to the Site URL, which the app doesn't handle.
 

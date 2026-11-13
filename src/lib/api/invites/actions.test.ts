@@ -17,7 +17,7 @@ vi.mock('@/lib/api/auth/server', () => ({ getRouteSession, resolveSessionProfile
 
 vi.mock('@/lib/supabase/server', () => ({
   createServiceClient: () => ({
-    from: () => ({
+    from: (table: string) => ({
       select: () => ({
         eq: (column: string, value: string) => {
           eq(column, value);
@@ -25,9 +25,9 @@ vi.mock('@/lib/supabase/server', () => ({
         }
       }),
       update: (values: { role: UserRole }) => ({
-        eq: (_column: string, id: string) => ({
+        eq: (column: string, id: string) => ({
           select: () => ({
-            single: () => updateRole(values, id) as Promise<{ error: { message: string; code?: string } | null }>
+            single: () => updateRole(table, values, column, id) as Promise<{ error: { message: string; code?: string } | null }>
           })
         })
       })
@@ -213,7 +213,8 @@ describe('inviteMember', () => {
         message: 'Invite sent to new@softbee.dev.'
       });
       expect(inviteUserByEmail).toHaveBeenCalledWith('new@softbee.dev');
-      expect(updateRole).toHaveBeenCalledWith({ role }, 'user-new');
+      // since SBT-8 roles live in user_access, keyed by user_id
+      expect(updateRole).toHaveBeenCalledWith('user_access', { role }, 'user_id', 'user-new');
     });
 
     it('treats an email the Auth server already knows as an existing account', async () => {
@@ -276,6 +277,6 @@ function noExistingAccount() {
 }
 
 function existingAccount(user: { email_confirmed_at: string | null; invited_at: string | null }, role: UserRole = 'worker') {
-  maybeSingle.mockResolvedValue({ data: { id: 'user-2', role }, error: null });
+  maybeSingle.mockResolvedValue({ data: { id: 'user-2', user_access: { role } }, error: null });
   getUserById.mockResolvedValue({ data: { user: { id: 'user-2', ...user } }, error: null });
 }
