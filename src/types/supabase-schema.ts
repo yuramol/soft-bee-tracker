@@ -199,6 +199,41 @@ export type Database = {
           },
         ]
       }
+      user_access: {
+        Row: {
+          created_at: string
+          is_blocked: boolean
+          is_confirmed: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_blocked?: boolean
+          is_confirmed?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_blocked?: boolean
+          is_confirmed?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -207,17 +242,11 @@ export type Database = {
           email: string
           first_name: string
           id: string
-          is_blocked: boolean
-          is_confirmed: boolean
           last_name: string
           linkedin: string | null
           phone: string | null
           positions: Json | null
-          role: Database["public"]["Enums"]["user_role"]
-          salary: number | null
-          salary_info: string | null
           time_zone: string | null
-          type_salary: Database["public"]["Enums"]["salary_type"] | null
           updated_at: string
           upwork: string | null
           username: string
@@ -229,17 +258,11 @@ export type Database = {
           email: string
           first_name: string
           id: string
-          is_blocked?: boolean
-          is_confirmed?: boolean
           last_name: string
           linkedin?: string | null
           phone?: string | null
           positions?: Json | null
-          role?: Database["public"]["Enums"]["user_role"]
-          salary?: number | null
-          salary_info?: string | null
           time_zone?: string | null
-          type_salary?: Database["public"]["Enums"]["salary_type"] | null
           updated_at?: string
           upwork?: string | null
           username: string
@@ -251,17 +274,11 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
-          is_blocked?: boolean
-          is_confirmed?: boolean
           last_name?: string
           linkedin?: string | null
           phone?: string | null
           positions?: Json | null
-          role?: Database["public"]["Enums"]["user_role"]
-          salary?: number | null
-          salary_info?: string | null
           time_zone?: string | null
-          type_salary?: Database["public"]["Enums"]["salary_type"] | null
           updated_at?: string
           upwork?: string | null
           username?: string
@@ -283,7 +300,6 @@ export type Database = {
         }
         Returns: string
       }
-      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       get_project_members: {
         Args: never
         Returns: {
@@ -307,7 +323,6 @@ export type Database = {
     Enums: {
       project_status: "active" | "archived"
       project_type: "fixed_price" | "non_profit" | "time_material"
-      salary_type: "hourly" | "fixed" | "project"
       tracker_live_status: "finish" | "pause" | "start"
       tracker_status: "approved" | "new" | "rejected"
       user_role: "worker" | "manager" | "admin"
@@ -443,7 +458,6 @@ export const Constants = {
     Enums: {
       project_status: ["active", "archived"],
       project_type: ["fixed_price", "non_profit", "time_material"],
-      salary_type: ["hourly", "fixed", "project"],
       tracker_live_status: ["finish", "pause", "start"],
       tracker_status: ["approved", "new", "rejected"],
       user_role: ["worker", "manager", "admin"],

@@ -28,8 +28,8 @@ export type {
   UpdatePasswordRequest,
   UpdateProfileRequest,
   UserRole,
-  SalaryType,
   UserStatus,
   UserPositions,
-  UserProfile
+  UserProfile,
+  UserAccess
 } from './types';

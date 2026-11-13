@@ -111,6 +111,16 @@ describe('updateSession', () => {
     expect(response.headers.get('location')).toBe(`http://localhost:3000${HOME_ROUTE}`);
   });
 
+  // a signed-in invitee clicking an old email link must still see why it failed
+  it('shows the link-invalid page to a signed-in user', async () => {
+    signedInAs('manager');
+
+    const response = await updateSession(buildRequest(ROUTES.LINK_INVALID));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('location')).toBeNull();
+  });
+
   it('denies restricted routes when the role claim is missing', async () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: 'user-1' } }, error: null });
 

@@ -9,8 +9,8 @@ values
   ('00000000-0000-0000-0000-00000000f002', 'manager2@access.test', '{"username": "manager-two"}'),
   ('00000000-0000-0000-0000-00000000f003', 'manager3@access.test', '{"username": "manager-three"}');
 
-update public.users set role = 'manager'
-where id in ('00000000-0000-0000-0000-00000000f002', '00000000-0000-0000-0000-00000000f003');
+update public.user_access set role = 'manager'
+where user_id in ('00000000-0000-0000-0000-00000000f002', '00000000-0000-0000-0000-00000000f003');
 
 -- the local database may hold projects beyond the seed, so totals are read up front
 create temp table project_totals on commit drop as select count(*)::int + 3 as total from public.projects;

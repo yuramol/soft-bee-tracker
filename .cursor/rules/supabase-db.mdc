@@ -22,18 +22,22 @@ alwaysApply: false
   - `as restrictive for all`
   - `using ((select private.is_secure()))`
   - `with check ((select private.is_secure()))`
+- Default scope is all roles (no `to` clause). Exception: on tables written by the signup trigger or read by
+  the auth hook (`public.users`, `public.user_access`), scope it `to anon, authenticated`.
+  `supabase_auth_admin` runs those without a JWT, so `is_secure()` would block it. Roles outside the list are
+  not gated by this policy, so give `supabase_auth_admin` only the narrow grants and policies it needs.
 - For normal access control, split policies by operation (`select`, `insert`, `update`, `delete`).
 - Use `auth.uid()` (often `(select auth.uid())`), never `current_user`.
 
 # RLS role checks (JWT claims — required)
 
 Role for authorization comes from the access token (`claims.user_role`), injected by
-`public.custom_access_token_hook` from `public.users.role`. Do **not** look up
+`private.custom_access_token_hook` from `public.user_access.role`. Do **not** look up
 `public.users` inside RLS for role.
 
 - Prefer `(select private.is_manager_or_admin())` for admin/manager gates.
 - Prefer `(select private.jwt_role())` when comparing a specific role.
-- Keep `public.users.role` as the source of truth; the hook copies it at token issue/refresh.
+- Keep `public.user_access.role` as the source of truth; the hook copies it at token issue/refresh.
 - Never authorize from `user_metadata` or client-writable metadata.
 - Missing/null `user_role` must fail closed (helpers already do this).
 - Role changes apply on the next token refresh (`jwt_expiry`); do not assume instant RLS pickup.

@@ -17,7 +17,9 @@
 --   public.add_project_manager_membership(), public.validate_project_responsible() and
 --   their triggers on public.projects; functions public.create_project(...),
 --   public.get_project_people(), public.get_project_members(); policies on public.projects,
---   public.project_rates and public.trackers (replaced); data in public.project_rates
+--   public.project_rates and public.trackers (replaced); data in public.project_rates.
+--   reads roles and access status from public.user_access
+--   (20261106123719_create_user_access_table.sql)
 -- special risks: drop policy statements replace the role-wide manager rules with
 --   project-scoped ones, so managers lose access to projects outside their area by design.
 --   several functions are security definer (see each justification); get_project_people()
@@ -118,20 +120,20 @@ grant execute on function private.is_project_member(uuid) to authenticated, serv
 -- responsible person and membership triggers
 -- ---------------------------------------------------------------------------
 
--- security definer justification: the target person's role lives in public.users, which
--- callers can only read for themselves. reads one row's role; writes nothing.
+-- runs as the caller: only managers and admins may insert or update projects, and the
+-- user_access select policy lets them read every person's role
 create or replace function public.validate_project_responsible()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 begin
   if new.manager_id is not null and not exists (
     select 1
-    from public.users u
-    where u.id = new.manager_id
-      and u.role in ('manager', 'admin')
+    from public.user_access ua
+    where ua.user_id = new.manager_id
+      and ua.role in ('manager', 'admin')
   ) then
     raise exception 'only a manager or an admin can be responsible for a project'
       using errcode = '23514';
@@ -402,11 +404,11 @@ $$;
 comment on function public.create_project(text, uuid, text, text, uuid[]) is
   'creates a project with its responsible person and extra members in one transaction';
 
--- security definer justification: public.users only exposes a user's own row and
--- project_rates only the caller's own rates, yet project pages must show who manages
--- and works on a project. this returns the minimum profile fields (no email, phone or
--- salary) for admins/managers, and for everyone else only the people who share a
--- project with the caller.
+-- security definer justification: public.users and public.user_access only expose a
+-- staff member's own row and project_rates only the caller's own rates, yet project pages
+-- must show who manages and works on a project. this returns the minimum profile fields
+-- (no email or phone) plus role and access status, for admins/managers everyone, and for
+-- everyone else only the people who share a project with the caller.
 create or replace function public.get_project_people()
 returns table (
   id uuid,
@@ -433,8 +435,9 @@ as $$
           and pr.user_id = (select auth.uid())
       )
   )
-  select u.id, u.first_name, u.last_name, u.role, u.positions, u.is_confirmed, u.is_blocked
+  select u.id, u.first_name, u.last_name, ua.role, u.positions, ua.is_confirmed, ua.is_blocked
   from public.users u
+  join public.user_access ua on ua.user_id = u.id
   where (select private.is_secure())
     and (select auth.uid()) is not null
     and (
