@@ -1,6 +1,6 @@
 begin;
 
-select plan(13);
+select plan(15);
 
 -- seeded users: a01 admin, a02 manager, a03 worker
 set local role authenticated;
@@ -45,6 +45,14 @@ select lives_ok(
   'a manager can set someone''s allowance'
 );
 
+select throws_ok(
+  $$ insert into public.leave_allowances (user_id, year, leave_type, days)
+     values ('00000000-0000-0000-0000-000000000a02', 2031, 'vacation', 99) $$,
+  '42501',
+  null,
+  'a manager cannot set their own allowance'
+);
+
 -- admin
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000a01","role":"authenticated","user_role":"admin"}', true);
 
@@ -58,6 +66,12 @@ select is(
   (select role::text from public.user_access where user_id = '00000000-0000-0000-0000-000000000a03'),
   'worker',
   'a manager cannot change someone''s role'
+);
+
+select lives_ok(
+  $$ insert into public.leave_allowances (user_id, year, leave_type, days)
+     values ('00000000-0000-0000-0000-000000000a01', 2031, 'vacation', 25) $$,
+  'an admin can set their own allowance'
 );
 
 select lives_ok(
