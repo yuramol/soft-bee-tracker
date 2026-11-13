@@ -174,6 +174,7 @@ export type Database = {
           created_at: string
           end_date: string | null
           id: string
+          links: Json
           manager_id: string | null
           name: string
           note: string | null
@@ -184,17 +185,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          client: string
+          client?: string
           created_at?: string
           end_date?: string | null
           id?: string
+          links?: Json
           manager_id?: string | null
           name: string
           note?: string | null
           picture_url?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
-          type: Database["public"]["Enums"]["project_type"]
+          type?: Database["public"]["Enums"]["project_type"]
           updated_at?: string
         }
         Update: {
@@ -202,6 +204,7 @@ export type Database = {
           created_at?: string
           end_date?: string | null
           id?: string
+          links?: Json
           manager_id?: string | null
           name?: string
           note?: string | null
@@ -382,7 +385,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_project: {
+        Args: {
+          manager_ids?: string[]
+          project_client?: string
+          project_name: string
+          project_note?: string
+          responsible_id: string
+        }
+        Returns: string
+      }
+      get_project_members: {
+        Args: never
+        Returns: {
+          project_id: string
+          user_id: string
+        }[]
+      }
+      get_project_people: {
+        Args: never
+        Returns: {
+          first_name: string
+          id: string
+          is_blocked: boolean
+          is_confirmed: boolean
+          last_name: string
+          positions: Json
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
     }
     Enums: {
       leave_status: "pending" | "approved" | "rejected" | "cancelled"

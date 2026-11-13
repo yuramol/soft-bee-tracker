@@ -18,10 +18,19 @@ export {
   useStartLiveTracker,
   useUpdateTracker
 } from './mutations';
-export { getActiveLiveTracker, getTrackers, trackerKeys, useActiveLiveTracker, useTrackers } from './queries';
+export {
+  getActiveLiveTracker,
+  getProjectTrackers,
+  getTrackers,
+  trackerKeys,
+  useActiveLiveTracker,
+  useProjectTrackers,
+  useTrackers
+} from './queries';
 export type {
   CreateTrackerInput,
   FinishLiveTrackerInput,
+  ProjectTrackersInput,
   StartLiveTrackerInput,
   Tracker,
   TrackerLiveStatus,

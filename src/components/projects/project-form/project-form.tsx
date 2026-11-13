@@ -17,24 +17,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@ui/textarea';
 import { Typography } from '@ui/typography';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
-import type { ProjectStatus } from '@/lib/api/projects';
+import type { ProjectRecord, ProjectStatus } from '@/lib/api/projects';
+import type { ProjectPerson } from '@/lib/api/users';
 import { formatText } from '@/lib/format-text';
-import { buildProjectHref, type ProjectField, type ProjectUpdateResult, type ProjectUpdateValues } from '@/lib/projects';
+import { buildProjectHref, type ProjectField, type ProjectSubmitOutcome, type ProjectUpdateValues } from '@/lib/projects';
 import { EMPTY_PROJECT_LINK, projectFormSchema, type ProjectFormValues } from '@/lib/schemas/project-form.schema';
 import schemaContent from '@/lib/schemas/content.json';
 import { cn } from '@/lib/utils';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectRecord } from '@/mocks/projects.mock';
 import content from '../content.json';
 
 export function ProjectForm({ project, editableFields, managerCandidates, isNameTaken, onSave }: ProjectFormProps) {
-  const [baseVersion, setBaseVersion] = useState(project.version);
-  const [conflict, setConflict] = useState<ProjectRecord | null>(null);
+  const [baseUpdatedAt, setBaseUpdatedAt] = useState(project.updatedAt);
+  const [hasConflict, setHasConflict] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const {
     control,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, isSubmitting },
     handleSubmit,
     register,
     reset,
@@ -50,19 +49,21 @@ export function ProjectForm({ project, editableFields, managerCandidates, isName
   const detailsHref = buildProjectHref(project.id);
   const isArchiving = project.status === 'active' && statusField.value === 'archived';
 
-  function handleProjectSubmit(values: ProjectFormValues) {
+  async function handleProjectSubmit(values: ProjectFormValues) {
     if (canEdit('name') && isNameTaken(values.name, project.id)) {
       setError('name', { message: schemaContent.project.nameTaken }, { shouldFocus: true });
       return;
     }
 
-    const result = onSave(project, values satisfies ProjectUpdateValues, baseVersion);
+    const outcome = await onSave(project, values satisfies ProjectUpdateValues, baseUpdatedAt);
 
-    if (result.status === 'conflict') {
-      setConflict(result.project);
-    } else {
+    if (outcome === 'conflict') {
+      setHasConflict(true);
+    } else if (outcome === 'name-taken') {
+      setError('name', { message: schemaContent.project.nameTaken }, { shouldFocus: true });
+    } else if (outcome === 'saved') {
       // the saved values become the baseline so the leave guard lets the redirect through
-      reset(toFormValues(result.project));
+      reset(values);
     }
   }
 
@@ -70,12 +71,11 @@ export function ProjectForm({ project, editableFields, managerCandidates, isName
     void handleSubmit(handleProjectSubmit)(event);
   }
 
+  // project already holds the refetched version that caused the conflict
   function handleReloadClick() {
-    if (conflict) {
-      reset(toFormValues(conflict));
-      setBaseVersion(conflict.version);
-      setConflict(null);
-    }
+    reset(toFormValues(project));
+    setBaseUpdatedAt(project.updatedAt);
+    setHasConflict(false);
   }
 
   function handleAddLinkClick() {
@@ -130,12 +130,12 @@ export function ProjectForm({ project, editableFields, managerCandidates, isName
         </Typography>
       </div>
 
-      {conflict ? (
+      {hasConflict ? (
         <Alert variant='destructive'>
           <AlertTitle>{content.edit.conflict.title}</AlertTitle>
           <AlertDescription className='flex flex-col items-start gap-3'>
             <span>{content.edit.conflict.description}</span>
-            <Button type='button' variant='outline' size='sm' onClick={handleReloadClick}>
+            <Button type='button' variant='outline' size='sm' disabled={project.updatedAt === baseUpdatedAt} onClick={handleReloadClick}>
               {content.edit.conflict.reload}
             </Button>
           </AlertDescription>
@@ -154,6 +154,25 @@ export function ProjectForm({ project, editableFields, managerCandidates, isName
               <Input id='projectName' autoComplete='off' aria-invalid={Boolean(errors.name)} {...register('name')} />
             ) : (
               <Input id='projectName' value={project.name} disabled readOnly />
+            )}
+          </FormField>
+
+          <FormField
+            label={content.edit.clientLabel}
+            htmlFor='projectClient'
+            error={errors.client}
+            description={canEdit('client') ? undefined : content.edit.lockedHint}
+          >
+            {canEdit('client') ? (
+              <Input
+                id='projectClient'
+                placeholder={content.edit.clientPlaceholder}
+                autoComplete='organization'
+                aria-invalid={Boolean(errors.client)}
+                {...register('client')}
+              />
+            ) : (
+              <Input id='projectClient' value={project.client} disabled readOnly />
             )}
           </FormField>
 
@@ -267,7 +286,7 @@ export function ProjectForm({ project, editableFields, managerCandidates, isName
         <Button variant='outline' render={<Link href={detailsHref} />} nativeButton={false}>
           {content.edit.cancel}
         </Button>
-        <Button type='submit' disabled={!isDirty}>
+        <Button type='submit' disabled={!isDirty || isSubmitting}>
           {content.edit.save}
         </Button>
       </div>
@@ -431,7 +450,8 @@ function LinkRow({
 function toFormValues(project: ProjectRecord): ProjectFormValues {
   return {
     name: project.name,
-    managerId: project.managerId,
+    client: project.client,
+    managerId: project.managerId ?? '',
     description: project.description,
     status: project.status,
     links: project.links.map((link) => ({ label: link.label, url: link.url }))
@@ -446,9 +466,9 @@ const STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string }> = [
 interface ProjectFormProps {
   project: ProjectRecord;
   editableFields: ProjectField[];
-  managerCandidates: CrewMember[];
+  managerCandidates: ProjectPerson[];
   isNameTaken: (name: string, exceptId?: string) => boolean;
-  onSave: (project: ProjectRecord, values: ProjectUpdateValues, baseVersion: number) => ProjectUpdateResult;
+  onSave: (project: ProjectRecord, values: ProjectUpdateValues, baseUpdatedAt: string) => Promise<ProjectSubmitOutcome>;
 }
 
 interface LinkRowProps {

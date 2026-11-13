@@ -1,8 +1,9 @@
-import type { UserRole } from '@/lib/api/auth/types';
+import type { UserRole, UserStatus } from '@/lib/api/auth/types';
 import type { LeaveAllowance, LeaveStatus, LeaveType } from '@/lib/api/leave/types';
 import type { Database } from '@/types';
 
-export type CrewStatus = 'pending' | 'active' | 'blocked';
+// a crew member's status is the same as the profile's (getProfileStatus)
+export type CrewStatus = UserStatus;
 
 export interface CrewMember {
   id: string;

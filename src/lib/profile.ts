@@ -1,12 +1,11 @@
-import type { UserProfile } from '@/lib/api/auth';
+import type { UserProfile, UserStatus } from '@/lib/api/auth';
 import type { MemberProject } from '@/lib/api/projects';
-import type { CrewStatus } from '@/lib/api/crew';
 
 export function getProfileDisplayName(profile: Pick<UserProfile, 'firstName' | 'lastName' | 'username'>): string {
   return `${profile.firstName} ${profile.lastName}`.trim() || profile.username;
 }
 
-export function getProfileStatus(profile: Pick<UserProfile, 'isBlocked' | 'isConfirmed'>): CrewStatus {
+export function getProfileStatus(profile: Pick<UserProfile, 'isBlocked' | 'isConfirmed'>): UserStatus {
   if (profile.isBlocked) {
     return 'blocked';
   }

@@ -2,8 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { mapProjectsRowsToProjects, PROJECT_COLUMNS } from '@/lib/api/projects/mappers';
-import type { MemberProject, Project, ProjectStatus } from '@/lib/api/projects/types';
+import { mapProjectMemberRows, mapProjectsRowsToProjects, PROJECT_COLUMNS, toProjectRecords } from '@/lib/api/projects/mappers';
+import type { MemberProject, Project, ProjectMember, ProjectRecord, ProjectStatus } from '@/lib/api/projects/types';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type { ApiError } from '@/types/api-error';
 
@@ -12,7 +12,8 @@ export const projectKeys = {
   lists: () => [...projectKeys.all, 'list'] as const,
   list: () => [...projectKeys.lists(), 'all'] as const,
   userList: () => [...projectKeys.lists(), 'user'] as const,
-  memberList: () => [...projectKeys.lists(), 'member'] as const
+  memberList: () => [...projectKeys.lists(), 'member'] as const,
+  recordList: () => [...projectKeys.lists(), 'records'] as const
 };
 
 const STATUS_ORDER: Record<ProjectStatus, number> = { active: 0, archived: 1 };
@@ -103,6 +104,34 @@ export function toMemberProjects(projects: Project[], userId: string): MemberPro
   return projects
     .map((project) => ({ project, membership: project.managerId === userId ? ('manager' as const) : ('member' as const) }))
     .sort((a, b) => STATUS_ORDER[a.project.status] - STATUS_ORDER[b.project.status] || a.project.name.localeCompare(b.project.name));
+}
+
+// membership pairs without rates, so staff also see who else works on their projects
+export async function getProjectMembers(): Promise<ProjectMember[]> {
+  const supabase = createBrowserClient();
+  const { data, error, status } = await supabase.rpc('get_project_members');
+
+  if (error) {
+    throw {
+      message: error.message,
+      statusCode: status
+    } satisfies ApiError;
+  }
+
+  return mapProjectMemberRows(data);
+}
+
+export async function getProjectRecords(): Promise<ProjectRecord[]> {
+  const [projects, members] = await Promise.all([getProjects(), getProjectMembers()]);
+
+  return toProjectRecords(projects, members);
+}
+
+export function useProjectRecords() {
+  return useQuery<ProjectRecord[], ApiError>({
+    queryKey: projectKeys.recordList(),
+    queryFn: getProjectRecords
+  });
 }
 
 export function useMyProjects() {

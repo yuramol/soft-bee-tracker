@@ -14,7 +14,6 @@
     "manager": "Manager",
     "worker": "Staff"
   },
-  "mockNotice": "Sample data. Available actions depend on your role and assignment.",
   "list": {
     "searchLabel": "Search",
     "searchPlaceholder": "Project name",
@@ -32,7 +31,7 @@
       },
       "manager": {
         "title": "No projects in your area",
-        "description": "Projects you are responsible for show up here."
+        "description": "Projects you are responsible for or assigned to show up here."
       },
       "admin": {
         "title": "No projects yet",
@@ -106,11 +105,10 @@
   },
   "addMember": {
     "title": "Add member to {project}",
-    "description": "Members can log time to this project. Their role in the system doesn't change.",
+    "description": "Members can log time to this project. Managers and admins can also edit it and manage its members. Their role in the system doesn't change.",
     "personLabel": "Person",
     "personPlaceholder": "Choose a person",
-    "managerScope": "Only active people from your team are listed. Ask an admin to add someone else.",
-    "adminScope": "Active people who aren't members yet.",
+    "scope": "Active people who aren't members yet.",
     "nobodyLeft": "Everyone available is already a member.",
     "cancel": "Cancel",
     "submit": "Add member"
@@ -121,9 +119,16 @@
     "description": "After creating it you can add members and links on the project card.",
     "nameLabel": "Name",
     "namePlaceholder": "Website redesign",
+    "clientLabel": "Client",
+    "clientPlaceholder": "Acme Studio",
     "managerLabel": "Responsible manager",
     "managerPlaceholder": "Choose a manager",
     "managerSelfHint": "You will be the responsible manager.",
+    "managerKeepHint": "If you choose someone else, you stay on the project as a member and can still manage it.",
+    "managersLabel": "Project managers",
+    "managersPlaceholder": "No extra managers",
+    "managersSelected": "{first} +{count}",
+    "managersHint": "Managers or admins added as members. They can edit the project and manage its members. You can change this later in Members.",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Purpose, scope, working notes and key agreements.",
     "cancel": "Cancel",
@@ -134,9 +139,11 @@
     "title": "Edit project",
     "back": "Back to {name}",
     "nameLabel": "Name",
+    "clientLabel": "Client",
+    "clientPlaceholder": "Acme Studio",
     "managerLabel": "Manager",
     "managerPlaceholder": "Choose a manager",
-    "managerHint": "The new manager takes over editing this project. People in other projects stay as they are.",
+    "managerHint": "The one person accountable for the project. The previous responsible person stays on the project as a member.",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Purpose, scope, working notes and key agreements.",
     "descriptionHint": "Separate paragraphs with a blank line. Start lines with \"-\" or \"1.\" for lists. Don't paste passwords or tokens.",

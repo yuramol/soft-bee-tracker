@@ -7,40 +7,61 @@ import { useController, useForm } from 'react-hook-form';
 
 import { FormField } from '@components/common/form/form-field';
 import { ManagerSelect } from '@components/projects/manager-select';
+import { ProjectManagersSelect } from '@components/projects/project-managers-select';
 import { Button } from '@ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@ui/dialog';
 import { FieldGroup } from '@ui/field';
 import { Input } from '@ui/input';
 import { Textarea } from '@ui/textarea';
-import type { CreateProjectValues } from '@/lib/projects';
+import type { ProjectPerson } from '@/lib/api/users';
+import type { CreateProjectValues, ProjectSubmitOutcome } from '@/lib/projects';
 import { createProjectFormSchema, type CreateProjectFormValues } from '@/lib/schemas/project-form.schema';
 import schemaContent from '@/lib/schemas/content.json';
-import type { CrewMember } from '@/mocks/crew.mock';
 import content from '../content.json';
 
-export function CreateProjectDialog({ viewerId, canChooseManager, managerCandidates, isNameTaken, onCreate }: CreateProjectDialogProps) {
+export function CreateProjectDialog({
+  viewerId,
+  canChooseManager,
+  isCreatorKept,
+  managerCandidates,
+  isNameTaken,
+  onCreate
+}: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
-  const defaultValues: CreateProjectFormValues = { name: '', description: '', managerId: viewerId };
+  const defaultValues: CreateProjectFormValues = { name: '', client: '', description: '', managerId: viewerId, managerIds: [] };
   const {
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     handleSubmit,
     register,
     reset,
     setError
   } = useForm<CreateProjectFormValues>({ defaultValues, resolver: zodResolver(createProjectFormSchema) });
   const { field: managerField } = useController({ control, name: 'managerId' });
+  const { field: managersField } = useController({ control, name: 'managerIds' });
+  // the responsible person already manages the project, so they aren't offered twice
+  const coManagerCandidates = managerCandidates.filter((person) => person.id !== managerField.value);
 
-  function handleProjectSubmit(values: CreateProjectFormValues) {
+  function handleResponsibleChange(nextId: string) {
+    managerField.onChange(nextId);
+    managersField.onChange(managersField.value.filter((id) => id !== nextId));
+  }
+
+  async function handleProjectSubmit(values: CreateProjectFormValues) {
     if (isNameTaken(values.name)) {
       setError('name', { message: schemaContent.project.nameTaken }, { shouldFocus: true });
       return;
     }
 
     // managers without the grant to choose always own what they create
-    onCreate({ ...values, managerId: canChooseManager ? values.managerId : viewerId } satisfies CreateProjectValues);
-    reset(defaultValues);
-    setOpen(false);
+    const outcome = await onCreate({ ...values, managerId: canChooseManager ? values.managerId : viewerId } satisfies CreateProjectValues);
+
+    if (outcome === 'name-taken') {
+      setError('name', { message: schemaContent.project.nameTaken }, { shouldFocus: true });
+    } else if (outcome === 'saved') {
+      reset(defaultValues);
+      setOpen(false);
+    }
   }
 
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -84,11 +105,21 @@ export function CreateProjectDialog({ viewerId, canChooseManager, managerCandida
               />
             </FormField>
 
+            <FormField label={content.create.clientLabel} htmlFor='createProjectClient' error={errors.client}>
+              <Input
+                id='createProjectClient'
+                placeholder={content.create.clientPlaceholder}
+                autoComplete='organization'
+                aria-invalid={Boolean(errors.client)}
+                {...register('client')}
+              />
+            </FormField>
+
             <FormField
               label={`${content.create.managerLabel} *`}
               htmlFor='createProjectManager'
               error={errors.managerId}
-              description={canChooseManager ? undefined : content.create.managerSelfHint}
+              description={getManagerHint(canChooseManager, isCreatorKept && managerField.value !== viewerId)}
             >
               <ManagerSelect
                 id='createProjectManager'
@@ -97,7 +128,22 @@ export function CreateProjectDialog({ viewerId, canChooseManager, managerCandida
                 placeholder={content.create.managerPlaceholder}
                 isDisabled={!canChooseManager}
                 isInvalid={Boolean(errors.managerId)}
-                onChange={managerField.onChange}
+                onChange={handleResponsibleChange}
+              />
+            </FormField>
+
+            <FormField
+              label={content.create.managersLabel}
+              htmlFor='createProjectManagers'
+              error={errors.managerIds}
+              description={content.create.managersHint}
+            >
+              <ProjectManagersSelect
+                id='createProjectManagers'
+                value={managersField.value}
+                candidates={coManagerCandidates}
+                isInvalid={Boolean(errors.managerIds)}
+                onChange={managersField.onChange}
               />
             </FormField>
 
@@ -117,7 +163,9 @@ export function CreateProjectDialog({ viewerId, canChooseManager, managerCandida
             <Button type='button' variant='outline' onClick={handleCancelClick}>
               {content.create.cancel}
             </Button>
-            <Button type='submit'>{content.create.submit}</Button>
+            <Button type='submit' disabled={isSubmitting}>
+              {content.create.submit}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -125,10 +173,20 @@ export function CreateProjectDialog({ viewerId, canChooseManager, managerCandida
   );
 }
 
+function getManagerHint(canChooseManager: boolean, isHandingOver: boolean): string | undefined {
+  if (!canChooseManager) {
+    return content.create.managerSelfHint;
+  }
+
+  return isHandingOver ? content.create.managerKeepHint : undefined;
+}
+
 interface CreateProjectDialogProps {
   viewerId: string;
   canChooseManager: boolean;
-  managerCandidates: CrewMember[];
+  // a creating manager stays on as a project manager when choosing someone else
+  isCreatorKept: boolean;
+  managerCandidates: ProjectPerson[];
   isNameTaken: (name: string) => boolean;
-  onCreate: (values: CreateProjectValues) => void;
+  onCreate: (values: CreateProjectValues) => Promise<ProjectSubmitOutcome>;
 }
