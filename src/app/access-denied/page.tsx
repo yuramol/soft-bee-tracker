@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { ROUTES } from '@/constants';
-import { getRouteSession } from '@/lib/api/auth/server';
+import { getRouteSession, getSessionProfile } from '@/lib/api/auth/server';
 
 export const metadata: Metadata = {
   title: 'Access denied',
@@ -16,6 +16,14 @@ export default async function AccessDeniedPage() {
   // a session with no user_role claim is denied everywhere, Tracker included;
   // only a fresh sign-in picks up a new claim
   const hasNoRole = session !== null && session.role === null;
+
+  if (session) {
+    // the proxy rewrites here on the JWT claim alone, so a blocked user can arrive
+    // with no role (a refreshed token, see custom_access_token_hook) or with a stale
+    // token that still carries one. either way the session check asks the database
+    // and signs them out with the blocked reason instead of showing this page
+    await getSessionProfile();
+  }
 
   return (
     <div className='mx-auto flex w-full max-w-lg flex-col gap-4 text-center'>
