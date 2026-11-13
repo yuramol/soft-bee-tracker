@@ -12,8 +12,8 @@ import {
   type ReportData,
   type ReportFilters
 } from '@/lib/reports';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectRecord } from '@/mocks/projects.mock';
+import type { ProjectRecord } from '@/lib/api/projects';
+import type { ProjectPerson } from '@/lib/api/users';
 
 describe('resolvePeriodPreset', () => {
   it('uses Monday-based weeks', () => {
@@ -120,11 +120,21 @@ describe('getReportOptions', () => {
     expect(options.canChoosePeople).toBe(true);
   });
 
-  it('limits managers to their team and the projects they run or staff', () => {
+  it('limits managers to the projects they manage and the people on them', () => {
     const options = getReportOptions(MANAGER, DATA);
 
     expect(options.people.map((person) => person.id).sort()).toEqual(['u2', 'u3', 'u4']);
-    expect(options.projects.map((project) => project.id).sort()).toEqual(['p1', 'p2']);
+    expect(options.projects.map((project) => project.id)).toEqual(['p1']);
+  });
+
+  it('treats a project a manager is assigned to as managed, like the trackers RLS', () => {
+    const assigned: ReportData = {
+      ...DATA,
+      projects: DATA.projects.map((item) => (item.id === 'p2' ? { ...item, memberIds: ['u2', 'u3'] } : item))
+    };
+
+    expect(getReportOptions(MANAGER, assigned).projects.map((project) => project.id)).toEqual(['p2', 'p1']);
+    expect(buildReport(assigned, FILTERS, MANAGER).totals.minutes).toBe(1440);
   });
 
   it('gives staff only themselves', () => {
@@ -174,11 +184,11 @@ describe('buildReport', () => {
     expect(hidden.rows.every((row) => row.absence === null)).toBe(true);
   });
 
-  it('lets a manager see their team and the projects they run, nothing else', () => {
+  it('lets a manager see time on the projects they manage, nothing else', () => {
     const report = buildReport(DATA, FILTERS, MANAGER);
 
     expect(new Set(report.rows.map((row) => row.memberId))).toEqual(new Set(['u3', 'u4']));
-    expect(report.rows.some((row) => row.projectId === 'p3')).toBe(false);
+    expect(report.rows.every((row) => row.projectId === 'p1')).toBe(true);
   });
 
   it('drops people and projects outside the viewer’s scope even when requested directly', () => {
@@ -225,43 +235,19 @@ describe('buildReport', () => {
   it('keeps time of people who left a project the manager runs', () => {
     const left: ReportData = {
       ...DATA,
-      crew: DATA.crew.map((person) => (person.id === 'u4' ? { ...person, managerId: 'u1' } : person)),
       projects: DATA.projects.map((item) => (item.id === 'p1' ? { ...item, memberIds: ['u2', 'u3'] } : item))
     };
 
     expect(buildReport(left, FILTERS, MANAGER).rows.some((row) => row.memberId === 'u4')).toBe(true);
   });
-
-  it('returns an empty report outside the recorded range', () => {
-    const report = buildReport(DATA, { ...FILTERS, from: '2025-01-01', to: '2025-01-07' }, ADMIN);
-
-    expect(report.rows).toEqual([]);
-    expect(report.totals.minutes).toBe(0);
-  });
 });
 
-function member(id: string, firstName: string, lastName: string, managerId: string | null, role: CrewMember['role']): CrewMember {
-  return {
-    id,
-    firstName,
-    lastName,
-    email: `${id}@example.com`,
-    role,
-    position: 'Engineer',
-    status: 'active',
-    phone: null,
-    linkedin: null,
-    upwork: null,
-    employmentDate: null,
-    managerId,
-    projects: [],
-    weekMinutesByProject: {},
-    monthMinutes: 0
-  };
+function person(id: string, firstName: string, lastName: string, role: ProjectPerson['role']): ProjectPerson {
+  return { id, firstName, lastName, role, position: 'Engineer', status: 'active' };
 }
 
 function project(id: string, name: string, managerId: string, memberIds: string[]): ProjectRecord {
-  return { id, name, description: '', managerId, status: 'active', memberIds, links: [], weekMinutesByMember: {}, version: 1 };
+  return { id, name, client: '', description: '', managerId, status: 'active', memberIds, links: [], updatedAt: '2026-11-01T00:00:00Z' };
 }
 
 const ADMIN = { id: 'u1', role: 'admin' } as const;
@@ -269,25 +255,24 @@ const MANAGER = { id: 'u2', role: 'manager' } as const;
 const STAFF = { id: 'u3', role: 'worker' } as const;
 
 const DATA: ReportData = {
-  crew: [
-    member('u1', 'Olena', 'Koval', null, 'admin'),
-    member('u2', 'Mark', 'Bee', 'u1', 'manager'),
-    member('u3', 'Alex', 'Smith', 'u2', 'worker'),
-    member('u4', 'Anastasia', 'Petrenko', 'u2', 'worker'),
-    member('u9', 'Zoe', 'Outsider', 'u1', 'worker')
+  people: [
+    person('u1', 'Olena', 'Koval', 'admin'),
+    person('u2', 'Mark', 'Bee', 'manager'),
+    person('u3', 'Alex', 'Smith', 'worker'),
+    person('u4', 'Anastasia', 'Petrenko', 'worker'),
+    person('u9', 'Zoe', 'Outsider', 'worker')
   ],
   projects: [
     project('p1', 'Fundayo', 'u2', ['u2', 'u3', 'u4']),
     project('p2', 'Fast Quote', 'u1', ['u3']),
     project('p3', 'Internal', 'u1', ['u1'])
   ],
+  // already summed per person and project for FILTERS' range by get_report_time
   entries: [
-    { id: 'e1', memberId: 'u3', projectId: 'p1', date: '2026-11-09', minutes: 240 },
-    { id: 'e2', memberId: 'u3', projectId: 'p1', date: '2026-11-10', minutes: 240 },
-    { id: 'e3', memberId: 'u4', projectId: 'p1', date: '2026-11-09', minutes: 480 },
-    { id: 'e4', memberId: 'u3', projectId: 'p2', date: '2026-11-11', minutes: 480 },
-    { id: 'e5', memberId: 'u1', projectId: 'p3', date: '2026-11-11', minutes: 240 },
-    { id: 'e6', memberId: 'u3', projectId: 'p1', date: '2026-11-02', minutes: 999 }
+    { memberId: 'u3', projectId: 'p1', minutes: 480 },
+    { memberId: 'u4', projectId: 'p1', minutes: 480 },
+    { memberId: 'u3', projectId: 'p2', minutes: 480 },
+    { memberId: 'u1', projectId: 'p3', minutes: 240 }
   ],
   absences: [
     { id: 'a1', memberId: 'u4', leaveType: 'vacation', startDate: '2026-11-10', endDate: '2026-11-10' },
