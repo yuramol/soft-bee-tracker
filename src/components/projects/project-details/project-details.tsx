@@ -10,21 +10,30 @@ import { ProjectDescription } from '@components/projects/project-description';
 import { ProjectMembers } from '@components/projects/project-members/project-members';
 import { ProjectStatusBadge } from '@components/projects/project-status-badge';
 import { Button } from '@ui/button';
-import type { ProjectStatus } from '@/lib/api/projects';
+import { Skeleton } from '@ui/skeleton';
+import type { ProjectLink, ProjectRecord, ProjectStatus } from '@/lib/api/projects';
+import { useProjectTrackers } from '@/lib/api/trackers';
+import type { ProjectPerson } from '@/lib/api/users';
 import { toSafeExternalUrl } from '@/lib/crew';
 import { formatClock } from '@/lib/format-duration';
 import { formatText } from '@/lib/format-text';
-import { buildProjectHref, getAddableMembers, getShortName, summarizeProjectTime, type ProjectAccess } from '@/lib/projects';
+import {
+  buildProjectHref,
+  getAddableMembers,
+  getShortName,
+  summarizeProjectTime,
+  type ProjectAccess,
+  type ProjectViewer
+} from '@/lib/projects';
 import { buildTeamReportHref } from '@/lib/team-report-params';
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectLink, ProjectRecord, ProjectViewer } from '@/mocks/projects.mock';
+import { getPeriodRange } from '@/lib/tracker-summary';
 import content from '../content.json';
 
 export function ProjectDetails({
   project,
   access,
   viewer,
-  crew,
+  people,
   peopleById,
   onStatusChange,
   onAddMember,
@@ -34,7 +43,7 @@ export function ProjectDetails({
   const isArchived = project.status === 'archived';
   const nextStatus: ProjectStatus = isArchived ? 'active' : 'archived';
   const statusCopy = isArchived ? content.details.restoreDialog : content.details.archiveDialog;
-  const manager = peopleById.get(project.managerId);
+  const manager = project.managerId ? peopleById.get(project.managerId) : undefined;
   const managerName = manager ? getShortName(manager) : '—';
   const editHref = buildProjectHref(project.id, 'edit');
 
@@ -104,8 +113,7 @@ export function ProjectDetails({
           project={project}
           peopleById={peopleById}
           canManage={access.canManageMembers}
-          addableMembers={access.canManageMembers ? getAddableMembers(project, crew, viewer) : []}
-          isAdmin={viewer.role === 'admin'}
+          addableMembers={access.canManageMembers ? getAddableMembers(project, people) : []}
           onAdd={onAddMember}
           onRemove={onRemoveMember}
         />
@@ -113,10 +121,7 @@ export function ProjectDetails({
         <ProjectTimeCard project={project} viewer={viewer} />
       </div>
 
-      <div className='flex flex-col gap-1'>
-        <p className='text-sm'>{content.details.footer}</p>
-        <p className='text-muted-foreground text-xs'>{content.mockNotice}</p>
-      </div>
+      <p className='text-sm'>{content.details.footer}</p>
 
       {access.canChangeStatus ? (
         <ConfirmDialog
@@ -186,7 +191,10 @@ function ProjectLinkItem({ link }: { link: ProjectLink }) {
 }
 
 function ProjectTimeCard({ project, viewer }: ProjectTimeCardProps) {
-  const summary = summarizeProjectTime(project, viewer);
+  const now = new Date();
+  const week = getPeriodRange(now, 'week');
+  const { data: trackers, isLoading } = useProjectTrackers({ projectId: project.id, from: week.start, to: week.end });
+  const summary = summarizeProjectTime(project, trackers ?? [], viewer, now);
   // the Reports page already limits staff to their own time, so the project is the only filter needed
   const reportHref = buildTeamReportHref({ period: 'this-week', projectIds: [project.id] });
 
@@ -194,7 +202,11 @@ function ProjectTimeCard({ project, viewer }: ProjectTimeCardProps) {
     <DetailsCard title={content.details.time.title} titleId='project-time-title'>
       <div className='flex items-baseline justify-between gap-3'>
         <span>{content.details.time.period}</span>
-        <span className='text-2xl font-semibold tabular-nums'>{formatClock(summary.minutes)}</span>
+        {isLoading ? (
+          <Skeleton className='h-8 w-20' />
+        ) : (
+          <span className='text-2xl font-semibold tabular-nums'>{formatClock(summary.minutes)}</span>
+        )}
       </div>
       <p className='text-muted-foreground text-sm'>
         {summary.scope === 'own' ? content.details.time.ownScope : content.details.time.teamScope}
@@ -211,11 +223,11 @@ interface ProjectDetailsProps {
   project: ProjectRecord;
   access: ProjectAccess;
   viewer: ProjectViewer;
-  crew: CrewMember[];
-  peopleById: Map<string, CrewMember>;
+  people: ProjectPerson[];
+  peopleById: Map<string, ProjectPerson>;
   onStatusChange: (project: ProjectRecord, status: ProjectStatus) => void;
-  onAddMember: (project: ProjectRecord, member: CrewMember) => void;
-  onRemoveMember: (project: ProjectRecord, member: CrewMember) => void;
+  onAddMember: (project: ProjectRecord, member: ProjectPerson) => void;
+  onRemoveMember: (project: ProjectRecord, member: ProjectPerson) => void;
 }
 
 interface ProjectLinksCardProps {

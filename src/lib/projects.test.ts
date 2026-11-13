@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CrewMember } from '@/mocks/crew.mock';
-import type { ProjectRecord, ProjectViewer } from '@/mocks/projects.mock';
+import type { ProjectRecord } from '@/lib/api/projects';
+import type { Tracker } from '@/lib/api/trackers';
+import type { ProjectPerson } from '@/lib/api/users';
 import {
-  addProjectMember,
-  applyProjectUpdate,
   buildProjectHref,
+  canBeProjectManager,
   containsSecret,
-  createProjectRecord,
   filterProjects,
   getAddableMembers,
   getDescriptionSummary,
   getManagerCandidates,
+  getOrderedMembers,
   getProjectAccess,
+  getProjectChanges,
   getProjectsPermissions,
   getShortName,
   getVisibleProjects,
@@ -20,43 +21,54 @@ import {
   isProjectNameTaken,
   parseDescription,
   parseProjectParams,
-  removeProjectMember,
   summarizeProjectTime,
-  type ProjectUpdateValues
+  type ProjectUpdateValues,
+  type ProjectViewer
 } from '@/lib/projects';
 
 function project(overrides: Partial<ProjectRecord>): ProjectRecord {
   return {
     id: 'p1',
     name: 'Atlas CRM',
+    client: 'Acme',
     description: 'CRM platform',
     managerId: 'mgr',
     status: 'active',
     memberIds: ['mgr', 'staff'],
     links: [],
-    weekMinutesByMember: { mgr: 60, staff: 120 },
-    version: 1,
+    updatedAt: '2026-11-12T10:00:00.000000+00:00',
     ...overrides
   };
 }
 
-function person(overrides: Partial<CrewMember>): CrewMember {
+function person(overrides: Partial<ProjectPerson>): ProjectPerson {
   return {
     id: 'm1',
     firstName: 'Iryna',
     lastName: 'Shevchenko',
-    email: 'iryna@softbee.dev',
     role: 'worker',
     position: 'Frontend engineer',
     status: 'active',
-    phone: null,
-    linkedin: null,
-    upwork: null,
-    employmentDate: null,
-    managerId: 'mgr',
-    projects: [],
-    weekMinutesByProject: {},
-    monthMinutes: 0,
+    ...overrides
+  };
+}
+
+function tracker(overrides: Partial<Tracker>): Tracker {
+  return {
+    id: 't1',
+    createdAt: '2026-11-12T10:00:00.000Z',
+    updatedAt: '2026-11-12T10:00:00.000Z',
+    date: '2026-11-12',
+    description: null,
+    durationMinutes: 60,
+    isLive: false,
+    liveDurationMinutes: 0,
+    liveStatus: null,
+    status: 'new',
+    startLiveDate: null,
+    projectId: 'p1',
+    userId: 'mgr',
+    transactionId: null,
     ...overrides
   };
 }
@@ -68,6 +80,7 @@ const staff: ProjectViewer = { id: 'staff', role: 'worker' };
 
 const updateValues: ProjectUpdateValues = {
   name: ' Renamed ',
+  client: ' Globex ',
   description: ' New scope ',
   managerId: 'other',
   status: 'archived',
@@ -86,7 +99,7 @@ describe('getProjectAccess', () => {
   it('gives admins every field, members and status', () => {
     expect(getProjectAccess(project({}), admin)).toEqual({
       canEdit: true,
-      editableFields: ['name', 'description', 'managerId', 'status', 'links'],
+      editableFields: ['name', 'client', 'description', 'managerId', 'status', 'links'],
       canManageMembers: true,
       canChangeStatus: true,
       canViewTeamTime: true
@@ -97,7 +110,17 @@ describe('getProjectAccess', () => {
     expect(getProjectAccess(project({}), manager)).toEqual(getProjectAccess(project({}), admin));
   });
 
-  it('gives other managers and staff read-only access', () => {
+  it('gives every manager assigned to the project the same rights as the responsible manager', () => {
+    const assigned = project({ memberIds: ['mgr', 'staff', 'other'] });
+
+    expect(getProjectAccess(assigned, otherManager)).toEqual(getProjectAccess(assigned, admin));
+  });
+
+  it('gives assigned staff read-only access because of their role', () => {
+    expect(getProjectAccess(project({}), staff).canEdit).toBe(false);
+  });
+
+  it('gives managers outside the project and staff read-only access', () => {
     for (const viewer of [otherManager, staff]) {
       const access = getProjectAccess(project({}), viewer);
 
@@ -113,15 +136,16 @@ describe('getVisibleProjects', () => {
   const projects = [
     project({ id: 'mine', managerId: 'mgr', memberIds: ['mgr'] }),
     project({ id: 'assigned', managerId: 'other', memberIds: ['other', 'staff'] }),
-    project({ id: 'foreign', managerId: 'other', memberIds: ['other'] })
+    project({ id: 'foreign', managerId: 'other', memberIds: ['other'] }),
+    project({ id: 'team', managerId: 'other', memberIds: ['other', 'mgr'] })
   ];
 
   it('shows admins everything', () => {
-    expect(getVisibleProjects(projects, admin).map((item) => item.id)).toEqual(['mine', 'assigned', 'foreign']);
+    expect(getVisibleProjects(projects, admin).map((item) => item.id)).toEqual(['mine', 'assigned', 'foreign', 'team']);
   });
 
-  it('shows managers the projects they are responsible for', () => {
-    expect(getVisibleProjects(projects, manager).map((item) => item.id)).toEqual(['mine']);
+  it('shows managers the projects they are responsible for or assigned to', () => {
+    expect(getVisibleProjects(projects, manager).map((item) => item.id)).toEqual(['mine', 'team']);
   });
 
   it('shows staff only assigned projects', () => {
@@ -148,19 +172,33 @@ describe('filterProjects', () => {
 });
 
 describe('getAddableMembers', () => {
-  const crew = [
-    person({ id: 'staff', managerId: 'mgr' }),
-    person({ id: 'team', firstName: 'Bohdan', managerId: 'mgr' }),
-    person({ id: 'blocked', managerId: 'mgr', status: 'blocked' }),
-    person({ id: 'outsider', firstName: 'Anna', managerId: 'other' })
-  ];
+  it('lists active people who are not members yet, by first name', () => {
+    const people = [
+      person({ id: 'staff' }),
+      person({ id: 'team', firstName: 'Bohdan' }),
+      person({ id: 'blocked', status: 'blocked' }),
+      person({ id: 'pending', status: 'pending' }),
+      person({ id: 'outsider', firstName: 'Anna' })
+    ];
 
-  it('limits managers to active people from their team who are not members yet', () => {
-    expect(getAddableMembers(project({}), crew, manager).map((item) => item.id)).toEqual(['team']);
+    expect(getAddableMembers(project({}), people).map((item) => item.id)).toEqual(['outsider', 'team']);
   });
+});
 
-  it('lets admins add any active person', () => {
-    expect(getAddableMembers(project({}), crew, admin).map((item) => item.id)).toEqual(['outsider', 'team']);
+describe('getOrderedMembers', () => {
+  it('puts the responsible person first and keeps the rest in order, skipping unknown ids', () => {
+    const peopleById = new Map(['a', 'b', 'new-mgr', 'c'].map((id) => [id, person({ id })]));
+    const handedOver = project({ managerId: 'new-mgr', memberIds: ['a', 'b', 'gone', 'new-mgr', 'c'] });
+
+    expect(getOrderedMembers(handedOver, peopleById).map((item) => item.id)).toEqual(['new-mgr', 'a', 'b', 'c']);
+  });
+});
+
+describe('canBeProjectManager', () => {
+  it('allows managers and admins only', () => {
+    expect(canBeProjectManager({ role: 'manager' })).toBe(true);
+    expect(canBeProjectManager({ role: 'admin' })).toBe(true);
+    expect(canBeProjectManager({ role: 'worker' })).toBe(false);
   });
 });
 
@@ -175,75 +213,59 @@ describe('getManagerCandidates', () => {
 
     expect(getManagerCandidates(crew).map((item) => item.id)).toEqual(['a', 'm']);
   });
+
+  it('keeps the viewer and the current responsible person even before their account is active', () => {
+    const crew = [
+      person({ id: 'me', role: 'manager', status: 'pending', firstName: 'Ror' }),
+      person({ id: 'old', role: 'manager', status: 'blocked', firstName: 'Ole' }),
+      person({ id: 'p', role: 'manager', status: 'pending', firstName: 'Pat' }),
+      person({ id: 'w', role: 'worker', firstName: 'Wim' })
+    ];
+
+    expect(getManagerCandidates(crew, ['me', 'old', 'w', null]).map((item) => item.id)).toEqual(['old', 'me']);
+  });
 });
 
 describe('summarizeProjectTime', () => {
-  it('sums the whole team for people who manage the project', () => {
-    expect(summarizeProjectTime(project({}), manager)).toEqual({ minutes: 180, scope: 'team' });
+  const now = new Date('2026-11-12T12:00:00.000Z');
+  const trackers = [
+    tracker({ id: 'a', userId: 'mgr', durationMinutes: 60 }),
+    tracker({ id: 'b', userId: 'staff', durationMinutes: 120 }),
+    tracker({ id: 'c', userId: 'staff', durationMinutes: 30, status: 'rejected' }),
+    tracker({ id: 'd', userId: 'staff', durationMinutes: 45, projectId: 'other' })
+  ];
+
+  it('sums the whole team for people who manage the project, without rejected entries', () => {
+    expect(summarizeProjectTime(project({}), trackers, manager, now)).toEqual({ minutes: 180, scope: 'team' });
   });
 
   it('shows staff only their own time', () => {
-    expect(summarizeProjectTime(project({}), staff)).toEqual({ minutes: 120, scope: 'own' });
-    expect(summarizeProjectTime(project({}), { id: 'nobody', role: 'worker' })).toEqual({ minutes: 0, scope: 'own' });
+    expect(summarizeProjectTime(project({}), trackers, staff, now)).toEqual({ minutes: 120, scope: 'own' });
+    expect(summarizeProjectTime(project({}), trackers, { id: 'nobody', role: 'worker' }, now)).toEqual({ minutes: 0, scope: 'own' });
   });
 });
 
-describe('applyProjectUpdate', () => {
-  it('saves only the fields the viewer may edit and bumps the version', () => {
-    const result = applyProjectUpdate(project({}), updateValues, 1, ['description', 'links']);
-
-    expect(result.status).toBe('saved');
-    expect(result.project).toMatchObject({
-      name: 'Atlas CRM',
+describe('getProjectChanges', () => {
+  it('sends only the editable fields, trimmed', () => {
+    expect(getProjectChanges(updateValues, ['description', 'links'])).toEqual({
       description: 'New scope',
-      managerId: 'mgr',
-      status: 'active',
-      links: [{ label: 'Repo', url: 'https://github.com/softbee/atlas' }],
-      version: 2
+      links: [{ label: 'Repo', url: 'https://github.com/softbee/atlas' }]
     });
   });
 
-  it('adds a new responsible manager to the members without touching others', () => {
-    const result = applyProjectUpdate(project({}), updateValues, 1, ['name', 'description', 'managerId', 'status', 'links']);
-
-    expect(result.project.managerId).toBe('other');
-    expect(result.project.status).toBe('archived');
-    expect(result.project.memberIds).toEqual(['other', 'mgr', 'staff']);
-  });
-
-  it('reports a conflict instead of overwriting a newer version', () => {
-    const current = project({ version: 3 });
-    const result = applyProjectUpdate(current, updateValues, 2, ['description']);
-
-    expect(result).toEqual({ status: 'conflict', project: current });
-  });
-});
-
-describe('members', () => {
-  it('never removes the responsible manager', () => {
-    expect(removeProjectMember(project({}), 'mgr').memberIds).toEqual(['mgr', 'staff']);
-    expect(removeProjectMember(project({}), 'staff').memberIds).toEqual(['mgr']);
-  });
-
-  it('adds a member once', () => {
-    expect(addProjectMember(project({}), 'new').memberIds).toEqual(['mgr', 'staff', 'new']);
-    expect(addProjectMember(project({}), 'staff').memberIds).toEqual(['mgr', 'staff']);
-  });
-});
-
-describe('createProjectRecord', () => {
-  it('creates an active project with the manager as its first member', () => {
-    expect(createProjectRecord({ name: ' New ', description: ' Notes ', managerId: 'mgr' }, 'p9')).toEqual({
-      id: 'p9',
-      name: 'New',
-      description: 'Notes',
-      managerId: 'mgr',
-      status: 'active',
-      memberIds: ['mgr'],
-      links: [],
-      weekMinutesByMember: {},
-      version: 1
+  it('sends every field to people who may edit the whole project', () => {
+    expect(getProjectChanges(updateValues, ['name', 'client', 'description', 'managerId', 'status', 'links'])).toEqual({
+      name: 'Renamed',
+      client: 'Globex',
+      description: 'New scope',
+      managerId: 'other',
+      status: 'archived',
+      links: [{ label: 'Repo', url: 'https://github.com/softbee/atlas' }]
     });
+  });
+
+  it('sends nothing to read-only viewers', () => {
+    expect(getProjectChanges(updateValues, [])).toEqual({});
   });
 });
 

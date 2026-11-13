@@ -10,7 +10,7 @@ export default async function ProjectsPage() {
 
   return (
     <Suspense fallback={<ProjectsPageSkeleton />}>
-      <ProjectsWorkspace role={profile.role} />
+      <ProjectsWorkspace viewerId={profile.id} role={profile.role} />
     </Suspense>
   );
 }

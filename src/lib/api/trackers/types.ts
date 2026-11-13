@@ -40,3 +40,9 @@ export interface UpdateTrackerInput {
   trackerId: string;
   entry: CreateTrackerInput;
 }
+
+export interface ProjectTrackersInput {
+  projectId: string;
+  from: string;
+  to: string;
+}
