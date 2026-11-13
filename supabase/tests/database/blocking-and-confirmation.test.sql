@@ -89,9 +89,10 @@ select is(
 
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000a02","role":"authenticated","user_role":"manager"}', true);
 
+-- user_access is readable by managers on dev already (20261106123719)
 select ok(
-  (select count(*) from public.users) >= 3,
-  'an active manager still sees everyone, blocked people included'
+  (select count(*) from public.user_access) >= 3,
+  'an active manager still sees everyone''s access rows, blocked people included'
 );
 
 reset role;
