@@ -11,14 +11,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # dev, test and main all share the single production Supabase project
   validate:
     name: Validate database
-    if: github.ref == 'refs/heads/main'
+    if: contains(fromJSON('["refs/heads/main", "refs/heads/test", "refs/heads/dev"]'), github.ref)
     uses: ./.github/workflows/validate-db.yml
 
   deploy:
     name: Deploy to production
-    if: github.ref == 'refs/heads/main'
+    if: contains(fromJSON('["refs/heads/main", "refs/heads/test", "refs/heads/dev"]'), github.ref)
     needs: [validate]
     runs-on: ubuntu-latest
     environment: production
