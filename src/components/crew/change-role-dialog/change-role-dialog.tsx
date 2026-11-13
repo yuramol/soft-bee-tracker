@@ -8,11 +8,11 @@ import { Button } from '@ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
 import type { UserRole } from '@/lib/api/auth';
-import type { CrewMember } from '@/mocks/crew.mock';
+import type { CrewMember } from '@/lib/api/crew';
 import { formatText } from '@/lib/format-text';
 import content from '../content.json';
 
-export function ChangeRoleDialog({ member, open, onOpenChange, onConfirm }: ChangeRoleDialogProps) {
+export function ChangeRoleDialog({ member, open, isSaving, onOpenChange, onConfirm }: ChangeRoleDialogProps) {
   const [selectedRole, setSelectedRole] = useState<UserRole>(member.role);
   const isUnchanged = selectedRole === member.role;
 
@@ -53,7 +53,7 @@ export function ChangeRoleDialog({ member, open, onOpenChange, onConfirm }: Chan
 
         <DialogFooter>
           <DialogClose render={<Button variant='outline' />}>{content.changeRoleDialog.cancelButton}</DialogClose>
-          <Button disabled={isUnchanged} onClick={handleSaveClick}>
+          <Button disabled={isUnchanged || isSaving} onClick={handleSaveClick}>
             {content.changeRoleDialog.saveButton}
           </Button>
         </DialogFooter>
@@ -67,6 +67,7 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = content.roleDescriptions;
 interface ChangeRoleDialogProps {
   member: CrewMember;
   open: boolean;
+  isSaving: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (member: CrewMember, role: UserRole) => void;
 }

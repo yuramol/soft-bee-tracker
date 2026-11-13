@@ -6,7 +6,7 @@ import { getFullName } from '@/lib/crew';
 import { formatText } from '@/lib/format-text';
 import type { LeaveConflict } from '@/lib/leave-conflicts';
 import { formatLeaveDateRange } from '@/lib/leave-days';
-import type { CrewMember } from '@/mocks/crew.mock';
+import type { CrewMember } from '@/lib/api/crew';
 import content from '../content.json';
 
 export function LeaveConflicts({ conflicts, membersById }: LeaveConflictsProps) {

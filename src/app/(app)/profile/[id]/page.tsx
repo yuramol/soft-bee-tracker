@@ -5,8 +5,8 @@ import { notFound, redirect } from 'next/navigation';
 import { MemberProfile } from '@components/crew/member-profile/member-profile';
 import { ROUTES } from '@/constants';
 import { requireRouteAccess } from '@/lib/api/auth/server';
-import { getCrewPermissions, getFullName, getVisibleMembers } from '@/lib/crew';
-import { getMockViewerId, MOCK_CREW, MOCK_CREW_LEAVE_REQUESTS } from '@/mocks/crew.mock';
+import { canViewCrewMember } from '@/lib/api/crew/server';
+import { getCrewPermissions } from '@/lib/crew';
 import content from './content.json';
 
 export default async function MemberProfilePage({ params }: MemberProfilePageProps) {
@@ -24,15 +24,10 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
     redirect(ROUTES.PROFILE);
   }
 
-  // Same access scope as the Crew list, so a manager can't open people outside their team by URL
-  const visibleMembers = getVisibleMembers(MOCK_CREW, { id: getMockViewerId(profile), role: profile.role });
-  const member = visibleMembers.find((item) => item.id === id);
-
-  if (!member) {
+  // same scope as the Crew list: rls only returns people this viewer may see
+  if (!(await canViewCrewMember(id))) {
     notFound();
   }
-
-  const manager = member.managerId ? MOCK_CREW.find((item) => item.id === member.managerId) : undefined;
 
   return (
     <div className='flex flex-col gap-6'>
@@ -44,9 +39,8 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
         {content.backToCrew}
       </Link>
       <MemberProfile
-        member={member}
-        managerName={manager ? getFullName(manager) : null}
-        initialLeaveRequests={MOCK_CREW_LEAVE_REQUESTS.filter((request) => request.memberId === member.id)}
+        memberId={id}
+        viewer={{ id: profile.id, role: profile.role }}
         canReviewLeave={permissions.canReviewLeave}
         // employment details are admin-only, the same gate as role changes and blocking
         canEditEmployment={permissions.canManageMembers}

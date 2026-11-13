@@ -20,7 +20,8 @@ import content from './content.json';
  * 2. the input, with the same zod schema the dialog uses
  * 3. the requested role is one this inviter may assign
  * 4. the email has no account; an open invite is only sent again on an
- *    explicit resend, and only by someone who could have sent it
+ *    explicit resend, only by someone who could have sent it, and with the
+ *    role it was sent with
  *
  * Then the Supabase invite email goes out and the invited role is stored. The
  * client's input is never trusted: a hand-crafted call runs the same checks as
@@ -84,7 +85,14 @@ export async function inviteMember(input: InviteMemberInput): Promise<InviteMemb
       }
     }
 
-    return await sendInvite(email, role, existingAccount ? 'resent' : 'sent');
+    // a resend keeps the role the person was invited with. the form's role
+    // (worker by default) would otherwise silently downgrade a pending admin
+    // or manager invite; changing a role is done from Crew, not by resending
+    if (existingAccount?.kind === 'invited') {
+      return await sendInvite(email, existingAccount.role, 'resent');
+    }
+
+    return await sendInvite(email, role, 'sent');
   } catch (error) {
     // next's own control-flow errors (e.g. dynamic rendering bailouts) must
     // propagate; session resets come back as a 'signed-out' value instead
@@ -147,7 +155,7 @@ async function findExistingAccount(email: string): Promise<ExistingAccount> {
 // public.users and public.user_access rows) and sends the email; for a user who
 // hasn't accepted yet it sends a fresh link. the trigger always creates a worker,
 // so the invited role is stored in user_access afterwards. if that write fails the user stays a worker, the safe
-// direction, and a resend sets the role again.
+// direction, and an admin sets the role from Crew.
 async function sendInvite(email: string, role: UserRole, sentStatus: 'sent' | 'resent'): Promise<InviteMemberResult> {
   const supabase = createServiceClient();
   const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);

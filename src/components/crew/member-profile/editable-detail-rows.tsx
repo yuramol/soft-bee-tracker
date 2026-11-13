@@ -26,12 +26,12 @@ export function EditablePositionRow({ icon, value, onSave }: EditablePositionRow
     register,
     reset
   } = useForm<MemberPositionFormValues>({
-    defaultValues: { position: value },
+    defaultValues: { position: value ?? '' },
     resolver: zodResolver(memberPositionFormSchema)
   });
 
   function handleEdit() {
-    reset({ position: value });
+    reset({ position: value ?? '' });
     setIsEditing(true);
   }
 
@@ -59,7 +59,7 @@ export function EditablePositionRow({ icon, value, onSave }: EditablePositionRow
       label={content.profile.position}
       isEditing={isEditing}
       error={errors.position?.message}
-      display={value}
+      display={value ?? <span className='text-muted-foreground'>{content.profile.notAdded}</span>}
       onEdit={handleEdit}
       onCancel={handleCancel}
       onSubmit={handleFormSubmit}
@@ -217,7 +217,7 @@ function InlineEditRow({
 
 interface EditablePositionRowProps {
   icon: LucideIcon;
-  value: string;
+  value: string | null;
   onSave: (position: string) => void;
 }
 

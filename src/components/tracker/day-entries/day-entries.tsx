@@ -20,7 +20,7 @@ import { formatClock, formatDuration } from '@/lib/format-duration';
 import { formatText } from '@/lib/format-text';
 import { getWeekDays, toDateKey } from '@/lib/tracker-days';
 import { cn } from '@/lib/utils';
-import type { LeaveType } from '@/mocks/leave.mock';
+import type { LeaveType } from '@/lib/api/leave';
 import type { ApiError } from '@/types/api-error';
 import { isEntryDateOpen } from '@/lib/work-time-policy';
 import content from '../content.json';

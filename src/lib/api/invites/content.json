@@ -10,6 +10,6 @@
   "sent": "Invite sent to {email}.",
   "resent": "Invite sent to {email} again.",
   "rateLimited": "Too many invite emails were sent just now. Try again in a few minutes.",
-  "roleNotSet": "The invite to {email} was sent, but their role couldn't be saved. Send the invite again to fix it.",
+  "roleNotSet": "The invite to {email} was sent, but their role couldn't be saved. They're a worker for now; an admin can change their role in Crew.",
   "alreadyInvitedByOther": "{email} has already been invited and hasn't accepted yet. Ask an admin to send the invite again."
 }

@@ -34,6 +34,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      leave_allowances: {
+        Row: {
+          created_at: string
+          days: number
+          id: string
+          leave_type: Database["public"]["Enums"]["leave_type"]
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          days: number
+          id?: string
+          leave_type: Database["public"]["Enums"]["leave_type"]
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          id?: string
+          leave_type?: Database["public"]["Enums"]["leave_type"]
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_allowances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          end_date: string
+          id: string
+          leave_type: Database["public"]["Enums"]["leave_type"]
+          note: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["leave_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          end_date: string
+          id?: string
+          leave_type: Database["public"]["Enums"]["leave_type"]
+          note?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["leave_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          end_date?: string
+          id?: string
+          leave_type?: Database["public"]["Enums"]["leave_type"]
+          note?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["leave_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_rates: {
         Row: {
           created_at: string
@@ -321,6 +416,8 @@ export type Database = {
       }
     }
     Enums: {
+      leave_status: "pending" | "approved" | "rejected" | "cancelled"
+      leave_type: "vacation" | "sick_leave"
       project_status: "active" | "archived"
       project_type: "fixed_price" | "non_profit" | "time_material"
       tracker_live_status: "finish" | "pause" | "start"
@@ -456,6 +553,8 @@ export const Constants = {
   },
   public: {
     Enums: {
+      leave_status: ["pending", "approved", "rejected", "cancelled"],
+      leave_type: ["vacation", "sick_leave"],
       project_status: ["active", "archived"],
       project_type: ["fixed_price", "non_profit", "time_material"],
       tracker_live_status: ["finish", "pause", "start"],

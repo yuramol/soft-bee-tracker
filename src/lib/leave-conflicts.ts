@@ -1,6 +1,5 @@
 import { getLeaveWorkingDays } from '@/lib/leave-days';
-import type { CrewLeaveRequest } from '@/mocks/crew.mock';
-import type { ProjectRecord } from '@/mocks/projects.mock';
+import type { CrewLeaveRequest, CrewProject } from '@/lib/api/crew';
 
 // For each active project the person is on: who else is away on the same working days,
 // and which days would leave the project with nobody available if this request is approved.
@@ -8,7 +7,7 @@ import type { ProjectRecord } from '@/mocks/projects.mock';
 export function getLeaveConflicts(
   request: CrewLeaveRequest,
   requests: CrewLeaveRequest[],
-  projects: ProjectRecord[],
+  projects: ConflictProject[],
   visibleMemberIds: Set<string>
 ): LeaveConflict[] {
   const requestDays = getLeaveWorkingDays(request.startDate, request.endDate);
@@ -73,3 +72,6 @@ export interface LeaveConflict {
   overlaps: LeaveOverlap[];
   uncoveredDays: string[];
 }
+
+// only what the coverage check reads, so both real crew projects and test fixtures fit
+export type ConflictProject = Pick<CrewProject, 'id' | 'name' | 'status' | 'memberIds'>;
