@@ -2,16 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useController, useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
+import { TrackerFormFields } from '@components/tracker/tracker-form-fields/tracker-form-fields';
 import { Button } from '@ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@ui/field';
-import { Input } from '@ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
-import { useProjectsStore } from '@/lib/api/projects';
-import type { Project } from '@/lib/api/projects';
+import { useProjects } from '@/lib/api/projects';
 import { useCreateTracker } from '@/lib/api/trackers';
 import {
   buildCreateTrackerInput,
@@ -19,38 +16,27 @@ import {
   trackerFormSchema,
   type TrackerFormValues
 } from '@/lib/schemas/tracker-form.schema';
+import content from '../content.json';
 
-export function CreateTrackerDialog() {
+export function CreateTrackerDialog({ defaultDate, triggerSize = 'default' }: CreateTrackerDialogProps) {
   const [open, setOpen] = useState(false);
-  const projects = useProjectsStore((state) => state.projects);
-  const getProjects = useProjectsStore((state) => state.getProjects);
-  const isLoadingProjects = useProjectsStore((state) => state.isLoading);
-  const projectsError = useProjectsStore((state) => state.error);
-  const {
-    control,
-    formState: { errors, isSubmitting },
-    handleSubmit,
-    register,
-    reset
-  } = useForm<TrackerFormValues>({
-    defaultValues: createTrackerFormDefaults(),
+  const { data: projects = [], isLoading: isLoadingProjects, error: projectsError } = useProjects(open);
+  const form = useForm<TrackerFormValues>({
+    defaultValues: createTrackerFormDefaults(defaultDate),
     resolver: zodResolver(trackerFormSchema)
   });
+  const {
+    formState: { isSubmitting },
+    handleSubmit,
+    reset
+  } = form;
   const createTracker = useCreateTracker();
   const isBusy = isSubmitting || createTracker.isPending;
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    void getProjects().catch(() => undefined);
-  }, [getProjects, open]);
 
   function handleTrackerSubmit(values: TrackerFormValues) {
     createTracker.mutate(buildCreateTrackerInput(values), {
       onSuccess: () => {
-        reset(createTrackerFormDefaults());
+        reset(createTrackerFormDefaults(defaultDate));
         setOpen(false);
       }
     });
@@ -65,82 +51,44 @@ export function CreateTrackerDialog() {
       return;
     }
 
-    if (!nextOpen) {
-      reset(createTrackerFormDefaults());
-    }
+    reset(createTrackerFormDefaults(defaultDate));
 
     setOpen(nextOpen);
   }
 
   function handleCancelClick() {
-    if (!isBusy) {
-      reset(createTrackerFormDefaults());
-      setOpen(false);
-    }
+    handleDialogOpenChange(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange} disablePointerDismissal={isBusy}>
-      <DialogTrigger render={<Button />}>
+      <DialogTrigger render={<Button size={triggerSize} />}>
         <PlusIcon data-icon='inline-start' />
-        New tracker
+        {content.createDialog.triggerButton}
       </DialogTrigger>
 
       <DialogContent className='sm:max-w-lg' showCloseButton={!isBusy}>
         <DialogHeader>
-          <DialogTitle>Create tracker</DialogTitle>
-          <DialogDescription>Add a manual time entry for one of your projects.</DialogDescription>
+          <DialogTitle>{content.createDialog.title}</DialogTitle>
+          <DialogDescription>{content.createDialog.description}</DialogDescription>
         </DialogHeader>
 
-        <form className='grid gap-4' onSubmit={handleFormSubmit} noValidate>
-          <FieldGroup className='grid gap-4 sm:grid-cols-2'>
-            <ProjectField
-              control={control}
-              projects={projects}
-              isLoading={isLoadingProjects}
-              errorMessage={projectsError?.message}
-              disabled={isBusy}
-            />
-
-            <Field data-invalid={Boolean(errors.date)}>
-              <FieldLabel htmlFor='date'>Date</FieldLabel>
-              <Input id='date' type='date' disabled={isBusy} aria-invalid={Boolean(errors.date)} {...register('date')} />
-              <FieldError errors={[errors.date]} />
-            </Field>
-
-            <Field data-invalid={Boolean(errors.durationMinutes)}>
-              <FieldLabel htmlFor='durationMinutes'>Duration (minutes)</FieldLabel>
-              <Input
-                id='durationMinutes'
-                type='number'
-                min={1}
-                step={1}
-                disabled={isBusy}
-                aria-invalid={Boolean(errors.durationMinutes)}
-                {...register('durationMinutes', { valueAsNumber: true })}
-              />
-              <FieldError errors={[errors.durationMinutes]} />
-            </Field>
-
-            <Field className='sm:col-span-2' data-invalid={Boolean(errors.description)}>
-              <FieldLabel htmlFor='description'>Description (optional)</FieldLabel>
-              <Input
-                id='description'
-                placeholder='What did you work on?'
-                disabled={isBusy}
-                aria-invalid={Boolean(errors.description)}
-                {...register('description')}
-              />
-              <FieldError errors={[errors.description]} />
-            </Field>
-          </FieldGroup>
+        <form className='grid gap-6' onSubmit={handleFormSubmit} noValidate>
+          <TrackerFormFields
+            form={form}
+            idPrefix='create'
+            projects={projects}
+            isLoadingProjects={isLoadingProjects}
+            projectsError={projectsError}
+            isDisabled={isBusy}
+          />
 
           <DialogFooter>
             <Button type='button' variant='outline' disabled={isBusy} onClick={handleCancelClick}>
-              Cancel
+              {content.createDialog.cancelButton}
             </Button>
             <Button type='submit' disabled={isBusy || projects.length === 0}>
-              {isBusy ? 'Creating…' : 'Create tracker'}
+              {isBusy ? content.createDialog.submittingButton : content.createDialog.submitButton}
             </Button>
           </DialogFooter>
         </form>
@@ -149,41 +97,7 @@ export function CreateTrackerDialog() {
   );
 }
 
-interface ProjectFieldProps {
-  control: ReturnType<typeof useForm<TrackerFormValues>>['control'];
-  projects: Project[];
-  isLoading: boolean;
-  errorMessage?: string;
-  disabled: boolean;
-}
-
-function ProjectField({ control, projects, isLoading, errorMessage, disabled }: ProjectFieldProps) {
-  const { field, fieldState } = useController({ control, name: 'projectId' });
-
-  function handleProjectChange(value: string | null) {
-    if (value) {
-      field.onChange(value);
-    }
-  }
-
-  const placeholder = isLoading ? 'Loading projects…' : projects.length === 0 ? 'No projects available' : 'Select a project';
-
-  return (
-    <Field className='sm:col-span-2' data-invalid={Boolean(fieldState.error) || Boolean(errorMessage)}>
-      <FieldLabel htmlFor='projectId'>Project</FieldLabel>
-      <Select value={field.value || null} onValueChange={handleProjectChange} disabled={disabled || isLoading || Boolean(errorMessage)}>
-        <SelectTrigger id='projectId' className='w-full' aria-invalid={Boolean(fieldState.error)}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {projects.map((project) => (
-            <SelectItem key={project.id} value={project.id}>
-              {project.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {errorMessage ? <FieldError>{errorMessage}</FieldError> : <FieldError errors={[fieldState.error]} />}
-    </Field>
-  );
+interface CreateTrackerDialogProps {
+  defaultDate?: string;
+  triggerSize?: 'default' | 'lg';
 }

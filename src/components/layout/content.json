@@ -1,0 +1,38 @@
+{
+  "navigation": {
+    "tracker": "Tracker",
+    "crew": "Crew",
+    "reports": "Reports",
+    "projects": "Projects",
+    "profile": "Profile"
+  },
+  "brand": {
+    "appName": "Soft Bee Tracker",
+    "brandName": "Soft Bee",
+    "brandSuffix": "Tracker"
+  },
+  "header": {
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "menuTitle": "Navigation"
+  },
+  "accountMenu": {
+    "openLabel": "Open account menu",
+    "profile": "Profile",
+    "logOut": "Log out"
+  },
+  "themeToggle": {
+    "label": "Toggle theme"
+  },
+  "brandPanel": {
+    "appName": "Soft Bee Tracker",
+    "headline": "Track time.",
+    "headlineAccent": "Ship more.",
+    "features": {
+      "logHours": "Log hours against projects in seconds",
+      "crew": "See your whole crew at a glance",
+      "reports": "Reports that match payroll"
+    },
+    "footer": "© Soft Bee — internal workspace"
+  }
+}

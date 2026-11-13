@@ -1,0 +1,50 @@
+name: Validate database
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Migrations, Seeds, Lint & DB Types
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.116.0
+
+      - name: Apply migrations and seeds to a clean local database
+        run: supabase start -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Lint database schema
+        run: supabase db lint --local --fail-on error
+
+      - name: Run database tests (pgTAP)
+        run: supabase db test --db-url postgresql://supabase_admin:postgres@127.0.0.1:54322/postgres
+
+      - name: Verify generated DB types are up to date
+        run: |
+          # the postgres-meta image pull is rate limited by the registry at times
+          for attempt in 1 2 3; do
+            supabase gen types typescript --local > "$RUNNER_TEMP/supabase-schema.ts" && break
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            echo "Type generation failed (attempt $attempt), retrying in 30s"
+            sleep 30
+          done
+          cp "$RUNNER_TEMP/supabase-schema.ts" src/types/supabase-schema.ts
+          git diff --exit-code -- src/types/supabase-schema.ts || {
+            echo "Error: src/types/supabase-schema.ts is out of date — run 'yarn sb:db:types' and commit the result"
+            exit 1
+          }
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop --no-backup

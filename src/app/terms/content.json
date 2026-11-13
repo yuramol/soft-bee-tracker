@@ -1,0 +1,63 @@
+{
+  "metadataTitle": "Terms of use — Soft Bee Tracker",
+  "backLink": "Back",
+  "title": "Terms of use",
+  "intro": "The rules for using Soft Bee Tracker, the internal workspace for logging time, managing projects and preparing reports.",
+  "lastUpdated": "Last updated: November 2026",
+  "sectionsNavLabel": "Sections",
+  "footer": "Questions about these terms? Contact your workspace admin or manager.",
+  "sections": [
+    {
+      "id": "access",
+      "title": "Who can use the workspace",
+      "points": [
+        "Access is limited to Soft Bee team members and contractors who were invited by an admin or manager.",
+        "Your account is personal. Do not share your sign-in link, password or session with anyone else.",
+        "Admins may change your role or block access when your engagement ends or these terms are breached."
+      ]
+    },
+    {
+      "id": "time-tracking",
+      "title": "Logging time",
+      "points": [
+        "Log time honestly and against the project you actually worked on.",
+        "Keep entries up to date; managers rely on them for approvals, invoices and payroll.",
+        "Approved entries may be locked. Ask your manager if an approved entry needs a correction."
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Your data",
+      "points": [
+        "We store the profile details you provide and the time entries you create to run the workspace.",
+        "Managers and admins can see your profile, time entries and reports for the projects they manage.",
+        "Data is used only for internal planning, reporting, invoicing and payroll."
+      ]
+    },
+    {
+      "id": "confidentiality",
+      "title": "Confidentiality",
+      "points": [
+        "Project, client and financial information in the workspace is confidential.",
+        "Do not export, copy or share it outside Soft Bee unless your manager has approved it."
+      ]
+    },
+    {
+      "id": "acceptable-use",
+      "title": "Acceptable use",
+      "points": [
+        "Do not try to access data or features your role does not allow.",
+        "Do not upload malicious content or attempt to disrupt the service.",
+        "Report security issues or suspicious activity to an admin right away."
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Changes to these terms",
+      "points": [
+        "We may update these terms as the workspace evolves. The date at the top shows the latest revision.",
+        "Continuing to use the workspace after an update means you accept the revised terms."
+      ]
+    }
+  ]
+}

@@ -25,3 +25,24 @@ export interface CreateTrackerInput {
   description: string | null;
   durationMinutes: number;
 }
+
+export interface StartLiveTrackerInput {
+  projectId: string;
+  description: string | null;
+}
+
+export interface FinishLiveTrackerInput {
+  tracker: Tracker;
+  entry: CreateTrackerInput;
+}
+
+export interface UpdateTrackerInput {
+  trackerId: string;
+  entry: CreateTrackerInput;
+}
+
+export interface ProjectTrackersInput {
+  projectId: string;
+  from: string;
+  to: string;
+}

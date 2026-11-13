@@ -1,7 +1,11 @@
+import 'server-only';
+
 import type { CookieOptions } from '@supabase/ssr';
 import { createServerClient as createServerClientLib } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+
+import { assertServerExecutionContext } from '@/lib/supabase/env-safeguards';
 import { Database } from '@/types';
 
 export async function createServerClient() {
@@ -34,7 +38,16 @@ export async function createServerClient() {
 
 /** Server-only admin client for backend APIs — no cookie/session handling. */
 export function createServiceClient() {
-  return createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
+  assertServerExecutionContext('createServiceClient');
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+
+  if (!supabaseUrl || !secretKey) {
+    throw new Error('SUPABASE_SECRET_KEY and NEXT_PUBLIC_SUPABASE_URL are required on the server to create a service client.');
+  }
+
+  return createClient<Database>(supabaseUrl, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false

@@ -1,0 +1,9 @@
+{
+  "blocked": "Your account has been blocked. Please contact an administrator.",
+  "signUpSuccess": "Account created! Please check your email to verify your profile.",
+  "resetLinkSent": "Reset link sent! Please check your mailbox.",
+  "passwordChanged": "Password changed! You can now log in.",
+  "sessionExpired": "Your session has expired. Please sign in again.",
+  "usernameTaken": "That username is already taken.",
+  "accessMissing": "Your account access could not be loaded. Please contact an administrator."
+}

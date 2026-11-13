@@ -3,13 +3,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
+import { Loader2Icon, MailIcon } from 'lucide-react';
 
+import { FormField } from '@components/common/form/form-field';
+import { IconInput } from '@components/common/form/icon-input';
 import { Button } from '@ui/button';
-import { Input } from '@ui/input';
-import { Label } from '@ui/label';
 import { ROUTES } from '@/constants';
 import { useRecoverPassword } from '@/lib/api/auth';
 import { forgotPasswordFormSchema, type ForgotPasswordFormValues } from '@/lib/schemas/forgot-password-form.schema';
+import content from './content.json';
 
 export function ForgotPasswordForm() {
   const recoverPassword = useRecoverPassword();
@@ -37,25 +39,25 @@ export function ForgotPasswordForm() {
 
   return (
     <form className='flex flex-col gap-5' onSubmit={handleFormSubmit} noValidate>
-      <div className='flex flex-col gap-2'>
-        <Label htmlFor='email'>Email</Label>
-        <Input
+      <FormField label={content.emailLabel} htmlFor='email' error={errors.email}>
+        <IconInput
           id='email'
+          icon={MailIcon}
           type='email'
           autoComplete='email'
-          placeholder='you@example.com'
+          placeholder={content.emailPlaceholder}
           aria-invalid={Boolean(errors.email)}
           {...register('email')}
         />
-        {errors.email ? <p className='text-destructive text-sm'>{errors.email.message}</p> : null}
-      </div>
+      </FormField>
 
-      <Button className='w-full' disabled={isBusy} type='submit'>
-        Send reset link
+      <Button className='w-full' size='xl' disabled={isBusy} type='submit'>
+        {isBusy ? <Loader2Icon data-icon='inline-start' className='animate-spin' /> : null}
+        {content.submitButton}
       </Button>
 
       <Link className='text-muted-foreground hover:text-foreground text-center text-sm transition-colors' href={ROUTES.LOGIN}>
-        Back to sign in
+        {content.backToSignInLink}
       </Link>
     </form>
   );

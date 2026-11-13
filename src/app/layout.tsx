@@ -1,41 +1,31 @@
 import './globals.css';
-import { Geist } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Toaster } from '@ui/sonner';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@ui/sidebar';
-import { AppSidebar } from '@components/layout/app-sidebar/app-sidebar';
-import { cn, getUserAvatarFallback } from '@/lib/utils';
-import { getSessionProfile } from '@/lib/api/auth/server';
+import { cn } from '@/lib/utils';
 import { QueryProvider } from '@/providers/query-provider';
-import { AvatarDropdown } from '@/components/layout/app-sidebar/avatar-dropdown';
+import { ThemeProvider } from '@/providers/theme-provider';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const fixel = localFont({
+  src: [
+    { path: '../assets/fonts/fixel/fixel-light.woff2', weight: '300', style: 'normal' },
+    { path: '../assets/fonts/fixel/fixel-regular.woff2', weight: '400', style: 'normal' },
+    { path: '../assets/fonts/fixel/fixel-medium.woff2', weight: '500', style: 'normal' },
+    { path: '../assets/fonts/fixel/fixel-semibold.woff2', weight: '600', style: 'normal' }
+  ],
+  variable: '--font-sans',
+  display: 'swap'
+});
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // app chrome only belongs to signed-in routes; /login and friends render bare
-  const profile = await getSessionProfile();
-
-  const userAvatar = profile?.avatarUrl ? profile.avatarUrl : undefined
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en' className={cn('font-sans', geist.variable)}>
+    <html lang='en' className={cn('font-sans', fixel.variable)} suppressHydrationWarning>
       <body>
-        <QueryProvider>
-          {profile ? (
-            <SidebarProvider>
-              <AppSidebar profile={profile} />
-              <SidebarInset>
-                <header className='flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4'>
-                  <SidebarTrigger />
-                  <AvatarDropdown avatarUrl={userAvatar} fallback={getUserAvatarFallback({ firstName: profile.firstName, lastName: profile.lastName})} />
-                </header>
-                <main className='flex flex-1 flex-col p-6'>{children}</main>
-              </SidebarInset>
-            </SidebarProvider>
-          ) : (
-            <main className='flex min-h-screen flex-col items-center justify-center p-6'>{children}</main>
-          )}
-          <Toaster richColors closeButton />
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            {children}
+            <Toaster richColors closeButton />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

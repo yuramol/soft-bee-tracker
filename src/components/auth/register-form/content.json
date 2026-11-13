@@ -1,0 +1,9 @@
+{
+  "successMessage": "Your account is ready. Complete your profile to get started.",
+  "emailLabel": "Email",
+  "emailDescription": "This is the address your invitation was sent to.",
+  "passwordLabel": "Password",
+  "confirmPasswordLabel": "Repeat password",
+  "passwordPlaceholder": "••••••••",
+  "submitButton": "Create account"
+}

@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "notAllowed": "You can't make this change.",
+    "unexpected": "Something went wrong. Try again in a moment."
+  }
+}

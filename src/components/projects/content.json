@@ -1,0 +1,181 @@
+{
+  "types": {
+    "time_material": "Time & material",
+    "fixed_price": "Fixed price",
+    "non_profit": "Non-profit"
+  },
+  "title": "Projects",
+  "status": {
+    "active": "Active",
+    "archived": "Archived"
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "worker": "Staff"
+  },
+  "list": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Project name",
+    "statusLabel": "Status",
+    "managerLabel": "Manager: {name}",
+    "members": "{count} members",
+    "oneMember": "1 member",
+    "open": "Open project",
+    "openLabel": "Open {name}",
+    "noDescription": "No description yet",
+    "empty": {
+      "worker": {
+        "title": "No projects yet",
+        "description": "A manager needs to add you to a project before it shows up here."
+      },
+      "manager": {
+        "title": "No projects in your area",
+        "description": "Projects you are responsible for or assigned to show up here."
+      },
+      "admin": {
+        "title": "No projects yet",
+        "description": "Create the first project to start tracking time against it."
+      },
+      "filtered": {
+        "title": "No projects match",
+        "description": "Try another name or switch the status filter."
+      }
+    }
+  },
+  "details": {
+    "back": "All projects",
+    "edit": "Edit project",
+    "archive": "Archive",
+    "restore": "Restore",
+    "archivedNotice": "This project is archived. New time can't be logged, but its entries and reports stay.",
+    "overview": {
+      "title": "Overview",
+      "purpose": "Purpose",
+      "empty": "No description yet.",
+      "manager": "Manager: {name}",
+      "status": "Status: {status}"
+    },
+    "links": {
+      "title": "Project links",
+      "empty": "No links yet.",
+      "add": "Add link",
+      "opensInNewTab": "(opens in a new tab)",
+      "accessNote": "Links open in a new tab. Access to the tracker doesn't grant access to Jira, GitHub or other services."
+    },
+    "members": {
+      "title": "Members",
+      "add": "Add member",
+      "remove": "Remove",
+      "removeLabel": "Remove {name} from the project",
+      "responsible": "Responsible",
+      "empty": "No members yet.",
+      "added": "{name} added to {project}",
+      "removed": "{name} removed from {project}",
+      "removeDialog": {
+        "title": "Remove {name} from {project}?",
+        "description": "They can no longer log time to this project. Their logged time and their role in the system stay unchanged.",
+        "confirmButton": "Remove member"
+      }
+    },
+    "time": {
+      "title": "Time summary",
+      "period": "This week",
+      "teamScope": "Work entries only",
+      "ownScope": "Your work entries only",
+      "openReport": "View project report"
+    },
+    "footer": "Only assigned users can log time. Archived projects keep their history.",
+    "archiveDialog": {
+      "title": "Archive {name}?",
+      "description": "No one can log new time to it. Logged entries and reports stay, and an admin or the project's manager can restore it any time.",
+      "confirmButton": "Archive project"
+    },
+    "restoreDialog": {
+      "title": "Restore {name}?",
+      "description": "It moves back to Active and assigned people can log time again.",
+      "confirmButton": "Restore project"
+    },
+    "archived": "{name} archived",
+    "restored": "{name} restored",
+    "notFound": {
+      "title": "Project not found",
+      "description": "It doesn't exist or you don't have access to it."
+    }
+  },
+  "addMember": {
+    "title": "Add member to {project}",
+    "description": "Members can log time to this project. Managers and admins can also edit it and manage its members. Their role in the system doesn't change.",
+    "personLabel": "Person",
+    "personPlaceholder": "Choose a person",
+    "scope": "Active people who aren't members yet.",
+    "nobodyLeft": "Everyone available is already a member.",
+    "cancel": "Cancel",
+    "submit": "Add member"
+  },
+  "create": {
+    "trigger": "New project",
+    "title": "New project",
+    "description": "After creating it you can add members and links on the project card.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Website redesign",
+    "clientLabel": "Client",
+    "clientPlaceholder": "Acme Studio",
+    "managerLabel": "Responsible manager",
+    "managerPlaceholder": "Choose a manager",
+    "managerSelfHint": "You will be the responsible manager.",
+    "managerKeepHint": "If you choose someone else, you stay on the project as a member and can still manage it.",
+    "managersLabel": "Project managers",
+    "managersPlaceholder": "No extra managers",
+    "managersSelected": "{first} +{count}",
+    "managersHint": "Managers or admins added as members. They can edit the project and manage its members. You can change this later in Members.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Purpose, scope, working notes and key agreements.",
+    "cancel": "Cancel",
+    "submit": "Create project",
+    "created": "{name} created. Add members and links next."
+  },
+  "edit": {
+    "title": "Edit project",
+    "back": "Back to {name}",
+    "nameLabel": "Name",
+    "clientLabel": "Client",
+    "clientPlaceholder": "Acme Studio",
+    "managerLabel": "Manager",
+    "managerPlaceholder": "Choose a manager",
+    "managerHint": "The one person accountable for the project. The previous responsible person stays on the project as a member.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Purpose, scope, working notes and key agreements.",
+    "descriptionHint": "Separate paragraphs with a blank line. Start lines with \"-\" or \"1.\" for lists. Don't paste passwords or tokens.",
+    "statusLabel": "Status",
+    "archiveHint": "Archiving stops new time entries. History and reports stay.",
+    "lockedHint": "Only an admin or the project's manager can change this field.",
+    "linksTitle": "Links",
+    "linkLabel": "Label",
+    "linkLabelPlaceholder": "Documentation",
+    "linkUrl": "URL",
+    "linkUrlPlaceholder": "https://example.com/docs",
+    "addLink": "Add link",
+    "moveUp": "Move {label} up",
+    "moveDown": "Move {label} down",
+    "removeLink": "Remove {label}",
+    "dragHandle": "Drag {label} to reorder",
+    "untitledLink": "link {index}",
+    "noLinks": "No links yet. Add Jira, the repository, docs, Figma or an environment.",
+    "membershipNote": "Project membership is managed in the Members block.",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "saved": "{name} saved",
+    "unsavedHint": "You have unsaved changes",
+    "conflict": {
+      "title": "Someone else changed this project",
+      "description": "Your changes were not saved, so theirs aren't overwritten. Load the latest version and apply your edits again.",
+      "reload": "Load latest version"
+    },
+    "leaveDialog": {
+      "title": "Discard unsaved changes?",
+      "description": "Your edits to this project will be lost.",
+      "confirmButton": "Discard changes"
+    }
+  }
+}

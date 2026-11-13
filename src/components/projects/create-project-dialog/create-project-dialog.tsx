@@ -4,57 +4,63 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useController, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
+import { FormField } from '@components/common/form/form-field';
+import { ManagerSelect } from '@components/projects/manager-select';
+import { ProjectManagersSelect } from '@components/projects/project-managers-select';
 import { Button } from '@ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@ui/field';
+import { FieldGroup } from '@ui/field';
 import { Input } from '@ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@ui/select';
 import { Textarea } from '@ui/textarea';
-import { useCreateProjectStore } from '@/lib/api/projects';
-import type { ProjectType } from '@/lib/api/projects';
-import {
-  buildCreateProjectInput,
-  CREATE_PROJECT_FORM_DEFAULTS,
-  createProjectFormSchema,
-  type CreateProjectFormValues
-} from '@/lib/schemas/create-project-form.schema';
+import type { ProjectPerson } from '@/lib/api/users';
+import type { CreateProjectValues, ProjectSubmitOutcome } from '@/lib/projects';
+import { createProjectFormSchema, type CreateProjectFormValues } from '@/lib/schemas/project-form.schema';
+import schemaContent from '@/lib/schemas/content.json';
+import content from '../content.json';
 
-const PROJECT_TYPE_OPTIONS: Array<{ label: string; value: ProjectType }> = [
-  { label: 'Time and material', value: 'time_material' },
-  { label: 'Fixed price', value: 'fixed_price' },
-  { label: 'Non-profit', value: 'non_profit' }
-];
-
-export function CreateProjectDialog() {
+export function CreateProjectDialog({
+  viewerId,
+  canChooseManager,
+  isCreatorKept,
+  managerCandidates,
+  isNameTaken,
+  onCreate
+}: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
-  const createProject = useCreateProjectStore((state) => state.createProject);
-  const isCreating = useCreateProjectStore((state) => state.isCreating);
-  const createError = useCreateProjectStore((state) => state.createError);
-  const resetCreation = useCreateProjectStore((state) => state.reset);
+  const defaultValues: CreateProjectFormValues = { name: '', client: '', description: '', managerId: viewerId, managerIds: [] };
   const {
     control,
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
-    reset
-  } = useForm<CreateProjectFormValues>({
-    defaultValues: CREATE_PROJECT_FORM_DEFAULTS,
-    resolver: zodResolver(createProjectFormSchema)
-  });
-  const { field: typeField } = useController({ control, name: 'type' });
-  const isBusy = isSubmitting || isCreating;
+    reset,
+    setError
+  } = useForm<CreateProjectFormValues>({ defaultValues, resolver: zodResolver(createProjectFormSchema) });
+  const { field: managerField } = useController({ control, name: 'managerId' });
+  const { field: managersField } = useController({ control, name: 'managerIds' });
+  // the responsible person already manages the project, so they aren't offered twice
+  const coManagerCandidates = managerCandidates.filter((person) => person.id !== managerField.value);
+
+  function handleResponsibleChange(nextId: string) {
+    managerField.onChange(nextId);
+    managersField.onChange(managersField.value.filter((id) => id !== nextId));
+  }
 
   async function handleProjectSubmit(values: CreateProjectFormValues) {
-    try {
-      const project = await createProject(buildCreateProjectInput(values));
-      toast.success(`${project.name} was created`);
-      reset(CREATE_PROJECT_FORM_DEFAULTS);
-      resetCreation();
+    if (isNameTaken(values.name)) {
+      setError('name', { message: schemaContent.project.nameTaken }, { shouldFocus: true });
+      return;
+    }
+
+    // managers without the grant to choose always own what they create
+    const outcome = await onCreate({ ...values, managerId: canChooseManager ? values.managerId : viewerId } satisfies CreateProjectValues);
+
+    if (outcome === 'name-taken') {
+      setError('name', { message: schemaContent.project.nameTaken }, { shouldFocus: true });
+    } else if (outcome === 'saved') {
+      reset(defaultValues);
       setOpen(false);
-    } catch {
-      // The creation store owns and exposes the normalized API error.
     }
   }
 
@@ -62,146 +68,125 @@ export function CreateProjectDialog() {
     void handleSubmit(handleProjectSubmit)(event);
   }
 
-  function handleDialogOpenChange(nextOpen: boolean) {
-    if (isBusy) {
-      return;
-    }
-
-    if (nextOpen) {
-      resetCreation();
-    } else {
-      reset(CREATE_PROJECT_FORM_DEFAULTS);
-      resetCreation();
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      reset(defaultValues);
     }
 
     setOpen(nextOpen);
   }
 
   function handleCancelClick() {
-    if (!isBusy) {
-      reset(CREATE_PROJECT_FORM_DEFAULTS);
-      resetCreation();
-      setOpen(false);
-    }
-  }
-
-  function handleProjectTypeChange(value: ProjectType | null) {
-    if (value) {
-      typeField.onChange(value);
-    }
+    handleOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange} disablePointerDismissal={isBusy}>
-      <DialogTrigger render={<Button />}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger render={<Button size='lg' />}>
         <PlusIcon data-icon='inline-start' />
-        New project
+        {content.create.trigger}
       </DialogTrigger>
 
-      <DialogContent className='max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg' showCloseButton={!isBusy}>
+      <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
-          <DialogTitle>Create project</DialogTitle>
-          <DialogDescription>Add a project that you will manage.</DialogDescription>
+          <DialogTitle>{content.create.title}</DialogTitle>
+          <DialogDescription>{content.create.description}</DialogDescription>
         </DialogHeader>
 
-        <form className='grid gap-4' onSubmit={handleFormSubmit} noValidate>
-          <FieldGroup className='grid gap-4 sm:grid-cols-2'>
-            <Field className='sm:col-span-2' data-invalid={Boolean(errors.name)}>
-              <FieldLabel htmlFor='name'>Project name</FieldLabel>
+        <form className='grid gap-6' onSubmit={handleFormSubmit} noValidate>
+          <FieldGroup className='gap-4'>
+            <FormField label={`${content.create.nameLabel} *`} htmlFor='createProjectName' error={errors.name}>
               <Input
-                id='name'
-                placeholder='Website redesign'
+                id='createProjectName'
+                placeholder={content.create.namePlaceholder}
                 autoComplete='off'
-                disabled={isBusy}
                 aria-invalid={Boolean(errors.name)}
                 {...register('name')}
               />
-              <FieldError errors={[errors.name]} />
-            </Field>
+            </FormField>
 
-            <Field className='sm:col-span-2' data-invalid={Boolean(errors.client)}>
-              <FieldLabel htmlFor='client'>Client</FieldLabel>
+            <FormField label={content.create.clientLabel} htmlFor='createProjectClient' error={errors.client}>
               <Input
-                id='client'
-                placeholder='Acme'
+                id='createProjectClient'
+                placeholder={content.create.clientPlaceholder}
                 autoComplete='organization'
-                disabled={isBusy}
                 aria-invalid={Boolean(errors.client)}
                 {...register('client')}
               />
-              <FieldError errors={[errors.client]} />
-            </Field>
+            </FormField>
 
-            <Field className='sm:col-span-2' data-invalid={Boolean(errors.type)}>
-              <FieldLabel htmlFor='type'>Project type</FieldLabel>
-              <Select<ProjectType> value={typeField.value} onValueChange={handleProjectTypeChange} disabled={isBusy}>
-                <SelectTrigger id='type' className='w-full' aria-invalid={Boolean(errors.type)}>
-                  <SelectValue placeholder='Select a project type' />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROJECT_TYPE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError errors={[errors.type]} />
-            </Field>
+            <FormField
+              label={`${content.create.managerLabel} *`}
+              htmlFor='createProjectManager'
+              error={errors.managerId}
+              description={getManagerHint(canChooseManager, isCreatorKept && managerField.value !== viewerId)}
+            >
+              <ManagerSelect
+                id='createProjectManager'
+                value={managerField.value}
+                candidates={managerCandidates}
+                placeholder={content.create.managerPlaceholder}
+                isDisabled={!canChooseManager}
+                isInvalid={Boolean(errors.managerId)}
+                onChange={handleResponsibleChange}
+              />
+            </FormField>
 
-            <Field className='sm:col-span-2' data-invalid={Boolean(errors.note)}>
-              <FieldLabel htmlFor='note'>Note (optional)</FieldLabel>
+            <FormField
+              label={content.create.managersLabel}
+              htmlFor='createProjectManagers'
+              error={errors.managerIds}
+              description={content.create.managersHint}
+            >
+              <ProjectManagersSelect
+                id='createProjectManagers'
+                value={managersField.value}
+                candidates={coManagerCandidates}
+                isInvalid={Boolean(errors.managerIds)}
+                onChange={managersField.onChange}
+              />
+            </FormField>
+
+            <FormField label={content.create.descriptionLabel} htmlFor='createProjectDescription' error={errors.description}>
               <Textarea
-                id='note'
-                placeholder='Project context or delivery notes'
-                disabled={isBusy}
-                aria-invalid={Boolean(errors.note)}
-                {...register('note')}
+                id='createProjectDescription'
+                rows={4}
+                className='px-3.5 py-3'
+                placeholder={content.create.descriptionPlaceholder}
+                aria-invalid={Boolean(errors.description)}
+                {...register('description')}
               />
-              <FieldError errors={[errors.note]} />
-            </Field>
-
-            <Field className='sm:col-span-2' data-invalid={Boolean(errors.pictureUrl)}>
-              <FieldLabel htmlFor='pictureUrl'>Picture URL (optional)</FieldLabel>
-              <Input
-                id='pictureUrl'
-                type='url'
-                placeholder='https://example.com/project.png'
-                disabled={isBusy}
-                aria-invalid={Boolean(errors.pictureUrl)}
-                {...register('pictureUrl')}
-              />
-              <FieldError errors={[errors.pictureUrl]} />
-            </Field>
-
-            <Field data-invalid={Boolean(errors.startDate)}>
-              <FieldLabel htmlFor='startDate'>Start date (optional)</FieldLabel>
-              <Input id='startDate' type='date' disabled={isBusy} aria-invalid={Boolean(errors.startDate)} {...register('startDate')} />
-              <FieldError errors={[errors.startDate]} />
-            </Field>
-
-            <Field data-invalid={Boolean(errors.endDate)}>
-              <FieldLabel htmlFor='endDate'>End date (optional)</FieldLabel>
-              <Input id='endDate' type='date' disabled={isBusy} aria-invalid={Boolean(errors.endDate)} {...register('endDate')} />
-              <FieldError errors={[errors.endDate]} />
-            </Field>
+            </FormField>
           </FieldGroup>
 
           <DialogFooter>
-            {createError ? (
-              <p role='alert' className='text-destructive mr-auto self-center text-sm'>
-                {createError.message}
-              </p>
-            ) : null}
-            <Button type='button' variant='outline' disabled={isBusy} onClick={handleCancelClick}>
-              Cancel
+            <Button type='button' variant='outline' onClick={handleCancelClick}>
+              {content.create.cancel}
             </Button>
-            <Button type='submit' disabled={isBusy}>
-              {isBusy ? 'Creating…' : 'Create project'}
+            <Button type='submit' disabled={isSubmitting}>
+              {content.create.submit}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+function getManagerHint(canChooseManager: boolean, isHandingOver: boolean): string | undefined {
+  if (!canChooseManager) {
+    return content.create.managerSelfHint;
+  }
+
+  return isHandingOver ? content.create.managerKeepHint : undefined;
+}
+
+interface CreateProjectDialogProps {
+  viewerId: string;
+  canChooseManager: boolean;
+  // a creating manager stays on as a project manager when choosing someone else
+  isCreatorKept: boolean;
+  managerCandidates: ProjectPerson[];
+  isNameTaken: (name: string) => boolean;
+  onCreate: (values: CreateProjectValues) => Promise<ProjectSubmitOutcome>;
 }

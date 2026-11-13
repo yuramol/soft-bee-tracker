@@ -1,0 +1,188 @@
+{
+  "fallbackProjectName": "Project",
+  "form": {
+    "projectLabel": "Project",
+    "dateLabel": "Date",
+    "durationLabel": "Duration, HH:mm",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "What did you work on?"
+  },
+  "projectSelect": {
+    "loading": "Loading projects…",
+    "empty": "No projects available",
+    "placeholder": "Select a project"
+  },
+  "createDialog": {
+    "triggerButton": "Add time",
+    "title": "Add time",
+    "description": "Add a manual time entry for one of your projects.",
+    "cancelButton": "Cancel",
+    "submitButton": "Save entry",
+    "submittingButton": "Saving…"
+  },
+  "editDialog": {
+    "title": "Edit entry",
+    "description": "Entries can be changed until they are approved.",
+    "cancelButton": "Cancel",
+    "submitButton": "Save changes",
+    "submittingButton": "Saving…"
+  },
+  "startDialog": {
+    "triggerButton": "Start timer",
+    "title": "New live time entry",
+    "description": "The timer runs until you stop it, then the time is saved as an entry for today.",
+    "projectLabel": "Project",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "What are you working on?",
+    "cancelButton": "Cancel",
+    "submitButton": "Start",
+    "submittingButton": "Starting…"
+  },
+  "finishDialog": {
+    "title": "Save time entry",
+    "description": "Check the details before saving. Cancel to keep the timer running.",
+    "cancelButton": "Cancel",
+    "submitButton": "Save entry",
+    "submittingButton": "Saving…"
+  },
+  "liveWidget": {
+    "label": "Live timer",
+    "pause": "Pause timer",
+    "resume": "Resume timer",
+    "elapsed": "Elapsed time",
+    "pausedAt": "Paused at",
+    "stopAndSave": "Stop and save",
+    "discardLabel": "Discard timer",
+    "discardTooltip": "Discard",
+    "discardDialog": {
+      "title": "Discard this timer?",
+      "newDescription": "The {duration} tracked on {project} won't be saved.",
+      "resumedDescription": "Time tracked since you resumed won't be saved. The entry keeps its {duration}.",
+      "confirmButton": "Discard"
+    }
+  },
+  "dayEntries": {
+    "label": "Day entries",
+    "today": "Today",
+    "goToToday": "Today",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "entriesTitle": "{day} entries",
+    "emptyTitle": "Nothing logged this day",
+    "emptyDescription": "Add the time you worked so it counts towards your totals.",
+    "futureTitle": "This day hasn't happened yet",
+    "futureDescription": "You can log time once the day starts.",
+    "closedTitle": "This month is closed",
+    "closedDescription": "Time can be added or changed until 23:59 (UTC+2) on the 5th of the next month.",
+    "total": "Day total",
+    "dayLabel": "{day}, {total}",
+    "leaveDayLabel": "{day}, {leave}",
+    "leaveBanner": "{leave} — approved absence. It isn't counted as worked time.",
+    "deleteDialog": {
+      "title": "Delete this entry?",
+      "description": "{duration} on {project} will be removed. This can't be undone.",
+      "fallbackProject": "this project",
+      "confirmButton": "Delete"
+    }
+  },
+  "entryRow": {
+    "noDescription": "No description",
+    "live": "Live",
+    "paused": "Paused",
+    "edit": "Edit",
+    "editLabel": "Edit entry",
+    "continue": "Continue timer",
+    "continueLabel": "Continue timer on this entry",
+    "stopRunningFirst": "Stop the running timer first",
+    "delete": "Delete",
+    "deleteLabel": "Delete entry",
+    "status": {
+      "new": "New",
+      "closed": "Closed",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "calendar": {
+    "label": "Monthly calendar",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "error": "Couldn't load entries, so days aren't marked.",
+    "legend": {
+      "untracked": "Less than {hours}h tracked",
+      "weekend": "Weekend",
+      "tracked": "{hours}h or more tracked"
+    }
+  },
+  "summary": {
+    "label": "Time summary",
+    "periods": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "empty": "No time tracked in this period.",
+    "total": "Total tracked",
+    "leaveDays": "Approved absence",
+    "leaveDaysValue": "{count} {unit}",
+    "leaveHint": "Not included in tracked time"
+  },
+  "leave": {
+    "label": "Leave",
+    "requestButton": "Request leave",
+    "balances": {
+      "vacation": "Vacation balance",
+      "sick_leave": "Sick leave balance"
+    },
+    "types": {
+      "vacation": "Vacation",
+      "sick_leave": "Sick leave"
+    },
+    "shortTypes": {
+      "vacation": "Leave",
+      "sick_leave": "Sick"
+    },
+    "daysValue": "{count} {unit}",
+    "day": "day",
+    "days": "days",
+    "notConfigured": "Not configured",
+    "balanceHint": "{used} of {total} used",
+    "pendingHint": "{count} pending",
+    "requestsTitle": "Your requests",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "loadError": "Couldn't load your leave",
+    "cancelRequest": "Cancel {type} request for {dates}",
+    "dialog": {
+      "title": "Request leave",
+      "description": "Your manager reviews the request before it's added to your calendar.",
+      "typeLabel": "Type",
+      "startLabel": "From",
+      "endLabel": "To",
+      "noteLabel": "Comment (optional)",
+      "notePlaceholder": "Anything your manager should know?",
+      "workingDays": "{count} working {unit}",
+      "cancelButton": "Cancel",
+      "submitButton": "Send request",
+      "submitError": "We couldn't send this request. Try again in a moment."
+    },
+    "grantDialog": {
+      "triggerButton": "Approve vacation",
+      "title": "Approve vacation",
+      "description": "Add approved leave for this person. It counts against their balance right away.",
+      "typeLabel": "Type",
+      "startLabel": "From",
+      "endLabel": "To",
+      "noteLabel": "Comment (optional)",
+      "notePlaceholder": "Anything worth noting?",
+      "workingDays": "{count} working {unit}",
+      "cancelButton": "Cancel",
+      "submitButton": "Approve"
+    }
+  }
+}

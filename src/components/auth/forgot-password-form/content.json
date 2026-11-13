@@ -1,0 +1,6 @@
+{
+  "emailLabel": "Email",
+  "emailPlaceholder": "you@example.com",
+  "submitButton": "Send reset link",
+  "backToSignInLink": "Back to sign in"
+}

@@ -56,7 +56,7 @@
 
 - No direct data calls inside React components, pages, layouts, or render paths.
 - Never call `fetch`, raw API utilities, or Supabase client methods directly from UI components.
-- Client-side data access must go through dedicated TanStack Query hooks.
+- Client-side data access must go through the domain's public TanStack Query hooks exported from `src/lib/api/<entity>/index.ts`. Do not use Zustand for CRUD; Zustand holds ephemeral UI state only.
 - Server components must use dedicated server-side data helpers/actions.
 - In this repo, place data access abstractions under `lib/api/**` and shared fetch logic under `lib/**`.
 
@@ -67,6 +67,7 @@
 - Use `@supabase/ssr` patterns only; do not use `@supabase/auth-helpers-nextjs`.
 - For cookie adapters, use `getAll` and `setAll`; do not use `get`/`set`/`remove` adapter shape.
 - In auth middleware, keep token refresh flow intact and preserve returned response cookies.
+- Route access is decided by `getRouteAccess` (`src/lib/route-access.ts`) from the verified `user_role` JWT claim; rules live in `src/constants/index.ts`. Every app `page.tsx` calls `requireRouteAccess` (`@/lib/api/auth/server`) at the top. It only applies the rules, so restrict a page by adding it to `ROLE_RESTRICTED_ROUTES`, and classify every new route in `ROUTE_CLASSIFICATION` (`src/lib/route-access.test.ts`); unlisted routes allow every signed-in role, and a missing role fails closed. Never read the role from `user_metadata` or `public.users`.
 
 ## Supabase migrations and types (strict)
 
@@ -77,8 +78,7 @@
 - Include a migration header comment (purpose, affected objects, special risks).
 - For destructive statements (`drop`, `alter`, `truncate`), add explicit safety comments.
 - New tables must enable RLS.
-- After creating/modifying migrations, regenerate DB types for this repo flow:
-  - `yarn typegen` (local) or `yarn typegen:remote` (linked environment).
+- After creating/modifying migrations, regenerate DB types with `yarn sb:db:types` (requires local Supabase running; writes `src/types/supabase-schema.ts`).
 - Never use `as any` on Supabase `.from()` table names; regenerate types first.
 - Avoid `any` for query results; use generated `Database` table `Row`/`Insert`/`Update` types.
 
@@ -120,6 +120,14 @@
 - If `any` or `unknown` is unavoidable, add a short inline justification comment.
 - `any`/`unknown` are allowed in unit tests when they improve test ergonomics/readability.
 
+## Secrets and environments (strict)
+
+- Keep local secrets in `.env` (gitignored by `.env` and `.env.*`); `.example.env` lists variable names only, never values.
+- Never commit, log, print, or paste secret values. Agents must not read or echo `.env` values; when debugging, check only whether each variable is set.
+- `SUPABASE_SECRET_KEY` is server-only: read it only in `createServiceClient()` in `src/lib/supabase/server.ts`. Never import `lib/supabase/server` from `"use client"` modules or from `lib/supabase/client`.
+- Never expose a secret through a `NEXT_PUBLIC_*` variable; only the Supabase URL and anon key are public.
+- Each developer works against their own environment (local Supabase via `supabase start` or a personal dev project). Do not run migrations or write SQL against shared or production projects without team agreement.
+
 ## Safety and approval boundaries
 
 - Ask for approval before changing database schema, auth flow, RLS model, or security-sensitive code.
@@ -128,6 +136,6 @@
 
 ## Verification and delivery
 
-- Run the smallest relevant checks (`eslint`, targeted tests, or typecheck) after changes.
+- Run the smallest relevant checks (`yarn test`, targeted `eslint`, or typecheck) after changes.
 - If checks are not run, state exactly which checks were skipped and why.
 - Summaries must include what changed, why, and any residual risk.
