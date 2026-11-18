@@ -68,6 +68,7 @@ function tracker(overrides: Partial<Tracker>): Tracker {
     startLiveDate: null,
     projectId: 'p1',
     userId: 'mgr',
+    invoiceId: null,
     transactionId: null,
     ...overrides
   };

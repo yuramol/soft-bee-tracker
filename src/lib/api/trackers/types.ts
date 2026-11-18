@@ -9,6 +9,7 @@ export interface Tracker {
   date: string;
   description: string | null;
   durationMinutes: number;
+  invoiceId: string | null;
   isLive: boolean;
   liveDurationMinutes: number;
   liveStatus: TrackerLiveStatus | null;
