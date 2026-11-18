@@ -45,6 +45,7 @@ function tracker(
     startLiveDate: null,
     projectId,
     userId,
+    invoiceId: null,
     transactionId: null
   };
 }

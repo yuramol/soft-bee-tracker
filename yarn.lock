@@ -1917,6 +1917,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/big.js@npm:^7":
+  version: 7.0.0
+  resolution: "@types/big.js@npm:7.0.0"
+  checksum: 10c0/d6cc629c7eefe86e2dcc8beb2c8ee41deaaab3bd761e5d2401b51a23f171caa36753e56002e1e5d9d7e671a922f303dcb52907725e15499faac7f7b533e556f2
+  languageName: node
+  linkType: hard
+
 "@types/chai@npm:^5.2.2":
   version: 5.2.3
   resolution: "@types/chai@npm:5.2.3"
@@ -2706,6 +2713,13 @@ __metadata:
     raw-body: "npm:^3.0.2"
     type-is: "npm:^2.1.0"
   checksum: 10c0/2a8fbbdc471b588338555a3e1a597d1eb0ad0c21cf20fdc3bac5d3f8d9c3a4b19b4163575ab852a43a5dfc0df7770ced5284f979e561f1a24c2f851ce89e695a
+  languageName: node
+  linkType: hard
+
+"big.js@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "big.js@npm:7.0.1"
+  checksum: 10c0/2ea2c2e263db37b2d5c6ad6246408eabf13ba07776cfd92bf464db201ef9aa9aa1712accbfe97f4aba5d358567ebefe768e8a50102cde11f35ef3497ddc2747c
   languageName: node
   linkType: hard
 
@@ -6818,8 +6832,10 @@ __metadata:
     "@supabase/supabase-js": "npm:^2.108.2"
     "@tailwindcss/postcss": "npm:^4.3.0"
     "@tanstack/react-query": "npm:^5.101.0"
+    "@types/big.js": "npm:^7"
     "@types/node": "npm:25.9.2"
     "@types/react": "npm:19.2.17"
+    big.js: "npm:^7.0.1"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     date-fns: "npm:^4.4.0"

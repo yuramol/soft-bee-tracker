@@ -31,6 +31,7 @@ const trackerRow = {
   start_live_date: '2026-11-05T11:00:00.000Z',
   project_id: 'project-1',
   user_id: 'user-1',
+  invoice_id: null,
   transaction_id: null
 };
 
@@ -48,6 +49,7 @@ const runningTracker: Tracker = {
   startLiveDate: '2026-11-05T11:58:30.000Z',
   projectId: 'project-1',
   userId: 'user-1',
+  invoiceId: null,
   transactionId: null
 };
 
