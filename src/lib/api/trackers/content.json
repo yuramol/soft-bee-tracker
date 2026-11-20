@@ -6,5 +6,22 @@
   "entrySaved": "Time entry saved",
   "entryUpdated": "Entry updated",
   "entryDeleted": "Entry deleted",
-  "timerDiscarded": "Timer discarded"
+  "timerDiscarded": "Timer discarded",
+  "entryApproved": "Entry approved",
+  "entryRejected": "Entry rejected",
+  "reviewUndone": "Review undone",
+  "reviewErrors": {
+    "notAllowed": "You can't review this entry. It may be on a project you don't manage.",
+    "ownEntry": "You can't review your own time entries.",
+    "adminEntry": "Only an admin can review this entry.",
+    "reasonRequired": "Add a reason to reject this entry.",
+    "undoReasonRequired": "Add a reason to undo this review.",
+    "reasonTooLong": "The reason can be at most 500 characters.",
+    "timerRunning": "This timer is still running and can't be reviewed yet.",
+    "alreadyReviewed": "This entry was already reviewed. Refresh to see the latest decision.",
+    "statusChanged": "Your action wasn't completed. Refresh to see the reason.",
+    "reviewedLocked": "This entry was already reviewed. Ask a manager to undo the review before changing or deleting it.",
+    "unexpected": "Couldn't update the review. Try again.",
+    "insertReviewed": "New time entries are saved unreviewed. Save it first, then approve it."
+  }
 }

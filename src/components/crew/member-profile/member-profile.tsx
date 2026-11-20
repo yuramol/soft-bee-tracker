@@ -27,6 +27,7 @@ import { EditableAllowance } from '@components/crew/member-profile/editable-allo
 import { EditableEmploymentDateRow, EditablePositionRow } from '@components/crew/member-profile/editable-detail-rows';
 import { LeaveStatusBadge } from '@components/crew/leave-status-badge';
 import { MemberProfileSkeleton } from '@components/crew/member-profile/member-profile-skeleton';
+import { MemberTimeReview } from '@components/crew/member-time-review/member-time-review';
 import { MemberStatusBadge } from '@components/crew/member-status-badge';
 import { RoleBadge } from '@components/crew/role-badge';
 import { RequestLeaveDialog } from '@components/tracker/request-leave-dialog/request-leave-dialog';
@@ -52,7 +53,7 @@ import { getUserAvatarFallback } from '@/lib/utils';
 import type { LeaveType } from '@/lib/api/leave';
 import content from '../content.json';
 
-export function MemberProfile({ memberId, viewer, canReviewLeave, canEditEmployment }: MemberProfileProps) {
+export function MemberProfile({ memberId, viewer, canReviewLeave, canReviewTime, canEditEmployment }: MemberProfileProps) {
   const { data: crew, isLoading, error, refetch } = useCrew();
 
   function handleRetry() {
@@ -79,12 +80,13 @@ export function MemberProfile({ memberId, viewer, canReviewLeave, canEditEmploym
       crew={crew}
       viewer={viewer}
       canReviewLeave={canReviewLeave}
+      canReviewTime={canReviewTime}
       canEditEmployment={canEditEmployment}
     />
   );
 }
 
-function MemberProfileContent({ member, crew, viewer, canReviewLeave, canEditEmployment }: MemberProfileContentProps) {
+function MemberProfileContent({ member, crew, viewer, canReviewLeave, canReviewTime, canEditEmployment }: MemberProfileContentProps) {
   const [year] = useState(() => new Date().getFullYear());
   const updateEmployment = useUpdateMemberEmployment();
   const reviewLeave = useReviewLeaveRequest();
@@ -93,6 +95,8 @@ function MemberProfileContent({ member, crew, viewer, canReviewLeave, canEditEmp
   const name = getFullName(member);
   const membersById = new Map(crew.members.map((item) => [item.id, item]));
   const managerNames = getManagerNames(member, membersById);
+  const projectNames = new Map(crew.projects.map((project) => [project.id, project.name]));
+  const memberNames = new Map(crew.members.map((item) => [item.id, getFullName(item)]));
   const leaveRequests = crew.leaveRequests.filter((request) => request.memberId === member.id);
   const allowances = crew.allowances.filter((allowance) => allowance.memberId === member.id);
   const balances = computeMemberLeaveBalances(leaveRequests, allowances, year);
@@ -199,7 +203,7 @@ function MemberProfileContent({ member, crew, viewer, canReviewLeave, canEditEmp
 
       <aside
         aria-label={content.profile.leaveLabel}
-        className='bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5 lg:sticky lg:top-20'
+        className='bg-card flex flex-col gap-4 rounded-2xl border p-4 sm:p-5 lg:sticky lg:top-20 lg:row-span-2'
       >
         {canGrantLeave ? <RequestLeaveDialog mode='grant' onSubmit={handleGrantLeave} /> : null}
 
@@ -237,6 +241,13 @@ function MemberProfileContent({ member, crew, viewer, canReviewLeave, canEditEmp
           )}
         </div>
       </aside>
+
+      {canReviewTime ? (
+        // left column under the details; the leave aside spans both rows beside it
+        <div className='lg:col-start-1'>
+          <MemberTimeReview member={member} viewer={viewer} projectNames={projectNames} memberNames={memberNames} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -382,6 +393,7 @@ interface MemberProfileProps {
   memberId: string;
   viewer: CrewViewer;
   canReviewLeave: boolean;
+  canReviewTime: boolean;
   canEditEmployment: boolean;
 }
 
@@ -390,6 +402,7 @@ interface MemberProfileContentProps {
   crew: Crew;
   viewer: CrewViewer;
   canReviewLeave: boolean;
+  canReviewTime: boolean;
   canEditEmployment: boolean;
 }
 

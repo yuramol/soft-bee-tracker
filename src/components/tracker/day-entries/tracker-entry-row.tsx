@@ -1,5 +1,6 @@
 'use client';
 
+import { format, parseISO } from 'date-fns';
 import { PencilIcon, PlayIcon, Trash2Icon } from 'lucide-react';
 
 import { Badge } from '@ui/badge';
@@ -10,6 +11,7 @@ import { isLiveTrackerActive } from '@/lib/tracker/live-tracker';
 import { getTrackerMinutes } from '@/lib/tracker/tracker-days';
 import { isEntryDateOpen } from '@/lib/tracker/work-time-policy';
 import content from '../content.json';
+import { formatText } from '@/lib/format/format-text';
 
 export function TrackerEntryRow({
   tracker,
@@ -42,6 +44,11 @@ export function TrackerEntryRow({
       <div className='flex min-w-0 flex-1 flex-col gap-1'>
         <span className='truncate font-semibold'>{projectName}</span>
         <span className='text-muted-foreground truncate text-sm'>{tracker.description?.trim() || content.entryRow.noDescription}</span>
+        {tracker.status === 'rejected' && tracker.reviewNote ? (
+          <span className='text-destructive text-sm break-words'>
+            {formatText(content.entryRow.rejectedReason, { note: tracker.reviewNote })}
+          </span>
+        ) : null}
       </div>
 
       <span className='shrink-0 text-xl font-semibold tabular-nums'>{formatClock(getTrackerMinutes(tracker, now))}</span>
@@ -54,7 +61,10 @@ export function TrackerEntryRow({
           />
         ) : null}
         {!isActiveTimer && !isEditable ? (
-          <EntryBadge {...(isClosed && tracker.status === 'new' ? CLOSED_BADGE : LOCKED_STATUS_BADGES[tracker.status])} />
+          <EntryBadge
+            {...(isClosed && tracker.status === 'new' ? CLOSED_BADGE : LOCKED_STATUS_BADGES[tracker.status])}
+            title={getReviewedTitle(tracker)}
+          />
         ) : null}
         {isEditable ? (
           <>
@@ -90,8 +100,18 @@ export function TrackerEntryRow({
   );
 }
 
-function EntryBadge({ label, variant }: EntryBadgeProps) {
-  return <Badge variant={variant}>{label}</Badge>;
+function EntryBadge({ label, variant, title }: EntryBadgeProps) {
+  return (
+    <Badge variant={variant} title={title}>
+      {label}
+    </Badge>
+  );
+}
+
+function getReviewedTitle(tracker: Tracker): string | undefined {
+  return tracker.reviewedAt
+    ? formatText(content.entryRow.reviewedOn, { date: format(parseISO(tracker.reviewedAt), 'd MMM, HH:mm') })
+    : undefined;
 }
 
 const CLOSED_BADGE: EntryBadgeProps = { label: content.entryRow.status.closed, variant: 'info' };
@@ -105,6 +125,7 @@ const LOCKED_STATUS_BADGES: Record<TrackerStatus, EntryBadgeProps> = {
 interface EntryBadgeProps {
   label: string;
   variant: 'brand' | 'warning' | 'info' | 'success' | 'destructive';
+  title?: string;
 }
 
 interface TrackerEntryRowProps {

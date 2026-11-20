@@ -41,7 +41,7 @@ export function DayEntries({
   const { data: projects = [] } = useProjects();
   const { data: activeTracker } = useActiveLiveTracker();
   const restartTracker = useRestartLiveTracker();
-  const deleteTracker = useDeleteTracker({ onSuccess: handleDeleted });
+  const deleteTracker = useDeleteTracker({ onSuccess: handleDeleted, onConcurrentStatusChange: handleDeleted });
   const selectedKey = toDateKey(selectedDate);
   const dayEntries = trackers.filter((tracker) => tracker.date === selectedKey);
   const dayMinutes = minutesByDate.get(selectedKey) ?? 0;

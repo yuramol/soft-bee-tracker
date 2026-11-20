@@ -45,7 +45,10 @@ function tracker(
     startLiveDate: null,
     projectId,
     userId,
-    transactionId: null
+    transactionId: null,
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null
   };
 }
 

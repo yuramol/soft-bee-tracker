@@ -2,14 +2,20 @@ import { format } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  approveTracker,
+  createTracker,
+  deleteTracker,
   discardLiveTracker,
   finishLiveTracker,
   pauseLiveTracker,
+  rejectTracker,
   restartLiveTracker,
   resumeLiveTracker,
-  startLiveTracker
+  startLiveTracker,
+  undoTrackerReview,
+  updateTracker
 } from './mutations';
-import type { Tracker } from './types';
+import type { Tracker, TrackerStatus } from './types';
 
 const createBrowserClient = vi.hoisted(() => vi.fn());
 
@@ -27,11 +33,14 @@ const trackerRow = {
   is_live: true,
   live_duration_minutes: 0,
   live_status: 'start' as const,
-  status: 'new' as const,
+  status: 'new' as TrackerStatus,
   start_live_date: '2026-11-05T11:00:00.000Z',
   project_id: 'project-1',
   user_id: 'user-1',
-  transaction_id: null
+  transaction_id: null,
+  reviewed_by: null,
+  reviewed_at: null,
+  review_note: null
 };
 
 const runningTracker: Tracker = {
@@ -48,12 +57,15 @@ const runningTracker: Tracker = {
   startLiveDate: '2026-11-05T11:58:30.000Z',
   projectId: 'project-1',
   userId: 'user-1',
-  transactionId: null
+  transactionId: null,
+  reviewedBy: null,
+  reviewedAt: null,
+  reviewNote: null
 };
 
 interface QueryResult {
   data: typeof trackerRow | null;
-  error: { message: string } | null;
+  error: { message: string; code?: string; hint?: string } | null;
   status: number;
 }
 
@@ -196,5 +208,148 @@ describe('live tracker mutations', () => {
     mockTrackersTable({ data: null, error: { message: 'Permission denied' }, status: 403 });
 
     await expect(discardLiveTracker(runningTracker)).rejects.toEqual({ message: 'Permission denied', statusCode: 403 });
+  });
+});
+
+describe('tracker review mutations', () => {
+  beforeEach(() => {
+    createBrowserClient.mockReset();
+  });
+
+  it('approves only while the entry is still unreviewed', async () => {
+    const { builder, from } = mockTrackersTable({ data: { ...trackerRow, status: 'approved' }, error: null, status: 200 });
+
+    const tracker = await approveTracker('tracker-1');
+
+    expect(from).toHaveBeenCalledWith('trackers');
+    expect(builder.update).toHaveBeenCalledWith({ status: 'approved' });
+    expect(builder.eq).toHaveBeenCalledWith('id', 'tracker-1');
+    expect(builder.in).toHaveBeenCalledWith('status', ['new']);
+    expect(tracker.status).toBe('approved');
+  });
+
+  it('rejects only while the entry is still unreviewed', async () => {
+    const { builder } = mockTrackersTable();
+
+    await rejectTracker({ trackerId: 'tracker-1', note: '  Wrong project  ' });
+
+    expect(builder.update).toHaveBeenCalledWith({ status: 'rejected', review_note: 'Wrong project' });
+    expect(builder.in).toHaveBeenCalledWith('status', ['new']);
+  });
+
+  it('undoes a review only while the entry is still reviewed', async () => {
+    const { builder } = mockTrackersTable();
+
+    await undoTrackerReview({ trackerId: 'tracker-1', note: '  Approved the wrong day ' });
+
+    expect(builder.update).toHaveBeenCalledWith({ status: 'new', review_note: 'Approved the wrong day' });
+    expect(builder.in).toHaveBeenCalledWith('status', ['approved', 'rejected']);
+  });
+
+  it.each([
+    ['tracker_review.not_reviewer', 403, "You can't review this entry. It may be on a project you don't manage."],
+    ['tracker_review.own_entry', 403, "You can't review your own time entries."],
+    ['tracker_review.admin_entry', 403, 'Only an admin can review this entry.'],
+    ['tracker_review.reason_required', 400, 'Add a reason to reject this entry.'],
+    ['tracker_review.undo_reason_required', 400, 'Add a reason to undo this review.'],
+    ['tracker_review.reason_too_long', 400, 'The reason can be at most 500 characters.'],
+    ['tracker_review.timer_running', 400, "This timer is still running and can't be reviewed yet."],
+    ['tracker_review.invalid_transition', 400, 'This entry was already reviewed. Refresh to see the latest decision.'],
+    [
+      'tracker_review.reviewed_locked',
+      400,
+      'This entry was already reviewed. Ask a manager to undo the review before changing or deleting it.'
+    ]
+  ])('maps the %s key to its message', async (hint, status, message) => {
+    // the message text is deliberately unrelated: only the hint key may drive the mapping
+    mockTrackersTable({
+      data: null,
+      error: { code: status === 403 ? '42501' : '23514', message: 'reworded in the database', hint },
+      status
+    });
+
+    await expect(approveTracker('tracker-1')).rejects.toEqual({ message, statusCode: status });
+  });
+
+  it('reports a concurrent status change when no row matches the expected status', async () => {
+    mockTrackersTable({
+      data: null,
+      error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' },
+      status: 406
+    });
+
+    await expect(approveTracker('tracker-1')).rejects.toEqual({
+      message: "Your action wasn't completed. Refresh to see the reason.",
+      statusCode: 406,
+      code: 'tracker_review.status_changed'
+    });
+  });
+
+  it('does not leak raw database messages for unknown errors', async () => {
+    mockTrackersTable({ data: null, error: { code: 'XX000', message: 'internal detail' }, status: 500 });
+
+    await expect(approveTracker('tracker-1')).rejects.toEqual({ message: "Couldn't update the review. Try again.", statusCode: 500 });
+  });
+});
+
+describe('tracker write errors', () => {
+  const entry = { projectId: 'project-1', date: '2026-11-05', description: null, durationMinutes: 30 };
+  const lockedError = { code: '23514', message: 'Undo the review before changing this entry.', hint: 'tracker_review.reviewed_locked' };
+  const lockedMessage = 'This entry was already reviewed. Ask a manager to undo the review before changing or deleting it.';
+
+  beforeEach(() => {
+    createBrowserClient.mockReset();
+  });
+
+  it('explains a locked entry when editing it', async () => {
+    mockTrackersTable({ data: null, error: lockedError, status: 400 });
+
+    await expect(updateTracker({ trackerId: 'tracker-1', entry })).rejects.toEqual({ message: lockedMessage, statusCode: 400 });
+  });
+
+  it('explains a locked entry when deleting it', async () => {
+    mockTrackersTable({ data: null, error: lockedError, status: 400 });
+
+    await expect(deleteTracker({ ...runningTracker, status: 'approved' })).rejects.toEqual({ message: lockedMessage, statusCode: 400 });
+  });
+
+  it('cancels delete when the status no longer matches what the ui showed', async () => {
+    const { builder } = mockTrackersTable({ data: null, error: null, status: 200 });
+
+    await expect(deleteTracker(runningTracker)).rejects.toEqual({
+      message: "Your action wasn't completed. Refresh to see the reason.",
+      statusCode: 200,
+      code: 'tracker_review.status_changed'
+    });
+
+    expect(builder.eq).toHaveBeenCalledWith('id', runningTracker.id);
+    expect(builder.eq).toHaveBeenCalledWith('status', 'new');
+    expect(builder.select).toHaveBeenCalledWith('id');
+  });
+
+  it('explains an entry logged as already reviewed', async () => {
+    mockTrackersTable({
+      data: null,
+      error: { code: '23514', message: 'New time entries must start unreviewed.', hint: 'tracker_review.insert_reviewed' },
+      status: 400
+    });
+
+    await expect(createTracker(entry)).rejects.toEqual({
+      message: 'New time entries are saved unreviewed. Save it first, then approve it.',
+      statusCode: 400
+    });
+  });
+
+  it('keeps database messages that have no review key, such as a closed month', async () => {
+    mockTrackersTable({
+      data: null,
+      error: { code: '42501', message: 'Time for this month is closed and can no longer be changed.' },
+      status: 403
+    });
+
+    await expect(updateTracker({ trackerId: 'tracker-1', entry })).rejects.toEqual({
+      message: 'Time for this month is closed and can no longer be changed.',
+      statusCode: 403
+    });
   });
 });

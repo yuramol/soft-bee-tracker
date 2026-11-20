@@ -21,6 +21,9 @@ function buildTracker(overrides: Partial<Tracker>): Tracker {
     projectId: 'p',
     userId: 'u',
     transactionId: null,
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null,
     ...overrides
   };
 }

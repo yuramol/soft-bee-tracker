@@ -250,6 +250,51 @@ export type Database = {
           },
         ]
       }
+      tracker_reviews: {
+        Row: {
+          action: Database["public"]["Enums"]["tracker_review_action"]
+          actor_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          previous_status: Database["public"]["Enums"]["tracker_status"]
+          tracker_id: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["tracker_review_action"]
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          previous_status: Database["public"]["Enums"]["tracker_status"]
+          tracker_id?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["tracker_review_action"]
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          previous_status?: Database["public"]["Enums"]["tracker_status"]
+          tracker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_reviews_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_reviews_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "trackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trackers: {
         Row: {
           created_at: string
@@ -261,6 +306,9 @@ export type Database = {
           live_duration_minutes: number
           live_status: Database["public"]["Enums"]["tracker_live_status"] | null
           project_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           start_live_date: string | null
           status: Database["public"]["Enums"]["tracker_status"]
           transaction_id: string | null
@@ -279,6 +327,9 @@ export type Database = {
             | Database["public"]["Enums"]["tracker_live_status"]
             | null
           project_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           start_live_date?: string | null
           status?: Database["public"]["Enums"]["tracker_status"]
           transaction_id?: string | null
@@ -297,6 +348,9 @@ export type Database = {
             | Database["public"]["Enums"]["tracker_live_status"]
             | null
           project_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           start_live_date?: string | null
           status?: Database["public"]["Enums"]["tracker_status"]
           transaction_id?: string | null
@@ -309,6 +363,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trackers_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -448,6 +509,7 @@ export type Database = {
       project_status: "active" | "archived"
       project_type: "fixed_price" | "non_profit" | "time_material"
       tracker_live_status: "finish" | "pause" | "start"
+      tracker_review_action: "approved" | "rejected" | "undone"
       tracker_status: "approved" | "new" | "rejected"
       user_role: "worker" | "manager" | "admin"
     }
@@ -585,6 +647,7 @@ export const Constants = {
       project_status: ["active", "archived"],
       project_type: ["fixed_price", "non_profit", "time_material"],
       tracker_live_status: ["finish", "pause", "start"],
+      tracker_review_action: ["approved", "rejected", "undone"],
       tracker_status: ["approved", "new", "rejected"],
       user_role: ["worker", "manager", "admin"],
     },

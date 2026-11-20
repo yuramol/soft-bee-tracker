@@ -42,6 +42,7 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
         memberId={id}
         viewer={{ id: profile.id, role: profile.role }}
         canReviewLeave={permissions.canReviewLeave}
+        canReviewTime={permissions.canReviewTime}
         // employment details are admin-only, the same gate as role changes and blocking
         canEditEmployment={permissions.canManageMembers}
       />

@@ -62,5 +62,9 @@
     "endBeforeStart": "End date must be on or after the start date",
     "noteTooLong": "Comment can be at most 500 characters",
     "allowanceInvalid": "Enter a whole number of days from 0 to 366"
+  },
+  "trackerReview": {
+    "reasonRequired": "Add a reason",
+    "reasonTooLong": "Reason can be at most 500 characters"
   }
 }

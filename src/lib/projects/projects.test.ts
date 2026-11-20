@@ -69,6 +69,9 @@ function tracker(overrides: Partial<Tracker>): Tracker {
     projectId: 'p1',
     userId: 'mgr',
     transactionId: null,
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null,
     ...overrides
   };
 }

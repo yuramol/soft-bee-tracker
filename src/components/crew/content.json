@@ -6,7 +6,7 @@
   },
   "roleDescriptions": {
     "worker": "Logs time on assigned projects.",
-    "manager": "Can approve time and see reports.",
+    "manager": "Can approve time on projects they manage and see reports.",
     "admin": "Full access, including crew management."
   },
   "status": {
@@ -142,7 +142,7 @@
     "emailLabel": "Email",
     "emailPlaceholder": "teammate@softbee.dev",
     "roleLabel": "Role",
-    "roleDescription": "Managers can approve time and see reports.",
+    "roleDescription": "Managers can approve time on projects they manage and see reports.",
     "cancelButton": "Cancel",
     "sendButton": "Send invite",
     "networkError": "We couldn't reach the server. Check your connection and try again.",
@@ -157,6 +157,59 @@
     "saveLabel": "Save {label}",
     "positionSaved": "Position updated for {name}",
     "dateSaved": "Employment date updated for {name}"
+  },
+  "timeReview": {
+    "title": "Time to review",
+    "period": "Last month and this month",
+    "pendingCount": "{count} waiting",
+    "empty": "No time logged in this period.",
+    "onlyYourProjects": "You only see entries on projects you manage.",
+    "loadErrorTitle": "Couldn't load time entries",
+    "noDescription": "No description",
+    "running": "Timer running",
+    "approve": "Approve",
+    "reject": "Reject",
+    "undo": "Undo",
+    "approveLabel": "Approve {entry}",
+    "rejectLabel": "Reject {entry}",
+    "undoLabel": "Undo review of {entry}",
+    "reviewedBy": "{status} by {name} · {date}",
+    "unknownReviewer": "a former member",
+    "unknownProject": "Unknown project",
+    "reason": "Reason: {note}",
+    "status": {
+      "new": "New",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "history": "History ({count})",
+    "historyHide": "Hide history",
+    "historyLabel": "Review history for {entry}",
+    "historyItem": "{action} by {name} · {date}",
+    "historyError": "Couldn't load the review history.",
+    "historyActions": {
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "undone": "Review undone"
+    }
+  },
+  "reviewNoteDialog": {
+    "reasonLabel": "Reason",
+    "cancelButton": "Cancel",
+    "reject": {
+      "title": "Reject time entry",
+      "description": "{entry}. {name} will see the reason and can't edit the entry until the review is undone.",
+      "placeholder": "For example: logged on the wrong project",
+      "submitButton": "Reject entry",
+      "submittingButton": "Rejecting…"
+    },
+    "undo": {
+      "title": "Undo review",
+      "description": "{entry}. The entry goes back to New and {name} can edit it again. The reason stays in the review history.",
+      "placeholder": "For example: approved the wrong day",
+      "submitButton": "Undo review",
+      "submittingButton": "Undoing…"
+    }
   },
   "loadErrorTitle": "Couldn't load the crew",
   "loadError": "Something went wrong. Try again in a moment."

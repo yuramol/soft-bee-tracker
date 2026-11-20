@@ -96,6 +96,8 @@
     "stopRunningFirst": "Stop the running timer first",
     "delete": "Delete",
     "deleteLabel": "Delete entry",
+    "rejectedReason": "Rejected: {note}",
+    "reviewedOn": "Reviewed {date}",
     "status": {
       "new": "New",
       "closed": "Closed",

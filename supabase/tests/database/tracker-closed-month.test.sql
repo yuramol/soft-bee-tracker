@@ -129,14 +129,15 @@ select is(
 -- manager of the project: may correct and review closed months
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000000a02","role":"authenticated","user_role":"manager"}', true);
 
-select lives_ok(
-  $$update public.trackers set status = 'approved' where id = '00000000-0000-0000-0000-00000000dc01'$$,
-  'a manager can approve an entry in a closed month'
-);
-
+-- correct first: a reviewed entry is locked until its review is undone (tracker-review tests)
 select lives_ok(
   $$update public.trackers set duration_minutes = 45 where id = '00000000-0000-0000-0000-00000000dc01'$$,
   'a manager can correct an entry in a closed month'
+);
+
+select lives_ok(
+  $$update public.trackers set status = 'approved' where id = '00000000-0000-0000-0000-00000000dc01'$$,
+  'a manager can approve an entry in a closed month'
 );
 
 -- admin
