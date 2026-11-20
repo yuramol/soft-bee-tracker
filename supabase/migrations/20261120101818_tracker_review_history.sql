@@ -75,7 +75,7 @@ revoke all on table public.tracker_reviews from anon, authenticated;
 grant select on table public.tracker_reviews to authenticated;
 grant all on table public.tracker_reviews to service_role;
 
--- same rules as 20261118104238_tracker_review.sql, plus: undo needs a reason, which stays
+-- same rules as 20261120101817_tracker_review.sql, plus: undo needs a reason, which stays
 -- on the row for private.log_tracker_review to record
 create or replace function private.guard_tracker_review()
 returns trigger
